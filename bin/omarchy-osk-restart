@@ -1,8 +1,20 @@
 #!/bin/bash
-# Restart the on-screen keyboard (hidden) so it picks up theme/font changes.
+# Restart the on-screen keyboard so it picks up theme/font changes, keeping
+# it on screen if it was showing.
 
-if pgrep -x omarchy-oskd >/dev/null; then
-  pkill -x omarchy-oskd
-  sleep 0.2
+pgrep -x omarchy-oskd >/dev/null || exit 0
+
+visible=$(hyprctl layers -j 2>/dev/null |
+  jq '[.[] | .levels[] | .[] | select(.namespace == "omarchy-osk")] | length')
+
+pkill -x omarchy-oskd
+for _ in {1..20}; do
+  pgrep -x omarchy-oskd >/dev/null || break
+  sleep 0.05
+done
+
+if [[ ${visible:-0} -gt 0 ]]; then
+  setsid -f omarchy-osk >/dev/null 2>&1
+else
   setsid -f omarchy-osk --hidden >/dev/null 2>&1
 fi

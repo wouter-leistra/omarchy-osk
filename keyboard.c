@@ -150,15 +150,27 @@ kbd_mark_typed(void)
 	}
 }
 
+void zwp_virtual_keyboard_v1_key_mods(struct zwp_virtual_keyboard_v1 *vkbd,
+                                      uint32_t time, uint32_t mods,
+                                      enum wl_keyboard_key_state state);
+
+/* Press one key with the given modifiers. Ctrl/Alt/Super are only held for
+ * the duration of this key, so the compositor never sees a modifier that
+ * stays down while the keyboard waits (or hides). */
 static void
 kbd_tap_code(struct kbd *kb, uint32_t time, uint32_t code, uint32_t mods)
 {
 	kbd_mark_typed();
+	zwp_virtual_keyboard_v1_key_mods(kb->vkbd, time, mods,
+	                                 WL_KEYBOARD_KEY_STATE_PRESSED);
 	zwp_virtual_keyboard_v1_modifiers(kb->vkbd, mods, 0, 0, 0);
 	zwp_virtual_keyboard_v1_key(kb->vkbd, time, code,
 	                            WL_KEYBOARD_KEY_STATE_PRESSED);
 	zwp_virtual_keyboard_v1_key(kb->vkbd, time, code,
 	                            WL_KEYBOARD_KEY_STATE_RELEASED);
+	zwp_virtual_keyboard_v1_key_mods(kb->vkbd, time, mods,
+	                                 WL_KEYBOARD_KEY_STATE_RELEASED);
+	zwp_virtual_keyboard_v1_modifiers(kb->vkbd, 0, 0, 0, 0);
 }
 
 static void
@@ -180,7 +192,6 @@ kbd_type_utf8(struct kbd *kb, uint32_t time, const char *s)
 	int n = utf8_decode(s, cps, SWIPE_MAX_CPS * 2);
 	for (int i = 0; i < n; i++)
 		kbd_type_cp(kb, time, cps[i], 0);
-	zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods & ~(Shift | CapsLock), 0, 0, 0);
 }
 
 static void
@@ -188,7 +199,6 @@ kbd_backspace(struct kbd *kb, uint32_t time, int count)
 {
 	for (int i = 0; i < count; i++)
 		kbd_tap_code(kb, time, KEY_BACKSPACE, 0);
-	zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods & ~(Shift | CapsLock), 0, 0, 0);
 }
 
 static uint32_t
@@ -428,11 +438,8 @@ kbd_unlatch(struct kbd *kb, uint32_t time)
 	uint8_t oneshot = kb->mods & (Shift | Ctrl | Alt | Super);
 	if (!oneshot)
 		return;
-	zwp_virtual_keyboard_v1_key_mods(kb->vkbd, time, oneshot,
-	                                 WL_KEYBOARD_KEY_STATE_RELEASED);
 	kb->mods &= ~oneshot;
 	autocap_latched = false;
-	zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods & ~CapsLock, 0, 0, 0);
 	kbd_draw_layout(kb);
 }
 
@@ -446,6 +453,15 @@ kbd_autocap(struct kbd *kb)
 	}
 }
 
+/* forget latched modifiers (caps lock stays) */
+void
+kbd_clear_mods(struct kbd *kb)
+{
+	kb->mods &= CapsLock;
+	autocap_latched = false;
+	zwp_virtual_keyboard_v1_modifiers(kb->vkbd, 0, 0, 0, 0);
+}
+
 void
 kbd_unpress_key(struct kbd *kb, uint32_t time)
 {
@@ -456,6 +472,10 @@ kbd_unpress_key(struct kbd *kb, uint32_t time)
 	if (k->type == Code) {
 		zwp_virtual_keyboard_v1_key(kb->vkbd, time, k->code,
 		                            WL_KEYBOARD_KEY_STATE_RELEASED);
+		zwp_virtual_keyboard_v1_key_mods(kb->vkbd, time, kb->held_mods,
+		                                 WL_KEYBOARD_KEY_STATE_RELEASED);
+		zwp_virtual_keyboard_v1_modifiers(kb->vkbd, 0, 0, 0, 0);
+		kb->held_mods = 0;
 		if (kb->mods & (Shift | Ctrl | Alt | Super)) {
 			kbd_unlatch(kb, time);
 			return;
@@ -543,6 +563,9 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
 		uint8_t code_mods = kb->mods & ~CapsLock;
 		if (k->code == KEY_ENTER || k->code == KEY_BACKSPACE)
 			code_mods &= ~Shift;
+		kb->held_mods = code_mods;
+		zwp_virtual_keyboard_v1_key_mods(kb->vkbd, time, code_mods,
+		                                 WL_KEYBOARD_KEY_STATE_PRESSED);
 		zwp_virtual_keyboard_v1_modifiers(kb->vkbd, code_mods, 0, 0, 0);
 		kb->last_press = k;
 		kb->last_press_offset = time - monotime();
@@ -567,12 +590,8 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
 			kbd_draw_layout(kb);
 			break;
 		}
+		/* Ctrl/Alt/Super latch for the next key, nothing is sent yet */
 		kb->mods ^= k->code;
-		zwp_virtual_keyboard_v1_key_mods(kb->vkbd, time, k->code,
-		                                 (kb->mods & k->code)
-		                                     ? WL_KEYBOARD_KEY_STATE_PRESSED
-		                                     : WL_KEYBOARD_KEY_STATE_RELEASED);
-		zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods & ~CapsLock, 0, 0, 0);
 		kbd_draw_key(kb, k, (kb->mods & k->code) ? Press : Unpress);
 		break;
 	case Layout:
@@ -713,7 +732,6 @@ kbd_tap_space(struct kbd *kb, uint32_t time)
 	kb->after_space = kb->word[0] != 0;
 	kb->word[0] = 0;
 	kbd_type_cp(kb, time, ' ', kb->mods & (Ctrl | Alt | Super));
-	zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods & ~(Shift | CapsLock), 0, 0, 0);
 	kbd_set_suggestions(kb, NULL, false);
 	if (kb->mods & (Ctrl | Alt | Super))
 		kbd_unlatch(kb, time);
@@ -736,7 +754,6 @@ kbd_tap_cp(struct kbd *kb, uint32_t time, uint32_t cp, bool letter)
 	}
 
 	kbd_type_cp(kb, time, cp, kb->mods & (Ctrl | Alt | Super));
-	zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods & ~(Shift | CapsLock), 0, 0, 0);
 	bool had_ctrl = kb->mods & (Ctrl | Alt | Super);
 	kb->after_commit = kb->after_space = false;
 
@@ -969,13 +986,17 @@ kbd_longpress(struct kbd *kb)
 }
 
 void
-kbd_touch_down(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y)
+kbd_touch_down(struct kbd *kb, uint32_t time, int32_t x, int32_t y)
 {
 	if (kb->debug)
 		fprintf(stderr, "%ld down %u,%u\n", (long)monotime(), x, y);
 	kbd_unpress_key(kb, time);
+	if (kb->alt_open)
+		kbd_close_alternates(kb);
+	if (x < 0 || y < 0)
+		return;
 
-	if (y < kb->suggest_h) {
+	if ((uint32_t)y < kb->suggest_h) {
 		kb->sugg_pressed = x * SUGG_SLOTS / kb->w;
 		kbd_draw_suggestions(kb);
 		return;
@@ -1002,12 +1023,15 @@ kbd_touch_down(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y)
 }
 
 void
-kbd_touch_motion(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y)
+kbd_touch_motion(struct kbd *kb, uint32_t time, int32_t x, int32_t y)
 {
 	if (kb->sugg_pressed >= 0)
 		return;
 	if (!kb->down_key) {
-		kbd_motion_key(kb, time, x, y);
+		if (x >= 0 && y >= 0)
+			kbd_motion_key(kb, time, x, y);
+		else
+			kbd_motion_key(kb, time, UINT32_MAX, UINT32_MAX);
 		return;
 	}
 
@@ -1048,7 +1072,7 @@ kbd_touch_motion(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y)
 			int n = (int)(moved / step);
 			for (int i = 0; i < abs(n); i++)
 				kbd_tap_code(kb, time, n > 0 ? KEY_RIGHT : KEY_LEFT,
-				             kb->mods & ~CapsLock);
+				             kb->mods & ~(CapsLock | (autocap_latched ? Shift : 0)));
 			kb->pts_x[0] += n * step;
 			kbd_reset_text(kb);
 		}
@@ -1056,7 +1080,7 @@ kbd_touch_motion(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y)
 	}
 
 	if (!kb->swiping) {
-		struct key *over = kbd_get_key(kb, x, y);
+		struct key *over = (x < 0 || y < 0) ? NULL : kbd_get_key(kb, x, y);
 		double fx = (double)x - kb->pts_x[0], fy = (double)y - kb->pts_y[0];
 		if (kb->swipe_enabled && kb->layout->abc && key_is_letter(dk) &&
 		    over != dk && fx * fx + fy * fy > dk->w * dk->w * 0.36) {
@@ -1121,6 +1145,27 @@ kbd_touch_up(struct kbd *kb, uint32_t time)
 		kbd_tap_char(kb, dk, time);
 	}
 	kb->swiping = false;
+}
+
+/* the compositor took the touch away (e.g. a gesture): drop everything
+ * without typing */
+void
+kbd_touch_cancel(struct kbd *kb, uint32_t time)
+{
+	kbd_unpress_key(kb, time);
+	if (kb->alt_open)
+		kbd_close_alternates(kb);
+	if (kb->swiping && kb->down_key && !key_is_space(kb->down_key))
+		kbd_clear_trail(kb);
+	if (kb->down_key)
+		kbd_draw_key(kb, kb->down_key, Unpress);
+	kb->down_key = NULL;
+	kb->swiping = false;
+	kb->longpress_at = 0;
+	kb->space_mode = SpaceTap;
+	kb->sugg_pressed = -1;
+	kbd_clear_last_popup(kb);
+	kbd_draw_suggestions(kb);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1374,11 +1419,16 @@ kbd_extend_keymap(struct kbd *kb)
 			else
 				snprintf(syms[j], sizeof(syms[j]), "NoSymbol");
 		}
-		extra_len += snprintf(extra + extra_len, extra_cap - extra_len,
-		                      "\toverride key <%s> { type= \"FOUR_LEVEL\", "
-		                      "[ %s, %s, %s, %s ] };\n",
-		                      xkb_keymap_key_get_name(kb->xkb_keymap, kc),
-		                      syms[0], syms[1], syms[2], syms[3]);
+		const char *fmt = "\toverride key <%s> { type= \"FOUR_LEVEL\", "
+		                  "[ %s, %s, %s, %s ] };\n";
+		const char *kname = xkb_keymap_key_get_name(kb->xkb_keymap, kc);
+		int need = snprintf(NULL, 0, fmt, kname, syms[0], syms[1], syms[2], syms[3]);
+		if (extra_len + need + 1 > extra_cap) {
+			extra_cap = (extra_len + need + 1) * 2;
+			extra = realloc(extra, extra_cap);
+		}
+		extra_len += snprintf(extra + extra_len, extra_cap - extra_len, fmt,
+		                      kname, syms[0], syms[1], syms[2], syms[3]);
 		kc++;
 		added += i + 4 <= nmissing ? 4 : nmissing - i;
 	}

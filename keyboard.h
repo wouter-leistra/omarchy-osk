@@ -173,6 +173,7 @@ struct kbd {
 	/* omarchy-osk: space bar gestures */
 	enum { SpaceTap = 0, SpaceCursor, SpaceLang } space_mode;
 	int lang_dir;
+	uint8_t held_mods;      // modifiers pressed with the held Code key
 };
 
 void draw_inset(struct drwsurf *ds, uint32_t x, uint32_t y, uint32_t width,
@@ -184,12 +185,14 @@ void kbd_init(struct kbd *kb, struct layout *layouts,
               char *layer_names_list, char *landscape_layer_names_list);
 void kbd_init_layout(struct layout *l, uint32_t width, uint32_t height,
                      uint32_t yoff);
-void kbd_touch_down(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y);
-void kbd_touch_motion(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y);
+void kbd_touch_down(struct kbd *kb, uint32_t time, int32_t x, int32_t y);
+void kbd_touch_motion(struct kbd *kb, uint32_t time, int32_t x, int32_t y);
 void kbd_touch_up(struct kbd *kb, uint32_t time);
+void kbd_touch_cancel(struct kbd *kb, uint32_t time);
 void kbd_reset_text(struct kbd *kb);
 void kbd_longpress(struct kbd *kb);
 void kbd_load_lang(struct kbd *kb);
+void kbd_clear_mods(struct kbd *kb);
 struct key *kbd_get_key(struct kbd *kb, uint32_t x, uint32_t y);
 size_t kbd_get_layer_index(struct kbd *kb, struct layout *l);
 void kbd_unpress_key(struct kbd *kb, uint32_t time);

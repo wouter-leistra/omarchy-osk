@@ -254,6 +254,10 @@ estrdup(const char *s)
     return p;
 }
 
+/* one finger at a time drives the keyboard; a second finger landing first
+ * finishes the key under the previous one (two-thumb rollover typing) */
+static int32_t active_touch = -1;
+
 void
 wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
               uint32_t time, struct wl_surface *surface, int32_t id,
@@ -263,6 +267,9 @@ wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
         return;
     }
 
+    if (active_touch != -1)
+        kbd_touch_up(&keyboard, time);
+    active_touch = id;
     kbd_touch_down(&keyboard, time, wl_fixed_to_int(x), wl_fixed_to_int(y));
 }
 
@@ -273,6 +280,9 @@ wl_touch_up(void *data, struct wl_touch *wl_touch, uint32_t serial,
     if(!layer_surface_configured || !popup_xdg_surface_configured) {
         return;
     }
+    if (id != active_touch)
+        return;
+    active_touch = -1;
 
     kbd_touch_up(&keyboard, time);
 }
@@ -284,6 +294,8 @@ wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
     if(!layer_surface_configured || !popup_xdg_surface_configured) {
         return;
     }
+    if (id != active_touch)
+        return;
 
     kbd_touch_motion(&keyboard, time, wl_fixed_to_int(x), wl_fixed_to_int(y));
 }
@@ -296,6 +308,10 @@ wl_touch_frame(void *data, struct wl_touch *wl_touch)
 void
 wl_touch_cancel(void *data, struct wl_touch *wl_touch)
 {
+    active_touch = -1;
+    if (layer_surface_configured && popup_xdg_surface_configured)
+        kbd_touch_cancel(&keyboard,
+                         (uint32_t)(monotime() + keyboard.last_press_offset));
 }
 
 void
@@ -375,7 +391,7 @@ wl_pointer_axis(void *data, struct wl_pointer *wl_pointer, uint32_t time,
 /* pen (tablet tool) input behaves like a finger */
 static struct {
     bool on_keyboard, down, pending_down, pending_up, moved;
-    uint32_t x, y;
+    int32_t x, y;
 } pen;
 
 static void tool_type(void *d, struct zwp_tablet_tool_v2 *t, uint32_t a) {}
@@ -858,6 +874,9 @@ hide()
     keyboard.swiping = false;
     keyboard.space_mode = SpaceTap;
     keyboard.longpress_at = 0;
+    keyboard.alt_open = false;
+    active_touch = -1;
+    kbd_clear_mods(&keyboard);
     keyboard.sugg_pressed = -1;
     kbd_reset_text(&keyboard);
 
@@ -1457,6 +1476,7 @@ main(int argc, char **argv)
     sigaddset(&signal_mask, SIGUSR1);
     sigaddset(&signal_mask, SIGUSR2);
     sigaddset(&signal_mask, SIGRTMIN);
+    sigaddset(&signal_mask, SIGRTMIN + 1);
     sigaddset(&signal_mask, SIGPIPE);
     if (sigprocmask(SIG_BLOCK, &signal_mask, NULL) == -1) {
         die("Failed to disable handled signals: %d\n", errno);
@@ -1475,11 +1495,12 @@ main(int argc, char **argv)
             timeout = left > 0 ? (int)left : 0;
         }
         poll(fds, 2, timeout);
-        if (keyboard.longpress_at && monotime() >= keyboard.longpress_at)
-            kbd_longpress(&keyboard);
 
         if (fds[WAYLAND_FD].revents & POLLIN)
             wl_display_dispatch(display);
+        /* after dispatching, so a release that is already queued wins */
+        if (keyboard.longpress_at && monotime() >= keyboard.longpress_at)
+            kbd_longpress(&keyboard);
         if (fds[WAYLAND_FD].revents & POLLERR) {
             die("Exceptional condition on wayland socket.\n");
         }
@@ -1496,6 +1517,8 @@ main(int argc, char **argv)
                 hide();
             else if (si.ssi_signo == SIGUSR2)
                 show();
+            else if (si.ssi_signo == (uint32_t)SIGRTMIN + 1)
+                kbd_reset_text(&keyboard); /* focus moved to another field */
             else if (si.ssi_signo == SIGRTMIN)
                 toggle_visibility();
             else if (si.ssi_signo == SIGPIPE)
