@@ -30,6 +30,7 @@
 
 static void kbd_draw_suggestions(struct kbd *kb);
 static void kbd_clear_trail(struct kbd *kb);
+static void kbd_update_completions(struct kbd *kb);
 
 /* ---------------------------------------------------------------------- */
 /* typing through the xkb keymap                                           */
@@ -530,10 +531,21 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
 	case Code:
 		if (k->code == KEY_BACKSPACE) {
 			if (kb->after_commit && kb->committed[0]) {
-				/* like Gboard: backspace right after a gesture
-				 * removes the whole word */
-				kbd_backspace(kb, time, utf8_len(kb->committed) + 1);
-				kbd_reset_text(kb);
+				if (kb->commit_swiped) {
+					/* like Gboard: backspace right after a
+					 * gesture removes the whole word */
+					kbd_backspace(kb, time, utf8_len(kb->committed) + 1);
+					kbd_reset_text(kb);
+				} else {
+					/* after a picked suggestion only the added
+					 * space goes, so the word can be continued */
+					char w[SWIPE_MAX_WORD];
+					snprintf(w, sizeof(w), "%s", kb->committed);
+					kbd_backspace(kb, time, 1);
+					kbd_reset_text(kb);
+					snprintf(kb->word, sizeof(kb->word), "%s", w);
+					kbd_update_completions(kb);
+				}
 				kbd_draw_key(kb, k, Press);
 				kb->last_press = NULL;
 				kbd_draw_key(kb, k, Unpress);
@@ -544,9 +556,7 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
 				while (len && (kb->word[len - 1] & 0xC0) == 0x80)
 					len--;
 				kb->word[len ? len - 1 : 0] = 0;
-				struct swipe_result r;
-				swipe_complete(kb->word, &r);
-				kbd_set_suggestions(kb, &r, false);
+				kbd_update_completions(kb);
 			} else {
 				kbd_reset_text(kb);
 			}
@@ -644,12 +654,16 @@ kbd_commit_word(struct kbd *kb, uint32_t time, const char *w, bool replace_word)
 static const char *
 lang_display_name(const char *code)
 {
-	if (!strcmp(code, "en"))
-		return "English";
-	if (!strcmp(code, "fi"))
-		return "Suomi";
-	if (!strcmp(code, "sv"))
-		return "Svenska";
+	static const char *names[][2] = {
+		{"en", "English"}, {"fi", "Suomi"},     {"sv", "Svenska"},
+		{"nb", "Norsk"},   {"da", "Dansk"},     {"de", "Deutsch"},
+		{"nl", "Nederlands"}, {"fr", "Français"}, {"es", "Español"},
+		{"it", "Italiano"}, {"pt", "Português"}, {"et", "Eesti"},
+		{"pl", "Polski"},
+	};
+	for (size_t i = 0; i < sizeof(names) / sizeof(*names); i++)
+		if (!strcmp(names[i][0], code))
+			return names[i][1];
 	return code;
 }
 
@@ -737,6 +751,33 @@ kbd_tap_space(struct kbd *kb, uint32_t time)
 		kbd_unlatch(kb, time);
 }
 
+/* completions for the letters typed so far, keeping their capitalisation */
+static void
+kbd_update_completions(struct kbd *kb)
+{
+	if (!kb->word[0]) {
+		kbd_set_suggestions(kb, NULL, false);
+		return;
+	}
+	char lower[SWIPE_MAX_WORD];
+	uint32_t cps[SWIPE_MAX_CPS];
+	int n = utf8_decode(kb->word, cps, SWIPE_MAX_CPS), o = 0;
+	for (int i = 0; i < n; i++) {
+		uint32_t c = cps[i];
+		if ((c >= 'A' && c <= 'Z') || (c >= 0xC0 && c <= 0xDE && c != 0xD7))
+			c += 32;
+		o += utf8_encode(c, lower + o);
+	}
+	lower[o] = 0;
+	struct swipe_result r;
+	swipe_complete(lower, &r);
+	bool upper = utf8_starts_upper(kb->word);
+	for (int i = 0; i < r.n; i++)
+		if (upper)
+			utf8_capitalize(r.words[i], false);
+	kbd_set_suggestions(kb, &r, false);
+}
+
 static void
 kbd_tap_cp(struct kbd *kb, uint32_t time, uint32_t cp, bool letter)
 {
@@ -765,23 +806,7 @@ kbd_tap_cp(struct kbd *kb, uint32_t time, uint32_t cp, bool letter)
 			memcpy(kb->word + len, buf, n);
 			kb->word[len + n] = 0;
 		}
-		char lower[SWIPE_MAX_WORD];
-		uint32_t cps[SWIPE_MAX_CPS];
-		int n = utf8_decode(kb->word, cps, SWIPE_MAX_CPS), o = 0;
-		for (int i = 0; i < n; i++) {
-			uint32_t c = cps[i];
-			if ((c >= 'A' && c <= 'Z') || (c >= 0xC0 && c <= 0xDE && c != 0xD7))
-				c += 32;
-			o += utf8_encode(c, lower + o);
-		}
-		lower[o] = 0;
-		struct swipe_result r;
-		swipe_complete(lower, &r);
-		bool upper = utf8_starts_upper(kb->word);
-		for (int i = 0; i < r.n; i++)
-			if (upper)
-				utf8_capitalize(r.words[i], false);
-		kbd_set_suggestions(kb, &r, false);
+		kbd_update_completions(kb);
 	} else {
 		kbd_reset_text(kb);
 	}
@@ -848,6 +873,7 @@ kbd_finish_swipe(struct kbd *kb, uint32_t time)
 	if (kb->word[0])
 		kbd_type_utf8(kb, time, " ");
 	kbd_commit_word(kb, time, r.words[0], false);
+	kb->commit_swiped = true;
 	kbd_set_suggestions(kb, &r, true);
 	if (shift)
 		kbd_unlatch(kb, time);
@@ -877,6 +903,7 @@ kbd_apply_suggestion(struct kbd *kb, uint32_t time, int slot)
 		kbd_draw_suggestions(kb);
 	} else {
 		kbd_commit_word(kb, time, chosen, true);
+		kb->commit_swiped = false;
 		struct swipe_result r = {.n = 1};
 		memcpy(r.words[0], chosen, SWIPE_MAX_WORD);
 		kbd_set_suggestions(kb, &r, true);

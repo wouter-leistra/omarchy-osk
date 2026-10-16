@@ -64,6 +64,69 @@ OSK_HEIGHT_RATIO=0.40    # share of the screen height
 OSK_XKB=fi               # xkb layout[:variant] to type with
 ```
 
+## Adding a language
+
+Swipe typing and suggestions use plain word-frequency lists, one per
+language, in `~/.local/share/omarchy-osk/dict/<code>.txt` (the repo copies
+are in `dict/`). Each line is `word count`, most frequent first:
+
+```
+hello 1234567
+world 456789
+```
+
+1. Get a frequency list, for example from
+   [FrequencyWords](https://github.com/hermitdave/FrequencyWords)
+   (`content/2018/<code>/<code>_50k.txt`).
+2. Keep only words that can be swiped on the layout: lowercase letters that
+   have a key, plus `'`. For the Finnish/Swedish layout:
+
+   ```sh
+   code=de
+   curl -fsSL -o /tmp/$code.txt \
+     https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/$code/${code}_50k.txt
+   LC_ALL=C.UTF-8 awk '{w=tolower($1); if (w ~ /^[a-zåäö'"'"']+$/ && $2 >= 5) print w" "$2}' \
+     /tmp/$code.txt > ~/.local/share/omarchy-osk/dict/$code.txt
+   ```
+
+   Words containing letters the layout lacks (`ü`, `ß`, `é` …) are skipped
+   for gestures, so for such languages add those letters to the layout as
+   well (see below) and to the awk pattern.
+3. Add the code to `OSK_LANGS` in `~/.config/omarchy-osk/config`, in the
+   order the space-bar swipe should cycle:
+
+   ```sh
+   OSK_LANGS=en,fi,de
+   ```
+4. `omarchy-osk-restart`. The space bar shows the language name for common
+   codes (`lang_display_name()` in `keyboard.c`), otherwise the code.
+
+To add it to the repo itself, put the file in `dict/` and run
+`make install-user`.
+
+## Keymap and layout
+
+Two separate things decide what you get:
+
+- **`OSK_XKB`** is the xkb layout used to *type* (default `fi`, same as the
+  Type Cover). Keys look up their character in this keymap, so `@`, `€` etc.
+  always arrive correctly, and characters the keymap lacks (é, ñ, — …) are
+  added to spare keycodes automatically. Use the layout your physical
+  keyboard uses, e.g. `OSK_XKB=us`, `OSK_XKB=se`, `OSK_XKB=de:nodeadkeys`.
+- **`layout.omarchy.h`** is what the keys *show*. It currently has the
+  Finnish/Swedish letter rows (`å ö ä`), a `?123` symbol page and a `=\<`
+  page with Esc/Tab/Ctrl/Alt/Super/arrows. Each `CH("x", "X")` key types its
+  label (lowercase / shifted), so changing a label is all it takes, e.g.
+  replace `CH("å", "Å")` with `CH("ü", "Ü")` for German. Rows are separated
+  by `EndRow`; key widths are relative within a row.
+
+Long-press alternates live in the `alternates[]` table at the top of
+`keyboard.c` (`{"e", "3éèêë€"}`): the key label, then the characters offered,
+first one pre-selected. Letter keys whose first alternate is a digit show it
+as a hint.
+
+After editing either file: `make install-user && omarchy-osk-restart`.
+
 ## Credits
 
 - [wvkbd](https://github.com/jjsullivan5196/wvkbd) by John Sullivan and

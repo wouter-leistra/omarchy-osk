@@ -132,13 +132,15 @@ def do_hide():
 
 pending_reassert = None
 reasserted_at = 0.0
+expect_echo = False
 
 
 def reassert():
-    global pending_reassert, reasserted_at
+    global pending_reassert, reasserted_at, expect_echo
     pending_reassert = None
     if auto:
         reasserted_at = time.monotonic()
+        expect_echo = True
         fcitx_call("ShowVirtualKeyboard")
     return False
 
@@ -166,18 +168,25 @@ def guarded(fn):
 
 
 def on_call(conn, sender, path, iface, method, params, invocation):
-    global pending_hide
+    global pending_hide, expect_echo
     invocation.return_value(None)
     if os.environ.get("OSK_DEBUG"):
         log(f"fcitx5: {method}")
+    # a show that is not the echo of our own re-assert means a text field
+    # gained focus: forget the word being typed in the previous one (also
+    # with the cover attached, the on-screen keyboard may still be in use)
+    if method == "ShowVirtualKeyboard":
+        # the first show right after our re-assert is its echo; any other
+        # show is a real focus change
+        if expect_echo and time.monotonic() - reasserted_at < 1.0:
+            expect_echo = False
+        else:
+            expect_echo = False
+            osk_signal(SIG_RESET_TEXT)
     if not auto:
         return
     if method == "ShowVirtualKeyboard":
         cancel_hide()
-        # a show that is not the echo of our own re-assert means a text field
-        # gained focus: forget the word being typed in the previous one
-        if time.monotonic() - reasserted_at > 0.5:
-            osk_signal(SIG_RESET_TEXT)
         osk_show()
     elif method == "HideVirtualKeyboard":
         cancel_hide()

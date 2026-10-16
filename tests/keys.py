@@ -16,21 +16,26 @@ def pos(c):
                 x = (off[r] + s.index(c) + 0.5) * U
                 break
     return x, Y0 + SUG + r * ROW + ROW / 2
-out = []
-for tok in sys.argv[1:]:
-    if tok.startswith("tap:"):
-        for c in tok[4:].replace("_", " ").replace("|", "\n"):
-            x, y = pos(c)
-            out += [f"move {x:.0f} {y:.0f}", "down", "sleep 40", "up", "sleep 60"]
-    elif tok.startswith("swipe:"):
-        w = tok[6:]
-        x, y = pos(w[0])
-        out += [f"move {x:.0f} {y:.0f}", "down"]
-        for c in w[1:]:
-            x, y = pos(c)
-            out.append(f"to {x:.0f} {y:.0f}")
-        out += ["up", "sleep 150"]
-    elif tok.startswith("sugg:"):
-        slot = int(tok[5:])
-        out += [f"move {(slot + 0.5) * W / 3:.0f} {Y0 + SUG / 2:.0f}", "down", "sleep 40", "up", "sleep 100"]
-print("\n".join(out))
+def commands(tokens):
+  out = []
+  for tok in tokens:
+      if tok.startswith("tap:"):
+          for c in tok[4:].replace("_", " ").replace("|", "\n"):
+              x, y = pos(c)
+              out += [f"move {x:.0f} {y:.0f}", "down", "sleep 40", "up", "sleep 60"]
+      elif tok.startswith("swipe:"):
+          w = tok[6:]
+          x, y = pos(w[0])
+          out += [f"move {x:.0f} {y:.0f}", "down"]
+          for c in w[1:]:
+              x, y = pos(c)
+              out.append(f"to {x:.0f} {y:.0f}")
+          out += ["up", "sleep 150"]
+      elif tok.startswith("sugg:"):
+          slot = int(tok[5:])
+          out += [f"move {(slot + 0.5) * W / 3:.0f} {Y0 + SUG / 2:.0f}", "down", "sleep 40", "up", "sleep 100"]
+  return out
+
+
+if __name__ == "__main__":
+    print("\n".join(commands(sys.argv[1:])))

@@ -157,6 +157,7 @@ struct kbd {
 	char word[SWIPE_MAX_WORD];      // letters tapped in the current word
 	char committed[SWIPE_MAX_WORD]; // last word committed with a trailing space
 	bool after_commit;
+	bool commit_swiped;     // the committed word came from a gesture
 	bool after_space;       // last key was a tapped space after a word
 	int64_t last_shift_tap;
 	void (*hide_cb)(void);
