@@ -189,6 +189,11 @@ drw_do_rectangle(struct drwsurf *ds, Color color, uint32_t x, uint32_t y,
 
     if (rounding > 0) {
         double radius = rounding / 1.0;
+        if (radius * 2 > w)
+            radius = w / 2.0;
+        if (radius * 2 > h)
+            radius = h / 2.0;
+        cairo_set_antialias(d->cairo, CAIRO_ANTIALIAS_DEFAULT);
         double degrees = M_PI / 180.0;
 
         cairo_new_sub_path (d->cairo);
@@ -202,9 +207,6 @@ drw_do_rectangle(struct drwsurf *ds, Color color, uint32_t x, uint32_t y,
           d->cairo, color.bgra[2] / (double)255, color.bgra[1] / (double)255, 
           color.bgra[0] / (double)255, color.bgra[3] / (double)255);
         cairo_fill (d->cairo);
-        cairo_set_source_rgba(d->cairo, 0, 0, 0, 0.9);
-        cairo_set_line_width(d->cairo, 1.0);
-        cairo_stroke(d->cairo);
 
         cairo_restore(d->cairo);
     }
@@ -217,6 +219,35 @@ drw_do_rectangle(struct drwsurf *ds, Color color, uint32_t x, uint32_t y,
 
         cairo_restore(d->cairo);
     }
+}
+
+void
+drw_line(struct drwsurf *ds, Color color, double x1, double y1, double x2,
+         double y2, double width)
+{
+    drwsurf_flip(ds);
+    struct drwbuf *d = ds->back_buffer;
+    double pad = width / 2 + 2;
+    double minx = fmin(x1, x2) - pad, miny = fmin(y1, y2) - pad;
+    if (minx < 0)
+        minx = 0;
+    if (miny < 0)
+        miny = 0;
+    drwsurf_damage(ds, minx, miny, fabs(x2 - x1) + pad * 2,
+                   fabs(y2 - y1) + pad * 2);
+
+    cairo_save(d->cairo);
+    cairo_set_antialias(d->cairo, CAIRO_ANTIALIAS_DEFAULT);
+    cairo_set_operator(d->cairo, CAIRO_OPERATOR_SOURCE);
+    cairo_set_line_cap(d->cairo, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_width(d->cairo, width);
+    cairo_set_source_rgba(
+        d->cairo, color.bgra[2] / (double)255, color.bgra[1] / (double)255,
+        color.bgra[0] / (double)255, color.bgra[3] / (double)255);
+    cairo_move_to(d->cairo, x1, y1);
+    cairo_line_to(d->cairo, x2, y2);
+    cairo_stroke(d->cairo);
+    cairo_restore(d->cairo);
 }
 
 void

@@ -1,0 +1,8 @@
+#!/bin/bash
+# Restart the on-screen keyboard (hidden) so it picks up theme/font changes.
+
+if pgrep -x omarchy-oskd >/dev/null; then
+  pkill -x omarchy-oskd
+  sleep 0.2
+  setsid -f omarchy-osk --hidden >/dev/null 2>&1
+fi

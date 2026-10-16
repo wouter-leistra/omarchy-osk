@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "user.osk",
+  "name": "On-screen keyboard",
+  "version": "1.0",
+  "author": "wouterleistra",
+  "license": "GPL-3.0",
+  "description": "Toggle the omarchy-osk gesture-typing on-screen keyboard.",
+  "kinds": ["bar-widget"],
+  "keepLoaded": true,
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "On-screen keyboard",
+    "description": "Show or hide the on-screen keyboard",
+    "category": "Widgets",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

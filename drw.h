@@ -50,6 +50,9 @@ void drw_fill_rectangle(struct drwsurf *ds, Color color, uint32_t x, uint32_t y,
 void drw_over_rectangle(struct drwsurf *ds, Color color, uint32_t x, uint32_t y,
                         uint32_t w, uint32_t h, int rounding);
 
+void drw_line(struct drwsurf *ds, Color color, double x1, double y1,
+              double x2, double y2, double width);
+
 void drw_draw_text(struct drwsurf *ds, Color color, uint32_t x, uint32_t y,
                    uint32_t w, uint32_t h, uint32_t b, const char *label,
                    PangoFontDescription *font_description);

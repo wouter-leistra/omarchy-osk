@@ -1,0 +1,8 @@
+#!/bin/bash
+# Show or hide the on-screen keyboard, starting it if needed.
+
+if pgrep -x omarchy-oskd >/dev/null; then
+  pkill -RTMIN -x omarchy-oskd
+else
+  setsid -f omarchy-osk >/dev/null 2>&1
+fi

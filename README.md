@@ -1,125 +1,77 @@
-# wvkbd - On-screen keyboard for wlroots that sucks less
+# omarchy-osk
 
-<img src="https://raw.githubusercontent.com/jjsullivan5196/wvkbd/master/contrib/wvkbd-mobintl.jpg" width=300 /> <img src="https://raw.githubusercontent.com/jjsullivan5196/wvkbd/master/contrib/wvkbd-mobintl-cyrillic.jpg" width=300 />
-
-This project aims to deliver a minimal but practically usable implementation of a wlroots on-screen
-keyboard in legible C. This will **only** be a keyboard, not a feedback buzzer,
-led blinker, or anything that requires more than what's needed to input text
-quickly. The end product should be a static codebase that can be patched to add
-new features.
+A Gboard-style on-screen keyboard for [Omarchy](https://omarchy.org) (Hyprland),
+built for a Surface Pro 3 but usable on any touchscreen. It is a fork of
+[wvkbd](https://github.com/jjsullivan5196/wvkbd); see `README.wvkbd.md` for the
+original project.
 
 ## Features
 
- - Typing, modifier locking, layout switching
- - Positive visual feedback on key presses
- - Custom layouts and underlying keymaps
- - On-the-fly layout and keymap switching
- - Custom color schemes
- - Proper font drawing
- - Intuitive layouts
- - International layouts (cyrillic, arabic, persian, greek, georgian)
- - Support for 'Copy' keys which are not on the keymap
- - Emoji support
- - Compose key for character variants (e.g. diacritics)
- - Show/hide keyboard on signals (SIGUSR1 = hide, SIGUSR2 = show, SIGRTMIN = toggle)
- - Auto-show/hide keyboard on text input fields (use `--auto` parameter), requires
-   a wayland compositor that implements the zwp_input_method_v2 protocol.
- - Automatic portrait/landscape detection and subsequent layout switching
-
-<img src="https://raw.githubusercontent.com/jjsullivan5196/wvkbd/master/contrib/wvkbd-mobintl-landscape.jpg" width=640 />
-
-There are some areas that still need work:
-
- - Make sure the virtual input method in wayland is working as best as it can
- - Support for input method protocol in wayland, ability to respond to text
-   fields
+- **Gesture (swipe) typing** with a suggestion strip: swipe across letters to
+  type a word, tap a suggestion to swap it, backspace right after a swipe
+  removes the whole word.
+- **English and Finnish dictionaries** (Swedish included); swipe across the
+  space bar to switch language, the choice is remembered.
+- **Finnish/Swedish layout** (å ä ö), typed through a real `fi` xkb keymap so
+  symbols like `@ € | £` come out right.
+- **Long-press alternates** (numbers on the top row, é ü ñ ø …, extra
+  punctuation); characters the layout lacks are added to the keymap.
+- **Docks below windows**: Hyprland shrinks the windows instead of the
+  keyboard covering what you type.
+- **Omarchy theme and font**, re-applied on theme/font change.
+- **Touch, mouse and Surface pen** (tablet-v2) input.
+- Long-press space and slide to move the cursor; double space types `. `;
+  punctuation attaches to the previous word; automatic capitals.
+- **Auto-show** for focused text fields while the Type Cover is detached,
+  driven by fcitx5's virtual keyboard D-Bus interface.
 
 ## Install
 
-You'll need the following developer packages
+Needs `wayland`, `libxkbcommon`, `pango`, `cairo`, `wayland-protocols`,
+`scdoc`, `python-gobject` (for auto-show) and Omarchy.
 
- - cairo
- - pango
- - wayland-client
- - xkbcommon
+```sh
+make install-user        # installs to ~/.local, no root needed
+systemctl --user enable --now omarchy-osk-autoshow
+```
 
-You also need [scdoc](https://git.sr.ht/~sircmpwn/scdoc/) to generate the documentation.
+Bar toggle: copy `omarchy/plugin/` to `~/.config/omarchy/plugins/omarchy-osk/`
+and run `omarchy plugin enable user.osk right`. Theme hooks:
+`omarchy hook install theme-set omarchy/plugin/theme-hook.sh` (and `font-set`).
 
-The default set of layouts is called `mobintl` *(mobile international)*, which groups various layouts aimed at mobile devices
-and also attempts to accommodate various international users. Run `make`. The resulting binary is called `wvkbd-mobintl`.
+Optional Hyprland slide-in animation (`~/.config/hypr/looknfeel.lua`):
 
-The other set of layouts is called `deskintl` *(desktop international)*, which groups layouts aimed at desktop, laptop, and
-tablet devices with a larger touchscreen. The set is US-International English. Run `make LAYOUT=deskintl`. The resulting binary
-is called `wvkbd-deskintl`.
+```lua
+hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom" })
+```
 
-You can, however, define your own layouts by copying and modifying `config.mobintl.h`, `layout.mobintl.h` and `keymap.mobintl.h`
-(replace `mobintl` for something like `yourlayout`), or `config.deskintl.h`, `layout.deskintl.h` and `keymap.deskintl.h`. Then
-make your layout set using `make LAYOUT=yourlayout`, and the resulting binary will be `wvkbd-yourlayout`.
+## Commands
 
-## Usage
+| Command | Does |
+|---|---|
+| `omarchy-osk` | start the keyboard with theme colours (extra args passed on, e.g. `--hidden`) |
+| `omarchy-osk-toggle` | show/hide, starting it if needed |
+| `omarchy-osk-restart` | restart hidden (used by the theme/font hooks) |
+| `omarchy-osk-autoshow` | auto-show daemon (run via the user service) |
 
-Run `wvkbd-mobintl`, `wvkbd-deskintl` or the binary for your custom layout set.
+## Settings
 
-You can switch between the layouts/layers of the keyboard by pressing the
-⌨ key (little keyboard) the bottom-left (press shift to iterate back instead of
-forward). If you only want a subset of the available layers, you can define
-which you want and in what order you want to cycle through them using the
-`-l` parameter (or `--landscape-layers` for landscape mode). This takes takes a ordered comma separated list of layout names
-that are defined in your layout set.
+`~/.config/omarchy-osk/config`:
 
-The keyboard can be hidden by sending it a `SIGUSR1` signal, shown again by sending it `SIGUSR2` or toggled by sending it `SIGRTMIN`.
-This saves some start up time and may be appropriate in some low-resource environments. If your compositor implements the zwp_input_method_v2 protocol, you can also have the keyboard automatically pop-up and hide on text input fields; start with the `--auto` parameter to eanble this behaviour.
+```sh
+OSK_LANGS=en,fi          # swipe dictionaries, in switching order
+OSK_HEIGHT_RATIO=0.40    # share of the screen height
+OSK_XKB=fi               # xkb layout[:variant] to type with
+```
 
-Wvkbd has an output mode `-o` that will echo its output to standard output. This facility can be used if users want
-audio/haptic feedback, a feature explicitly out of scope for wvkbd. To achieve this, simply pipe wvkbd's output through the external tool
-[clickclack](https://git.sr.ht/~proycon/clickclack):
+## Credits
 
-`$ wvkbd-mobintl -l simple,special,emoji -o | clickclack -V -f keypress.wav`
+- [wvkbd](https://github.com/jjsullivan5196/wvkbd) by John Sullivan and
+  contributors (GPL-3.0), which this is built on.
+- Word lists in `dict/` are derived from
+  [FrequencyWords](https://github.com/hermitdave/FrequencyWords) by Hermit Dave,
+  based on OpenSubtitles (content licensed CC BY-SA 4.0).
 
-Another output mode, `-O` will let the keyboard output keys which are swiped over. It can be used by an external program, such as [swipeGuess](https://git.sr.ht/~earboxer/swipeGuess) to get swipe-typing support.
+## License
 
-`$ wvkbd-mobintl -O | swipeGuess.sh words.txt | completelyTypeWord.sh`
-
-### Compose button
-
-The default mobile international layout features a Compose button (`Cmp`)
-which, when combined with another key, opens up a layout that offers variants
-for that key. This is similar to functionality that other keyboards implemented
-using a *long press* (wvkbd has no such notion, holding a key will repeat
-it like on a physical keyboard).
-
-For example, press Cmp + a to access variants with diacritics like á,à,â,ä, etc.. 
-
-Most layouts also feature the following that are less obvious:
-
-* Press Cmp + ``.`` to access more punctuation
-* Press Cmp + ``-`` or ``,`` to access 'mathematical' symbols (+,-,=,etc)
-* Press Cmp + ``'`` or ``0`` or ``9`` to access more brackets and quotes
-* Press Cmp + ``q`` to access emojis
-
-Last, but not least, pressing Cmp + space or Cmp + ⌨  or Cmp + Abc opens up an index that allows you to immediately jump to any
-layout by name, even layouts not explicitly added to your layers on startup.
-
-## Contribute
-
-Any contributions are welcome, there are two ways to contribute, the first one is **preferred**:
-
-1. [Sourcehut](https://git.sr.ht/~proycon/wvkbd) - Submit your patches using `git send-email` to [~mil/sxmo-devel@lists.sr.ht](mailto:~mil/sxmo-devel@lists.sr.ht), follow [these contribution guidelines](https://sxmo.org/contribute/). Questions can also be asked on Sxmo's [mailing lists](https://sxmo.org/support/).
-2. [Github](https://github.com/jjsullivan5196/wvkbd/) - Submit a pull request or open an issue *(legacy method)*
-
-This project was started by [John Sullivan](https://jsullivan.cc/) and is
-currently being maintained by the [Sxmo](https://sxmo.org) project, whose
-maintainers will ensure both git remotes are kept in sync at all times.
-
-For code contributions, please run `make format` (requires `clang-format`)
-before sending a patch (opening a PR) and include as much relevant detail as
-possible.
-
-## Related projects
-
-* [clickclack](https://git.sr.ht/~proycon/clickclack) - Audio/haptic feedback (standalone)
-* [swipeGuess](https://git.sr.ht/~earboxer/swipeGuess) - Word-completion for swipe-typing
-* [Sxmo](https://sxmo.org) - A hackable mobile interface environment for Linux phones that adopted wvkbd as its keyboard
-* [svkbd](https://tools.suckless.org/x/svkbd/) - A similar project as wvkbd but for X11 rather than Wayland
-* [squeekboard](https://gitlab.gnome.org/World/Phosh/squeekboard) - The virtual keyboard developed for the Librem5 (used
-	by Phosh)
+GPL-3.0, like wvkbd.

@@ -8,3 +8,5 @@ include/config.h
 *.1
 build-*/*
 wvkbd-*
+wvkbd-omarchy
+tests/proto/vp.[ch]

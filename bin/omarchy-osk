@@ -1,0 +1,70 @@
+#!/bin/bash
+# Start the omarchy-osk on-screen keyboard, styled from the current Omarchy
+# theme and sized for the focused monitor. Extra arguments are passed on
+# (e.g. --hidden).
+
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy-osk/config"
+[[ -f $CONF ]] && source "$CONF"
+
+OSK_XKB="${OSK_XKB:-fi}"                 # xkb layout[:variant] to type with
+OSK_LANGS="${OSK_LANGS:-en,fi}"          # gesture typing dictionaries
+OSK_HEIGHT_RATIO="${OSK_HEIGHT_RATIO:-0.40}"  # share of the screen height
+
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-osk"
+THEME="$HOME/.local/state/omarchy/current/theme/colors.toml"
+
+color() {
+  local value
+  for name in "$@"; do
+    value=$(sed -n "s/^$name *= *\"#\{0,1\}\([0-9a-fA-F]\{6\}\)\".*/\1/p" "$THEME" 2>/dev/null | head -1)
+    [[ -n $value ]] && { echo "$value"; return; }
+  done
+}
+
+bg=$(color dark_background background)
+bg=${bg:-1e1e2e}
+key=$(color lighter_background selection)
+key=${key:-313244}
+special=$(color selection muted)
+special=${special:-45475a}
+pressed=$(color muted dark_foreground)
+pressed=${pressed:-585b70}
+text=$(color foreground)
+text=${text:-cdd6f4}
+accent=$(color accent blue)
+accent=${accent:-89b4fa}
+accent_text=$(color background)
+accent_text=${accent_text:-1e1e2e}
+
+# logical size of the focused monitor
+read -r mon_h scale transform < <(hyprctl monitors -j 2>/dev/null |
+  jq -r '(map(select(.focused)) + .)[0] | "\(.height) \(.scale) \(.transform)"')
+if [[ $transform == 1 || $transform == 3 ]]; then
+  mon_h=$(hyprctl monitors -j | jq -r '(map(select(.focused)) + .)[0].width')
+fi
+height=$(awk -v h="${mon_h:-1440}" -v s="${scale:-1}" -v r="$OSK_HEIGHT_RATIO" 'BEGIN { printf "%d", h / s * r }')
+
+# 4 key rows plus a suggestion strip
+row=$(awk -v h="$height" 'BEGIN { printf "%d", h / 4.7 }')
+font_size=$(awk -v r="$row" 'BEGIN { printf "%d", r * 0.24 }')
+rounding=$(awk -v r="$row" 'BEGIN { printf "%d", r * 0.12 }')
+font=$(omarchy font current 2>/dev/null)
+font=${font:-Sans}
+
+dicts=""
+IFS=, read -ra langs <<< "$OSK_LANGS"
+for lang in "${langs[@]}"; do
+  [[ -f $DATA/dict/$lang.txt ]] && dicts+="${dicts:+,}$DATA/dict/$lang.txt"
+done
+
+exec omarchy-oskd \
+  -L "$height" -H "$height" \
+  --xkb "$OSK_XKB" \
+  ${dicts:+--dict "$dicts"} \
+  --fn "$font $font_size" -R "$rounding" \
+  --bg "$bg" --fg "$key" --fg-sp "$special" \
+  --press "$pressed" --press-sp "$pressed" \
+  --text "$text" --text-sp "$text" --text-press "$text" --text-press-sp "$text" \
+  --fg-accent "$accent" --press-accent "$pressed" --text-accent "$accent_text" \
+  --trail "${accent}cc" \
+  "$@"

@@ -4,6 +4,7 @@
 #include "proto/fractional-scale-v1-client-protocol.h"
 #include "proto/viewporter-client-protocol.h"
 #include "proto/input-method-unstable-v2-protocol.h"
+#include "proto/tablet-v2-client-protocol.h"
 #include <errno.h>
 #include <linux/input-event-codes.h>
 #include <stdio.h>
@@ -29,7 +30,7 @@
 #define countof(x) (sizeof(x) / sizeof(*x))
 
 /* client state */
-static const char *namespace = "wvkbd";
+static const char *namespace = "omarchy-osk";
 static struct wl_display *display;
 static struct wl_compositor *compositor;
 static struct wl_seat *seat;
@@ -48,8 +49,10 @@ static struct wp_fractional_scale_manager_v1 *wfs_mgr;
 static struct wp_viewport *draw_surf_viewport, *popup_draw_surf_viewport;
 static struct wp_viewporter *viewporter;
 static struct zwp_input_method_manager_v2 *im_mgr;
+static struct zwp_tablet_manager_v2 *tablet_mgr;
 static bool popup_xdg_surface_configured;
 static bool layer_surface_configured;
+static int64_t show_started;
 
 static uint32_t available_width, available_height = 0;
 static void refresh_available_dimension();
@@ -260,22 +263,7 @@ wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
         return;
     }
 
-    struct key *next_key;
-    uint32_t touch_x, touch_y;
-
-    touch_x = wl_fixed_to_int(x);
-    touch_y = wl_fixed_to_int(y);
-
-    kbd_unpress_key(&keyboard, time);
-
-    next_key = kbd_get_key(&keyboard, touch_x, touch_y);
-    if (next_key) {
-        kbd_press_key(&keyboard, next_key, time);
-    } else if (keyboard.compose) {
-        keyboard.compose = 0;
-        kbd_switch_layout(&keyboard, keyboard.prevlayout,
-                          keyboard.last_abc_index);
-    }
+    kbd_touch_down(&keyboard, time, wl_fixed_to_int(x), wl_fixed_to_int(y));
 }
 
 void
@@ -286,7 +274,7 @@ wl_touch_up(void *data, struct wl_touch *wl_touch, uint32_t serial,
         return;
     }
 
-    kbd_release_key(&keyboard, time);
+    kbd_touch_up(&keyboard, time);
 }
 
 void
@@ -297,12 +285,7 @@ wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
         return;
     }
 
-    uint32_t touch_x, touch_y;
-
-    touch_x = wl_fixed_to_int(x);
-    touch_y = wl_fixed_to_int(y);
-
-    kbd_motion_key(&keyboard, time, touch_x, touch_y);
+    kbd_touch_motion(&keyboard, time, wl_fixed_to_int(x), wl_fixed_to_int(y));
 }
 
 void
@@ -332,6 +315,10 @@ wl_pointer_enter(void *data, struct wl_pointer *wl_pointer, uint32_t serial,
                  struct wl_surface *surface, wl_fixed_t surface_x,
                  wl_fixed_t surface_y)
 {
+    if (keyboard.debug)
+        fprintf(stderr, "pointer enter %s\n",
+                surface == draw_surf.surf ? "keyboard" :
+                surface == popup_draw_surf.surf ? "popup" : "other");
 }
 
 void
@@ -353,7 +340,7 @@ wl_pointer_motion(void *data, struct wl_pointer *wl_pointer, uint32_t time,
     cur_y = wl_fixed_to_int(surface_y);
 
     if (cur_press) {
-        kbd_motion_key(&keyboard, time, cur_x, cur_y);
+        kbd_touch_motion(&keyboard, time, cur_x, cur_y);
     }
 }
 
@@ -365,24 +352,12 @@ wl_pointer_button(void *data, struct wl_pointer *wl_pointer, uint32_t serial,
         return;
     }
 
-    struct key *next_key;
     cur_press = state == WL_POINTER_BUTTON_STATE_PRESSED;
 
-    if (cur_press) {
-        kbd_unpress_key(&keyboard, time);
-    } else {
-        kbd_release_key(&keyboard, time);
-    }
-
-    if (cur_press && cur_x >= 0 && cur_y >= 0) {
-        next_key = kbd_get_key(&keyboard, cur_x, cur_y);
-        if (next_key) {
-            kbd_press_key(&keyboard, next_key, time);
-        } else if (keyboard.compose) {
-            keyboard.compose = 0;
-            kbd_switch_layout(&keyboard, keyboard.prevlayout,
-                              keyboard.last_abc_index);
-        }
+    if (!cur_press) {
+        kbd_touch_up(&keyboard, time);
+    } else if (cur_x >= 0 && cur_y >= 0) {
+        kbd_touch_down(&keyboard, time, cur_x, cur_y);
     }
 }
 
@@ -394,8 +369,128 @@ wl_pointer_axis(void *data, struct wl_pointer *wl_pointer, uint32_t time,
         return;
     }
 
-    kbd_next_layer(&keyboard, NULL, (value >= 0));
+    /* scrolling over the keyboard does nothing */
 }
+
+/* pen (tablet tool) input behaves like a finger */
+static struct {
+    bool on_keyboard, down, pending_down, pending_up, moved;
+    uint32_t x, y;
+} pen;
+
+static void tool_type(void *d, struct zwp_tablet_tool_v2 *t, uint32_t a) {}
+static void tool_hardware_serial(void *d, struct zwp_tablet_tool_v2 *t,
+                                 uint32_t a, uint32_t b) {}
+static void tool_hardware_id_wacom(void *d, struct zwp_tablet_tool_v2 *t,
+                                   uint32_t a, uint32_t b) {}
+static void tool_capability(void *d, struct zwp_tablet_tool_v2 *t, uint32_t a) {}
+static void tool_done(void *d, struct zwp_tablet_tool_v2 *t) {}
+static void tool_removed(void *d, struct zwp_tablet_tool_v2 *t)
+{
+    zwp_tablet_tool_v2_destroy(t);
+}
+static void
+tool_proximity_in(void *d, struct zwp_tablet_tool_v2 *t, uint32_t serial,
+                  struct zwp_tablet_v2 *tablet, struct wl_surface *surface)
+{
+    pen.on_keyboard = surface == draw_surf.surf;
+}
+static void
+tool_proximity_out(void *d, struct zwp_tablet_tool_v2 *t)
+{
+    if (pen.down)
+        pen.pending_up = true;
+    pen.on_keyboard = false;
+}
+static void
+tool_down(void *d, struct zwp_tablet_tool_v2 *t, uint32_t serial)
+{
+    pen.pending_down = true;
+}
+static void
+tool_up(void *d, struct zwp_tablet_tool_v2 *t)
+{
+    pen.pending_up = true;
+}
+static void
+tool_motion(void *d, struct zwp_tablet_tool_v2 *t, wl_fixed_t x, wl_fixed_t y)
+{
+    pen.x = wl_fixed_to_int(x);
+    pen.y = wl_fixed_to_int(y);
+    pen.moved = true;
+}
+static void tool_pressure(void *d, struct zwp_tablet_tool_v2 *t, uint32_t a) {}
+static void tool_distance(void *d, struct zwp_tablet_tool_v2 *t, uint32_t a) {}
+static void tool_tilt(void *d, struct zwp_tablet_tool_v2 *t, wl_fixed_t a,
+                      wl_fixed_t b) {}
+static void tool_rotation(void *d, struct zwp_tablet_tool_v2 *t, wl_fixed_t a) {}
+static void tool_slider(void *d, struct zwp_tablet_tool_v2 *t, int32_t a) {}
+static void tool_wheel(void *d, struct zwp_tablet_tool_v2 *t, wl_fixed_t a,
+                       int32_t b) {}
+static void tool_button(void *d, struct zwp_tablet_tool_v2 *t, uint32_t serial,
+                        uint32_t button, uint32_t state) {}
+static void
+tool_frame(void *d, struct zwp_tablet_tool_v2 *t, uint32_t time)
+{
+    bool ready = layer_surface_configured && popup_xdg_surface_configured;
+    if (pen.pending_down && pen.on_keyboard && ready) {
+        pen.down = true;
+        kbd_touch_down(&keyboard, time, pen.x, pen.y);
+    } else if (pen.moved && pen.down && ready) {
+        kbd_touch_motion(&keyboard, time, pen.x, pen.y);
+    }
+    if (pen.pending_up && pen.down) {
+        pen.down = false;
+        if (ready)
+            kbd_touch_up(&keyboard, time);
+    }
+    pen.pending_down = pen.pending_up = pen.moved = false;
+}
+
+static const struct zwp_tablet_tool_v2_listener tablet_tool_listener = {
+    .type = tool_type,
+    .hardware_serial = tool_hardware_serial,
+    .hardware_id_wacom = tool_hardware_id_wacom,
+    .capability = tool_capability,
+    .done = tool_done,
+    .removed = tool_removed,
+    .proximity_in = tool_proximity_in,
+    .proximity_out = tool_proximity_out,
+    .down = tool_down,
+    .up = tool_up,
+    .motion = tool_motion,
+    .pressure = tool_pressure,
+    .distance = tool_distance,
+    .tilt = tool_tilt,
+    .rotation = tool_rotation,
+    .slider = tool_slider,
+    .wheel = tool_wheel,
+    .button = tool_button,
+    .frame = tool_frame,
+};
+
+static void
+tablet_seat_tablet_added(void *d, struct zwp_tablet_seat_v2 *s,
+                         struct zwp_tablet_v2 *tablet)
+{
+}
+static void
+tablet_seat_tool_added(void *d, struct zwp_tablet_seat_v2 *s,
+                       struct zwp_tablet_tool_v2 *tool)
+{
+    zwp_tablet_tool_v2_add_listener(tool, &tablet_tool_listener, NULL);
+}
+static void
+tablet_seat_pad_added(void *d, struct zwp_tablet_seat_v2 *s,
+                      struct zwp_tablet_pad_v2 *pad)
+{
+}
+
+static const struct zwp_tablet_seat_v2_listener tablet_seat_listener = {
+    .tablet_added = tablet_seat_tablet_added,
+    .tool_added = tablet_seat_tool_added,
+    .pad_added = tablet_seat_pad_added,
+};
 
 void
 seat_handle_capabilities(void *data, struct wl_seat *wl_seat,
@@ -469,6 +564,9 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name,
                       zwp_virtual_keyboard_manager_v1_interface.name) == 0) {
         vkbd_mgr = wl_registry_bind(
             registry, name, &zwp_virtual_keyboard_manager_v1_interface, 1);
+    } else if (strcmp(interface, zwp_tablet_manager_v2_interface.name) == 0) {
+        tablet_mgr = wl_registry_bind(registry, name,
+                                      &zwp_tablet_manager_v2_interface, 1);
     } else if (im_auto && strcmp(interface, zwp_input_method_manager_v2_interface.name) == 0) {
         im_mgr = wl_registry_bind(registry, name, &zwp_input_method_manager_v2_interface, 1);
     }
@@ -651,8 +749,12 @@ layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface,
 
     zwlr_layer_surface_v1_ack_configure(surface, serial);
 
+    int64_t t = monotime();
     kbd_resize(&keyboard, layouts, NumLayouts);
     drwsurf_attach(&draw_surf);
+    if (keyboard.debug)
+        fprintf(stderr, "show: configured after %ldms, drawing took %ldms\n",
+                (long)(t - show_started), (long)(monotime() - t));
 }
 
 void
@@ -672,9 +774,13 @@ usage(char *argv0)
             argv0);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -D          - Enable debug\n");
-    fprintf(stderr, "  -o          - Print pressed keys to standard output\n");
-    fprintf(stderr,
-            "  -O          - Print intersected keys to standard output\n");
+    fprintf(stderr, "  --xkb [layout[:variant]] - xkb layout to type with (default fi)\n");
+    fprintf(stderr, "  --dict [file,file]     - Word frequency lists for gesture typing\n");
+    fprintf(stderr, "  --no-swipe             - Disable gesture typing and suggestions\n");
+    fprintf(stderr, "  --trail [rrggbb|aa]    - Set color of the gesture trail\n");
+    fprintf(stderr, "  --fg-accent [rrggbb|aa]    - Set color of the enter key\n");
+    fprintf(stderr, "  --press-accent [rrggbb|aa] - Set color of the pressed enter key\n");
+    fprintf(stderr, "  --text-accent [rrggbb|aa]  - Set color of text on the enter key\n");
     fprintf(stderr, "  -H [int]    - Height in pixels\n");
     fprintf(stderr, "  -L [int]    - Landscape height in pixels\n");
     fprintf(stderr, "  -R [int]    - Rounding radius in pixels\n");
@@ -748,6 +854,12 @@ hide()
     // Ensure active keys are released, so they're not repeated infinitely.
     uint32_t time = (uint32_t) (monotime() + keyboard.last_press_offset);
     kbd_unpress_key(&keyboard, time);
+    keyboard.down_key = NULL;
+    keyboard.swiping = false;
+    keyboard.space_mode = SpaceTap;
+    keyboard.longpress_at = 0;
+    keyboard.sugg_pressed = -1;
+    kbd_reset_text(&keyboard);
 
     if (wfs_draw_surf) {
         wp_fractional_scale_v1_destroy(wfs_draw_surf);
@@ -797,7 +909,10 @@ show()
         return;
     }
 
+    show_started = monotime();
     refresh_available_dimension();
+    if (keyboard.debug)
+        fprintf(stderr, "show: dimensions after %ldms\n", (long)(monotime() - show_started));
     redimension_keyboard();
 
     draw_surf.surf = wl_compositor_create_surface(compositor);
@@ -928,6 +1043,10 @@ main(int argc, char **argv)
 
     uint8_t alpha = 0;
     bool alpha_defined = false;
+    char *dict_paths = NULL;
+    bool no_swipe = false;
+    keyboard.trail = schemes[0].swipe;
+    keyboard.hide_cb = hide;
 
     int i;
     for (i = 1; argv[i]; i++) {
@@ -1084,10 +1203,50 @@ main(int argc, char **argv)
                 exit(1);
             }
             fc_font_pattern = estrdup(argv[++i]);
-        } else if (!strcmp(argv[i], "-o")) {
-            keyboard.print = true;
-        } else if (!strcmp(argv[i], "-O")) {
-            keyboard.print_intersect = true;
+        } else if (!strcmp(argv[i], "--xkb")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            keyboard.xkb_layout = estrdup(argv[++i]);
+            char *colon = strchr(keyboard.xkb_layout, ':');
+            if (colon) {
+                *colon = 0;
+                keyboard.xkb_variant = colon + 1;
+            }
+        } else if (!strcmp(argv[i], "--dict")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            dict_paths = argv[++i];
+        } else if (!strcmp(argv[i], "--no-swipe")) {
+            no_swipe = true;
+        } else if (!strcmp(argv[i], "--trail")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            set_kbd_colors(keyboard.trail.bgra, argv[++i]);
+        } else if (!strcmp(argv[i], "--fg-accent")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            set_kbd_colors(keyboard.schemes[2].fg.bgra, argv[++i]);
+        } else if (!strcmp(argv[i], "--press-accent")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            set_kbd_colors(keyboard.schemes[2].high.bgra, argv[++i]);
+        } else if (!strcmp(argv[i], "--text-accent")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            set_kbd_colors(keyboard.schemes[2].text.bgra, argv[++i]);
+            set_kbd_colors(keyboard.schemes[2].text_press.bgra, argv[i]);
         } else if ((!strcmp(argv[i], "-hidden")) ||
                    (!strcmp(argv[i], "--hidden"))) {
             hidden = true;
@@ -1173,6 +1332,15 @@ main(int argc, char **argv)
         }
     }
 
+    /* every scheme shares the keyboard background */
+    for (i = 1; i < countof(schemes); i++)
+        schemes[i].bg = schemes[0].bg;
+
+    if (dict_paths && !no_swipe)
+        swipe_dict_load(dict_paths);
+    keyboard.swipe_enabled = swipe_dict_loaded();
+    kbd_load_lang(&keyboard);
+
     if (corner_radius >= 0) {
         keyboard.corner_radius = corner_radius;
     } else if (dock_mode != DOCK_FULL) {
@@ -1237,6 +1405,13 @@ main(int argc, char **argv)
         die("virtual_keyboard_manager not available\n");
     }
 
+    if (tablet_mgr && seat) {
+        struct zwp_tablet_seat_v2 *tablet_seat =
+            zwp_tablet_manager_v2_get_tablet_seat(tablet_mgr, seat);
+        zwp_tablet_seat_v2_add_listener(tablet_seat, &tablet_seat_listener,
+                                        NULL);
+    }
+
     // A second round-trip to receive wl_outputs events
     wl_display_roundtrip(display);
 
@@ -1248,11 +1423,6 @@ main(int argc, char **argv)
     if (keyboard.vkbd == NULL) {
         die("failed to init virtual keyboard_manager\n");
     }
-    #ifdef SHIFT_SPACE_IS_TAB
-    keyboard.shift_space_is_tab = true;
-    #else
-    keyboard.shift_space_is_tab = false;
-    #endif
 
     kbd_init(&keyboard, (struct layout *)&layouts, layer_names_list,
              landscape_layer_names_list);
@@ -1299,7 +1469,14 @@ main(int argc, char **argv)
 
     while (run_display) {
         wl_display_flush(display);
-        poll(fds, 2, -1);
+        int timeout = -1;
+        if (keyboard.longpress_at) {
+            int64_t left = keyboard.longpress_at - monotime();
+            timeout = left > 0 ? (int)left : 0;
+        }
+        poll(fds, 2, timeout);
+        if (keyboard.longpress_at && monotime() >= keyboard.longpress_at)
+            kbd_longpress(&keyboard);
 
         if (fds[WAYLAND_FD].revents & POLLIN)
             wl_display_dispatch(display);

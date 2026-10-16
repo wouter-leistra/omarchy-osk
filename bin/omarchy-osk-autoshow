@@ -1,0 +1,186 @@
+#!/usr/bin/python3 -I
+"""Show the on-screen keyboard when a text field gets focus, but only while
+the Type Cover is detached.
+
+fcitx5 (Omarchy's input method) knows which text field has focus. Its DBus
+virtual keyboard module asks a frontend named org.fcitx.Fcitx5.VirtualKeyboard
+to show or hide; this daemon is that frontend and forwards the requests to
+omarchy-oskd as signals (SIGUSR2 show, SIGUSR1 hide).
+
+fcitx5 drops back to "physical keyboard" mode (and asks for a hide) as soon as
+it sees a key it thinks came from real hardware, which includes keys typed on
+the on-screen keyboard. omarchy-oskd touches $XDG_RUNTIME_DIR/omarchy-osk-typed
+whenever it types, so such hides are ignored and on-screen mode is restored.
+"""
+
+import os
+import re
+import signal
+import subprocess
+import time
+
+from gi.repository import Gio, GLib
+
+COVER_NAME = os.environ.get("OSK_COVER_NAME", "Type Cover Keyboard")
+TYPED_FILE = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "omarchy-osk-typed")
+HIDE_DELAY_MS = 150      # focus changes arrive as hide+show pairs
+OWN_TYPING_WINDOW = 1.0  # seconds after our typing in which a hide is ours
+
+IMPANEL_XML = """<node><interface name="org.fcitx.Fcitx5.VirtualKeyboard1">
+<method name="ShowVirtualKeyboard"/><method name="HideVirtualKeyboard"/>
+</interface></node>"""
+
+bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+auto = False
+pending_hide = None
+
+
+def log(msg):
+    print(msg, flush=True)
+
+
+def cover_attached():
+    try:
+        with open("/proc/bus/input/devices") as f:
+            return re.search(r'^N: Name=".*%s"' % re.escape(COVER_NAME), f.read(), re.M) is not None
+    except OSError:
+        return True
+
+
+_osk_pid = None
+
+
+def _is_osk(pid):
+    try:
+        with open(f"/proc/{pid}/comm") as f:
+            return f.read().strip() == "omarchy-oskd"
+    except OSError:
+        return False
+
+
+def osk_pid():
+    """pid of omarchy-oskd, cached so showing needs no extra process"""
+    global _osk_pid
+    if _osk_pid and _is_osk(_osk_pid):
+        return _osk_pid
+    _osk_pid = next((int(p) for p in os.listdir("/proc") if p.isdigit() and _is_osk(p)), None)
+    return _osk_pid
+
+
+def osk_show():
+    pid = osk_pid()
+    if pid:
+        os.kill(pid, signal.SIGUSR2)
+    else:
+        subprocess.Popen(["omarchy-osk"], start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def osk_hide():
+    pid = osk_pid()
+    if pid:
+        os.kill(pid, signal.SIGUSR1)
+
+
+def fcitx_call(method):
+    """Switch fcitx5 into (or out of) on-screen keyboard mode."""
+    bus.call("org.fcitx.Fcitx5", "/virtualkeyboard", "org.fcitx.Fcitx.VirtualKeyboard1",
+             method, None, None, Gio.DBusCallFlags.NONE, 1000, None, None, None)
+
+
+def typed_recently():
+    try:
+        return time.time() - os.stat(TYPED_FILE).st_mtime < OWN_TYPING_WINDOW
+    except OSError:
+        return False
+
+
+def cancel_hide():
+    global pending_hide
+    if pending_hide:
+        GLib.source_remove(pending_hide)
+        pending_hide = None
+
+
+def do_hide():
+    global pending_hide
+    pending_hide = None
+    if auto and not typed_recently():
+        osk_hide()
+    return False
+
+
+pending_reassert = None
+
+
+def reassert():
+    global pending_reassert
+    pending_reassert = None
+    if auto:
+        fcitx_call("ShowVirtualKeyboard")
+    return False
+
+
+def on_typed(monitor, file, other, event):
+    """fcitx5 switches to physical keyboard mode when it sees our keys;
+    switch it back once the typing pauses."""
+    global pending_reassert
+    if not auto:
+        return
+    if pending_reassert:
+        GLib.source_remove(pending_reassert)
+    pending_reassert = GLib.timeout_add(300, reassert)
+
+
+def on_call(conn, sender, path, iface, method, params, invocation):
+    global pending_hide
+    invocation.return_value(None)
+    if os.environ.get("OSK_DEBUG"):
+        log(f"fcitx5: {method}")
+    if not auto:
+        return
+    if method == "ShowVirtualKeyboard":
+        cancel_hide()
+        osk_show()
+    elif method == "HideVirtualKeyboard":
+        cancel_hide()
+        pending_hide = GLib.timeout_add(HIDE_DELAY_MS, do_hide)
+
+
+def on_bus_acquired(conn, name):
+    conn.register_object("/org/fcitx/virtualkeyboard/impanel",
+                         Gio.DBusNodeInfo.new_for_xml(IMPANEL_XML).interfaces[0],
+                         on_call, None, None)
+
+
+def check_cover():
+    global auto
+    detached = not cover_attached()
+    if detached != auto:
+        auto = detached
+        log("Type Cover detached: auto-show on" if auto else "Type Cover attached: auto-show off")
+        if auto:
+            osk_show()
+            fcitx_call("ShowVirtualKeyboard")
+        else:
+            cancel_hide()
+            osk_hide()
+    return True
+
+
+def on_name_acquired(conn, name):
+    # give fcitx5 a moment to notice the new frontend before switching it
+    # into on-screen keyboard mode, otherwise the request is ignored
+    def start():
+        check_cover()
+        GLib.timeout_add(1000, check_cover)
+        return False
+    GLib.timeout_add(1500, start)
+
+
+on_bus_acquired(bus, None)
+typed_monitor = Gio.File.new_for_path(TYPED_FILE).monitor_file(Gio.FileMonitorFlags.NONE, None)
+typed_monitor.connect("changed", on_typed)
+Gio.bus_own_name_on_connection(bus, "org.fcitx.Fcitx5.VirtualKeyboard",
+                               Gio.BusNameOwnerFlags.REPLACE, on_name_acquired, None)
+GLib.MainLoop().run()

@@ -2,6 +2,8 @@
 #define __KEYBOARD_H
 
 #include "drw.h"
+#include "swipe.h"
+#include <xkbcommon/xkbcommon.h>
 
 #define MAX_LAYERS 25
 
@@ -24,6 +26,8 @@ enum key_type {
 	NextLayer, // Layout switch to the next layout in the layers sequence
 	Compose,   // Compose modifier key, switches to a specific associated layout
 	           // upon next keypress
+	Char,      // Types its label through the xkb keymap (letters swipe)
+	Hide,      // Hides the keyboard
 	EndRow,    // Incidates the end of a key row
 	Last,      // Indicated the end of a layout
 };
@@ -130,6 +134,45 @@ struct kbd {
 	struct zwp_virtual_keyboard_v1 *vkbd;
 
 	uint32_t last_popup_x, last_popup_y, last_popup_w, last_popup_h;
+
+	/* omarchy-osk: xkb keymap used for typing Char keys */
+	struct xkb_context *xkb_ctx;
+	struct xkb_keymap *xkb_keymap;
+	char *xkb_layout, *xkb_variant;
+
+	/* omarchy-osk: gesture typing */
+	bool swipe_enabled;
+	struct key *down_key;   // Char key under the finger, typed on release
+	bool swiping;
+	int npts;
+	double *pts_x, *pts_y;
+	int pts_cap;
+	Color trail;
+
+	/* omarchy-osk: suggestion strip and text tracking */
+	uint32_t suggest_h;
+	int sugg_pressed;
+	struct swipe_result sugg;
+	bool sugg_replace;      // suggestions replace the last committed word
+	char word[SWIPE_MAX_WORD];      // letters tapped in the current word
+	char committed[SWIPE_MAX_WORD]; // last word committed with a trailing space
+	bool after_commit;
+	bool after_space;       // last key was a tapped space after a word
+	int64_t last_shift_tap;
+	void (*hide_cb)(void);
+
+	/* omarchy-osk: long-press alternates */
+	int64_t longpress_at;   // monotonic ms deadline, 0 when not armed
+	bool alt_open;
+	uint32_t alt_cps[16];
+	int alt_n, alt_sel;
+	uint32_t alt_x, alt_y, alt_w, alt_h; // first cell, in popup coordinates
+	PangoFontDescription *hint_font;
+	char *keymap_str;       // keymap as uploaded, for temporary extra keys
+
+	/* omarchy-osk: space bar gestures */
+	enum { SpaceTap = 0, SpaceCursor, SpaceLang } space_mode;
+	int lang_dir;
 };
 
 void draw_inset(struct drwsurf *ds, uint32_t x, uint32_t y, uint32_t width,
@@ -139,7 +182,14 @@ void draw_over_inset(struct drwsurf *ds, uint32_t x, uint32_t y, uint32_t width,
 
 void kbd_init(struct kbd *kb, struct layout *layouts,
               char *layer_names_list, char *landscape_layer_names_list);
-void kbd_init_layout(struct layout *l, uint32_t width, uint32_t height);
+void kbd_init_layout(struct layout *l, uint32_t width, uint32_t height,
+                     uint32_t yoff);
+void kbd_touch_down(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y);
+void kbd_touch_motion(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y);
+void kbd_touch_up(struct kbd *kb, uint32_t time);
+void kbd_reset_text(struct kbd *kb);
+void kbd_longpress(struct kbd *kb);
+void kbd_load_lang(struct kbd *kb);
 struct key *kbd_get_key(struct kbd *kb, uint32_t x, uint32_t y);
 size_t kbd_get_layer_index(struct kbd *kb, struct layout *l);
 void kbd_unpress_key(struct kbd *kb, uint32_t time);
