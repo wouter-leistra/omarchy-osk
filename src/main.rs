@@ -521,7 +521,35 @@ fn show(app: &mut App, queue: &mut EventQueue<App>) {
     app.layer_surface = Some(ls);
 }
 
+/// the signals the keyboard handles, blocked from the very start: one that
+/// arrives while it is still starting waits instead of ending the process
+fn block_signals() -> libc::sigset_t {
+    let sigrtmin = libc::SIGRTMIN();
+    unsafe {
+        let mut mask: libc::sigset_t = std::mem::zeroed();
+        libc::sigemptyset(&mut mask);
+        for s in [libc::SIGUSR1, libc::SIGUSR2, sigrtmin, sigrtmin + 1, sigrtmin + 2, sigrtmin + 3, libc::SIGPIPE] {
+            libc::sigaddset(&mut mask, s);
+        }
+        if libc::sigprocmask(libc::SIG_BLOCK, &mask, std::ptr::null_mut()) == -1 {
+            die!("Failed to disable handled signals\n");
+        }
+        mask
+    }
+}
+
+/// block them before main, as soon as the program's own code runs
+#[used]
+#[link_section = ".init_array"]
+static BLOCK_SIGNALS_EARLY: extern "C" fn() = {
+    extern "C" fn early() {
+        block_signals();
+    }
+    early
+};
+
 fn main() {
+    let mask = block_signals();
     let args: Vec<String> = std::env::args().collect();
     let opts = options::parse(&args);
     let mut kb = opts.build_kbd();
@@ -616,14 +644,6 @@ fn main() {
     // signals arrive on a signalfd next to the Wayland socket
     let sigrtmin = libc::SIGRTMIN();
     let signal_fd = unsafe {
-        let mut mask: libc::sigset_t = std::mem::zeroed();
-        libc::sigemptyset(&mut mask);
-        for s in [libc::SIGUSR1, libc::SIGUSR2, sigrtmin, sigrtmin + 1, sigrtmin + 2, sigrtmin + 3, libc::SIGPIPE] {
-            libc::sigaddset(&mut mask, s);
-        }
-        if libc::sigprocmask(libc::SIG_BLOCK, &mask, std::ptr::null_mut()) == -1 {
-            die!("Failed to disable handled signals\n");
-        }
         let fd = libc::signalfd(-1, &mask, libc::SFD_CLOEXEC);
         if fd == -1 {
             die!("Failed to get signalfd\n");

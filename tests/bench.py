@@ -164,7 +164,8 @@ def bench_daemon(binary, runs):
                 if m:
                     return m
                 time.sleep(0.002)
-            raise RuntimeError(f"{pattern!r} not seen")
+            log.seek(0)
+            raise RuntimeError(f"{pattern!r} not seen; log:\n" + log.read()[-3000:])
 
         try:
             wait_for(r"using xkb layout")
