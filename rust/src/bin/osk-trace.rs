@@ -21,12 +21,16 @@ impl Output for Log {
 
 fn main() {
     let mut args: Vec<String> = std::env::args().collect();
-    let (mut width, mut height) = (2160u32, 576u32);
+    let (mut width, mut height, mut scale) = (2160u32, 576u32, 1.0f64);
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
             "-W" if i + 1 < args.len() => {
                 width = args[i + 1].parse().unwrap_or(width);
+                args.drain(i..i + 2);
+            }
+            "-S" if i + 1 < args.len() => {
+                scale = args[i + 1].parse().unwrap_or(scale);
                 args.drain(i..i + 2);
             }
             "-H" if i + 1 < args.len() => {
@@ -45,7 +49,7 @@ fn main() {
     // the layer surface configure of main.c
     kb.w = width;
     kb.h = height;
-    kb.scale = 1.0;
+    kb.scale = scale;
     kb.layout = kb.layers[0];
     kb.prevlayout = kb.layout;
     kb.last_abc_layout = kb.layout;

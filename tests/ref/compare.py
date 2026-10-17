@@ -280,6 +280,14 @@ def scenarios():
         t.tap("hi").png("portrait")
     sc("portrait", "en,fi", ("en", "fi"), portrait, w=1440, h=700)
 
+    def scaled(t):
+        t.tap("hi").longpress("o", 1, png="scaled_lp").swipe("hello").png("scaled")
+    sc("scaled", "en,fi", ("en", "fi"), scaled, extra=["-S", "1.5"])
+
+    def scaled125(t):
+        t.key("^").tap("x").png("scaled125")
+    sc("scaled125", "en,fi", ("en", "fi"), scaled125, extra=["-S", "1.25"])
+
     def plainfont(t):
         t.tap("a").png("plain")
     sc("plainfont", "en,fi", ("en", "fi"), plainfont, extra=["--fn", "Sans 20", "-R", "10"])
@@ -311,6 +319,7 @@ def main():
     ap.add_argument("--keep", action="store_true")
     ap.add_argument("only", nargs="*")
     a = ap.parse_args()
+    a.c, a.rust = os.path.abspath(a.c), os.path.abspath(a.rust)
 
     base = tempfile.mkdtemp(prefix="osk-compare-")
     failures = 0

@@ -134,6 +134,7 @@ int
 main(int argc, char **argv)
 {
 	uint32_t width = 2160, height = 576;
+	double scale = 1;
 	char *font = NULL, *dicts = NULL;
 	int rounding = DEFAULT_ROUNDING;
 
@@ -149,6 +150,7 @@ main(int argc, char **argv)
 	for (int i = 1; i < argc; i++) {
 		const char *a = argv[i], *v = i + 1 < argc ? argv[i + 1] : "";
 		if (!strcmp(a, "-W")) width = atoi(argv[++i]);
+		else if (!strcmp(a, "-S")) scale = atof(argv[++i]);
 		else if (!strcmp(a, "-H")) height = atoi(argv[++i]);
 		else if (!strcmp(a, "-R")) rounding = atoi(argv[++i]);
 		else if (!strcmp(a, "--fn")) font = argv[++i];
@@ -215,7 +217,7 @@ main(int argc, char **argv)
 	/* the layer surface configure of main.c */
 	kb.w = width;
 	kb.h = height;
-	kb.scale = 1;
+	kb.scale = scale;
 	kb.layout = &kb.layouts[kb.layers[0]];
 	kb.prevlayout = kb.last_abc_layout = kb.layout;
 	kbd_resize(&kb, layouts, NumLayouts);

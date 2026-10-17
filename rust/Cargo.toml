@@ -21,4 +21,4 @@ pangocairo = "0.22"
 libc = "0.2"
 
 [profile.release]
-debug = 1
+debug = "line-tables-only"
