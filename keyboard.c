@@ -600,7 +600,14 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
 			kbd_draw_layout(kb);
 			break;
 		}
-		/* Ctrl/Alt/Super latch for the next key, nothing is sent yet */
+		/* Ctrl/Alt/Super latch for the next key, nothing is sent yet.
+		 * The automatic capital is not part of a shortcut: Super+Space
+		 * at the start of a field must not become Super+Shift+Space */
+		if (autocap_latched) {
+			kb->mods &= ~Shift;
+			autocap_latched = false;
+			kbd_draw_layout(kb);
+		}
 		kb->mods ^= k->code;
 		kbd_draw_key(kb, k, (kb->mods & k->code) ? Press : Unpress);
 		break;
