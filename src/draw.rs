@@ -29,7 +29,49 @@ enum Op {
 struct Target {
     surf: cairo::ImageSurface,
     cr: cairo::Context,
-    layout: pango::Layout,
+    /// laid out labels: shaping text is the costly part of drawing a key,
+    /// and the same labels come back all the time
+    layouts: std::cell::RefCell<LayoutCache>,
+}
+
+#[derive(Default)]
+struct LayoutCache {
+    map: std::collections::HashMap<(String, u64, i32, i32), Vec<(pango::FontDescription, pango::Layout, (i32, i32))>>,
+    entries: usize,
+}
+
+const LAYOUT_CACHE: usize = 512;
+
+impl Target {
+    /// a layout of label in font, wrapped to w x h (pango units), and its
+    /// pixel size
+    fn layout(&self, label: &str, font: &pango::FontDescription, w: i32, h: i32) -> (pango::Layout, (i32, i32)) {
+        let mut cache = self.layouts.borrow_mut();
+        let fh = {
+            use std::hash::{Hash, Hasher};
+            let mut h = std::collections::hash_map::DefaultHasher::new();
+            font.hash(&mut h);
+            h.finish()
+        };
+        let key = (label.to_string(), fh, w, h);
+        if let Some(hit) = cache.map.get(&key).and_then(|v| v.iter().find(|(f, _, _)| f == font)) {
+            return (hit.1.clone(), hit.2);
+        }
+        let layout = pangocairo::functions::create_layout(&self.cr);
+        layout.set_auto_dir(false);
+        layout.set_font_description(Some(font));
+        layout.set_text(label);
+        layout.set_width(w);
+        layout.set_height(h);
+        let size = layout.pixel_size();
+        if cache.entries >= LAYOUT_CACHE {
+            cache.map.clear();
+            cache.entries = 0;
+        }
+        cache.map.entry(key).or_default().push((font.clone(), layout.clone(), size));
+        cache.entries += 1;
+        (layout, size)
+    }
 }
 
 /// memory cairo draws into, e.g. a mapped shared-memory buffer
@@ -79,10 +121,8 @@ fn target(surf: cairo::ImageSurface, s: f64) -> Target {
     let cr = cairo::Context::new(&surf).expect("cairo context");
     cr.scale(s, s);
     cr.set_antialias(cairo::Antialias::None);
-    let layout = pangocairo::functions::create_layout(&cr);
-    layout.set_auto_dir(false);
     cr.save().ok();
-    Target { surf, cr, layout }
+    Target { surf, cr, layouts: Default::default() }
 }
 
 impl Op {
@@ -91,15 +131,16 @@ impl Op {
         cr.save().ok();
         match self {
             Op::Text { color, x, y, w, h, b, label, font } => {
-                t.layout.set_font_description(Some(font));
                 set_source(cr, *color);
                 cr.move_to(x.wrapping_add(w / 2) as f64, y.wrapping_add(h / 2) as f64);
-                t.layout.set_text(label);
-                t.layout.set_width((w.wrapping_sub(b * 2) as i32).wrapping_mul(pango::SCALE));
-                t.layout.set_height((h.wrapping_sub(b * 2) as i32).wrapping_mul(pango::SCALE));
-                let (width, height) = t.layout.pixel_size();
+                let (layout, (width, height)) = t.layout(
+                    label,
+                    font,
+                    (w.wrapping_sub(b * 2) as i32).wrapping_mul(pango::SCALE),
+                    (h.wrapping_sub(b * 2) as i32).wrapping_mul(pango::SCALE),
+                );
                 cr.rel_move_to((-width / 2) as f64, (-height / 2) as f64);
-                pangocairo::functions::show_layout(cr, &t.layout);
+                pangocairo::functions::show_layout(cr, &layout);
             }
             Op::Clear { x, y, w, h } => {
                 cr.set_operator(cairo::Operator::Clear);

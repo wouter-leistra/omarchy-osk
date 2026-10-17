@@ -358,7 +358,8 @@ def scenario_outputs(name, binary, base):
         args += ["--dict", dict_paths(*dicts)]
     args += extra
     d = os.path.join(base, name)
-    env = dict(os.environ, XDG_RUNTIME_DIR=os.path.join(d, "run"), XDG_STATE_HOME=os.path.join(d, "state"))
+    env = dict(os.environ, XDG_RUNTIME_DIR=os.path.join(d, "run"), XDG_STATE_HOME=os.path.join(d, "state"),
+               XDG_CACHE_HOME=os.path.join(d, "cache"))
     os.makedirs(env["XDG_RUNTIME_DIR"], exist_ok=True)
     log = run(binary, args, t.lines, d, env)
     sums = ["keymap " + hashlib.sha256(open(os.path.join(d, "keymap.xkb"), "rb").read()).hexdigest()]
@@ -391,7 +392,8 @@ def decode_outputs(binary, lang, layout, base, words=300):
     g = os.path.join(base, f"{lang}.geo")
     open(g, "w").write(geom)
     dicts = ",".join(os.path.join(ROOT, "dict", f"{l}.txt") for l in ("en", "fi", "sv"))
-    p = subprocess.run([binary, dicts, g], input=text, capture_output=True, text=True, timeout=600)
+    p = subprocess.run([binary, dicts, g], input=text, capture_output=True, text=True, timeout=600,
+                       env=dict(os.environ, XDG_CACHE_HOME=os.path.join(base, "cache")))
     return p.stdout
 
 

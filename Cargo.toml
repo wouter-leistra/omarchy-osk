@@ -23,4 +23,8 @@ pangocairo = "0.22"
 libc = "0.2"
 
 [profile.release]
-debug = "line-tables-only"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+# function names stay, so crash backtraces (coredumpctl) still read well
+strip = "debuginfo"

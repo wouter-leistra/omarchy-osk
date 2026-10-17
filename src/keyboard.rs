@@ -1159,6 +1159,37 @@ impl Kbd {
         }
     }
 
+    /// load the fonts and the glyphs of every label now (when idle after
+    /// startup), so the first time the keyboard is shown it draws at once
+    pub fn warm_up(&self) {
+        let Ok(surf) = cairo::ImageSurface::create(cairo::Format::ARgb32, 1, 1) else { return };
+        let Ok(cr) = cairo::Context::new(&surf) else { return };
+        let layout = pangocairo::functions::create_layout(&cr);
+        let mut labels: Vec<String> = Vec::new();
+        for set in &self.sets {
+            for k in set {
+                labels.push(k.label.clone());
+                labels.push(k.shift_label.clone());
+            }
+        }
+        for l in &self.langs {
+            labels.push(format!("‹  {}  ›", l.name));
+        }
+        labels.push("0123456789 abcdefghijklmnopqrstuvwxyzåäö".into());
+        let text = labels.join(" ");
+        let mut fonts: Vec<pango::FontDescription> = self.schemes.iter().filter_map(|s| s.font_desc.clone()).collect();
+        if let Some(f) = self.schemes[0].font_desc.as_ref() {
+            let mut h = f.clone();
+            h.set_size((f.size() as f64 * 0.5) as i32);
+            fonts.push(h);
+        }
+        for f in &fonts {
+            layout.set_font_description(Some(f));
+            layout.set_text(&text);
+            pangocairo::functions::show_layout(&cr, &layout);
+        }
+    }
+
     /// get the gesture decoder ready for the letter layout (when idle)
     pub fn prepare_swipe(&self) {
         if self.swipe_enabled && self.w != 0 && self.dict.lang_active() {

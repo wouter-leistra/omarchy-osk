@@ -79,7 +79,8 @@ enum Which {
 }
 
 /// the one shared-memory buffer of a surface; the canvas draws into it
-/// while the compositor doesn't hold it
+/// while the compositor doesn't hold it. Buffers outlive the surfaces: what
+/// the next show needs is drawn into them while the keyboard is hidden.
 struct ShmBuf {
     id: u64,
     buffer: WlBuffer,
@@ -94,7 +95,6 @@ impl Drop for ShmBuf {
 
 struct Surf {
     surface: WlSurface,
-    buf: Option<ShmBuf>,
     frame_pending: bool,
     /// attach even without changes (a freshly configured popup)
     force: bool,
@@ -183,6 +183,7 @@ struct App {
     popup_configured: bool,
     gen: u32,
     buf_serial: u64,
+    bufs: [Option<ShmBuf>; 2],
 
     available: (u32, u32),
     height: u32,
@@ -279,23 +280,65 @@ impl App {
             s.destroy();
         }
         if let Some(s) = self.popup.take() {
-            drop(s.buf);
             s.surface.destroy();
         }
         ls.destroy();
         self.layer_configured = false;
         self.popup_configured = false;
         if let Some(s) = self.keys.take() {
-            drop(s.buf);
             s.surface.destroy();
         }
         self.hidden = true;
+        self.prerender();
+    }
+
+    /// draw now what the next show will look like (the state is reset
+    /// exactly as redimension does), so showing only attaches the buffers
+    fn prerender(&mut self) {
+        if self.kb.surf.is_none() {
+            return;
+        }
+        let layer = if self.kb.landscape { self.kb.landscape_layers[0] } else { self.kb.layers[0] };
+        self.kb.layout = layer;
+        self.kb.layer_index = 0;
+        self.kb.prevlayout = layer;
+        self.kb.last_abc_layout = layer;
+        self.kb.last_abc_index = 0;
+        self.kb.draw_layout();
+        let (w, h) = (self.kb.w, self.kb.h);
+        if let Some(p) = self.kb.popup_surf.as_mut() {
+            p.clear(0, 0, w, h * 2);
+        }
+    }
+
+    /// while hidden, play what was drawn into the buffers
+    fn flush_hidden(&mut self) {
+        if !self.hidden {
+            return;
+        }
+        for (i, c) in [self.kb.surf.as_mut(), self.kb.popup_surf.as_mut()].into_iter().enumerate() {
+            if let (Some(c), Some(b)) = (c, self.bufs[i].as_ref()) {
+                if !b.busy && c.has_pending() {
+                    c.flush();
+                }
+            }
+        }
+    }
+
+    /// buffers that still fit and are free: the next show can use them
+    fn ready_to_reuse(&self, scale: f64) -> bool {
+        let fits = |c: Option<&omarchy_osk::draw::Canvas>, w: u32, h: u32| {
+            c.is_some_and(|c| c.scale == scale && c.pixel_width() == ((w as f64 * scale).ceil() as i32).max(1) && c.pixel_height() == ((h as f64 * scale).ceil() as i32).max(1))
+        };
+        fits(self.kb.surf.as_ref(), self.kb.w, self.kb.h)
+            && fits(self.kb.popup_surf.as_ref(), self.kb.w, self.kb.h * 2)
+            && self.bufs.iter().all(|b| b.as_ref().is_some_and(|b| !b.busy))
     }
 
     fn new_surf(&mut self) -> Surf {
         self.gen += 1;
         let surface = self.compositor.create_surface(&self.qh, self.gen);
-        Surf { surface, buf: None, frame_pending: false, force: false, gen: self.gen }
+        Surf { surface, frame_pending: false, force: false, gen: self.gen }
     }
 
     /* drawing: the canvas plays its operations into the surface's buffer
@@ -303,11 +346,11 @@ impl App {
 
     /// a buffer for the surface, the canvas draws into its memory
     fn give_buffer(&mut self, which: Which) {
-        let (surf, canvas) = match which {
-            Which::Keys => (self.keys.as_mut(), self.kb.surf.as_mut()),
-            Which::Popup => (self.popup.as_mut(), self.kb.popup_surf.as_mut()),
+        let canvas = match which {
+            Which::Keys => self.kb.surf.as_mut(),
+            Which::Popup => self.kb.popup_surf.as_mut(),
         };
-        let (Some(surf), Some(canvas)) = (surf, canvas) else { return };
+        let Some(canvas) = canvas else { return };
         let (pw, ph) = (canvas.pixel_width(), canvas.pixel_height());
         let stride = pw * 4;
         let size = (stride * ph) as usize;
@@ -319,13 +362,13 @@ impl App {
         let pool: WlShmPool = self.shm.create_pool(fd.as_fd(), size as i32, &self.qh, ());
         self.buf_serial += 1;
         let id = self.buf_serial;
-        let buffer = pool.create_buffer(0, pw, ph, stride, wl_shm::Format::Argb8888, &self.qh, (which, surf.gen, id));
+        let buffer = pool.create_buffer(0, pw, ph, stride, wl_shm::Format::Argb8888, &self.qh, (which, id));
         pool.destroy();
         let addr = data as usize;
         canvas.set_memory(unsafe { Memory::new(data as *mut u8, size, move || {
             libc::munmap(addr as *mut libc::c_void, size);
         }) });
-        surf.buf = Some(ShmBuf { id, buffer, busy: false });
+        self.bufs[which as usize] = Some(ShmBuf { id, buffer, busy: false });
     }
 
     fn present(&mut self, which: Which) {
@@ -335,13 +378,16 @@ impl App {
             _ => return,
         };
         let (Some(surf), Some(canvas)) = (surf, canvas) else { return };
-        let Some(buf) = surf.buf.as_mut() else { return };
+        let Some(buf) = self.bufs[which as usize].as_mut() else { return };
         if surf.frame_pending || buf.busy || !(canvas.has_damage() || surf.force) {
             return;
         }
         canvas.flush();
         let damage = canvas.take_damage();
         surf.surface.attach(Some(&buf.buffer), 0, 0);
+        if surf.force {
+            surf.surface.damage(0, 0, i32::MAX, i32::MAX);
+        }
         for r in &damage {
             surf.surface.damage(r.x, r.y, r.w, r.h);
         }
@@ -406,9 +452,12 @@ impl App {
 
         self.layer_surface.as_ref().unwrap().ack_configure(serial);
         let t = monotime();
-        self.kb.resize();
-        self.give_buffer(Which::Keys);
-        self.give_buffer(Which::Popup);
+        if !self.ready_to_reuse(scale) {
+            self.kb.resize();
+            self.give_buffer(Which::Keys);
+            self.give_buffer(Which::Popup);
+        }
+        self.keys.as_mut().unwrap().force = true;
         self.present(Which::Keys);
         if self.kb.debug {
             eprintln!("show: configured after {}ms, drawing took {}ms", t - self.show_started, monotime() - t);
@@ -524,6 +573,7 @@ fn main() {
         popup_configured: false,
         gen: 0,
         buf_serial: 0,
+        bufs: [None, None],
         available: (0, 0),
         height: 0,
         hidden,
@@ -581,6 +631,7 @@ fn main() {
         OwnedFd::from_raw_fd(fd)
     };
 
+    let mut warm = false;
     while app.run {
         if queue.dispatch_pending(&mut app).is_err() {
             die!("Wayland dispatch failed\n");
@@ -599,6 +650,20 @@ fn main() {
             die!("Wayland socket has been disconnected: {e}\n");
         }
         // idle: everything is drawn and sent
+        if !warm {
+            warm = true;
+            app.kb.warm_up();
+            if app.hidden && app.kb.surf.is_none() {
+                // hidden start: draw the keyboard now, showing only attaches
+                refresh_available_dimension(&mut app, &mut queue);
+                app.redimension();
+                app.kb.scale = if app.preferred_fractional_scale != 0.0 { app.preferred_fractional_scale } else { app.preferred_scale };
+                app.kb.resize();
+                app.give_buffer(Which::Keys);
+                app.give_buffer(Which::Popup);
+            }
+        }
+        app.flush_hidden();
         app.kb.prepare_swipe();
         let timeout = if app.kb.longpress_at != 0 { (app.kb.longpress_at - monotime()).max(0) as i32 } else { -1 };
         let Some(guard) = queue.prepare_read() else { continue };
@@ -905,15 +970,14 @@ impl Dispatch<WlCallback, (Which, u32)> for App {
     }
 }
 
-impl Dispatch<WlBuffer, (Which, u32, u64)> for App {
-    fn event(app: &mut Self, _: &WlBuffer, event: wl_buffer::Event, data: &(Which, u32, u64), _: &Connection, _: &QueueHandle<Self>) {
+impl Dispatch<WlBuffer, (Which, u64)> for App {
+    fn event(app: &mut Self, _: &WlBuffer, event: wl_buffer::Event, data: &(Which, u64), _: &Connection, _: &QueueHandle<Self>) {
         if let wl_buffer::Event::Release = event {
-            let surf = match data.0 {
-                Which::Keys => app.keys.as_mut(),
-                Which::Popup => app.popup.as_mut(),
-            };
-            if let Some(b) = surf.filter(|s| s.gen == data.1).and_then(|s| s.buf.as_mut()).filter(|b| b.id == data.2) {
+            if let Some(b) = app.bufs[data.0 as usize].as_mut().filter(|b| b.id == data.1) {
                 b.busy = false;
+                if app.kb.debug && app.hidden {
+                    eprintln!("buffer {:?} released while hidden", data.0);
+                }
             }
         }
     }

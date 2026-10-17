@@ -106,6 +106,10 @@ fn main() {
             }
             _ => println!("? unknown command"),
         }
+        // render now, as the daemon does for every frame
+        for c in [kb.surf.as_mut(), kb.popup_surf.as_mut()].into_iter().flatten() {
+            c.flush();
+        }
         let mut state = format!(
             "= layout={} lang={} mods={} word=\"{}\" sugg={}",
             kb.layouts[kb.layout].name,

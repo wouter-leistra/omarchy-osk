@@ -48,7 +48,9 @@ pub struct Results {
     pub words: Vec<String>,
 }
 
-/// a dictionary word: its text in Dict::text, frequency and language
+/// a dictionary word: its text in the text buffer, frequency and language
+/// (12 bytes, stored as is in the cache file)
+#[repr(C)]
 #[derive(Clone, Copy)]
 struct Entry {
     off: u32,
@@ -71,12 +73,35 @@ struct Templates {
 
 const NO_LANG: i32 = -2;
 
+/// the dictionary's arrays: built from the word lists, or mapped from the
+/// cache file (clean pages the kernel can share and drop)
+enum Store {
+    Built {
+        text: Vec<u8>,
+        /// most frequent first
+        words: Vec<Entry>,
+        /// word indices in byte order of their text, for prefixes
+        alpha: Vec<u32>,
+    },
+    Mapped {
+        map: *const u8,
+        len: usize,
+        words: (usize, usize),
+        alpha: (usize, usize),
+        text: (usize, usize),
+    },
+}
+
+impl Drop for Store {
+    fn drop(&mut self) {
+        if let Store::Mapped { map, len, .. } = self {
+            unsafe { libc::munmap(*map as *mut libc::c_void, *len) };
+        }
+    }
+}
+
 pub struct Dict {
-    text: Vec<u8>,
-    /// most frequent first
-    words: Vec<Entry>,
-    /// word indices in byte order of their text, for prefixes
-    alpha: Vec<u32>,
+    store: Store,
     lang_codes: Vec<String>,
     /// -1: all languages, NO_LANG: none
     active: i32,
@@ -231,16 +256,149 @@ fn to_results(words: Vec<&[u8]>) -> Results {
 
 impl Default for Dict {
     fn default() -> Self {
-        Dict { text: Vec::new(), words: Vec::new(), alpha: Vec::new(), lang_codes: Vec::new(), active: -1, templates: RefCell::new(Vec::new()) }
+        Dict {
+            store: Store::Built { text: Vec::new(), words: Vec::new(), alpha: Vec::new() },
+            lang_codes: Vec::new(),
+            active: -1,
+            templates: RefCell::new(Vec::new()),
+        }
     }
 }
 
+const CACHE_MAGIC: &[u8; 8] = b"OSKWRDS1";
+
+/// FNV-1a, for the cache key
+fn fnv(h: u64, bytes: &[u8]) -> u64 {
+    bytes.iter().fold(h, |h, &b| (h ^ b as u64).wrapping_mul(0x100000001b3))
+}
+
+fn cache_dir() -> std::path::PathBuf {
+    match std::env::var_os("XDG_CACHE_HOME").filter(|v| !v.is_empty()) {
+        Some(d) => std::path::PathBuf::from(d).join("omarchy-osk"),
+        None => std::path::PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".cache/omarchy-osk"),
+    }
+}
+
+fn section<T>(base: *const u8, (off, n): (usize, usize)) -> &'static [T] {
+    unsafe { std::slice::from_raw_parts(base.add(off) as *const T, n) }
+}
+
 impl Dict {
-    fn word(&self, e: &Entry) -> &[u8] {
-        &self.text[e.off as usize..e.off as usize + e.len as usize]
+    fn text(&self) -> &[u8] {
+        match &self.store {
+            Store::Built { text, .. } => text,
+            Store::Mapped { map, text, .. } => section(*map, *text),
+        }
     }
 
-    fn load_one(&mut self, path: &str, lang: u8, out: &mut Vec<Entry>) {
+    fn words(&self) -> &[Entry] {
+        match &self.store {
+            Store::Built { words, .. } => words,
+            Store::Mapped { map, words, .. } => section(*map, *words),
+        }
+    }
+
+    fn alpha(&self) -> &[u32] {
+        match &self.store {
+            Store::Built { alpha, .. } => alpha,
+            Store::Mapped { map, alpha, .. } => section(*map, *alpha),
+        }
+    }
+
+    fn word(&self, e: &Entry) -> &[u8] {
+        &self.text()[e.off as usize..e.off as usize + e.len as usize]
+    }
+
+    /// the cache file for these word lists: their paths, sizes and times
+    fn cache_path(paths: &[&str]) -> std::path::PathBuf {
+        use std::os::unix::fs::MetadataExt;
+        let mut h = fnv(0xcbf29ce484222325, CACHE_MAGIC);
+        h = fnv(h, &(std::mem::size_of::<Entry>() as u32).to_le_bytes());
+        for p in paths {
+            h = fnv(h, p.as_bytes());
+            if let Ok(m) = std::fs::metadata(p) {
+                h = fnv(h, &m.len().to_le_bytes());
+                h = fnv(h, &m.mtime().to_le_bytes());
+                h = fnv(h, &m.mtime_nsec().to_le_bytes());
+                h = fnv(h, &m.ino().to_le_bytes());
+            }
+            h = fnv(h, b"\0");
+        }
+        cache_dir().join(format!("words-{h:016x}.bin"))
+    }
+
+    /// map a cache file written by save_cache, if it is intact
+    fn load_cache(&mut self, path: &std::path::Path) -> bool {
+        let Ok(f) = std::fs::File::open(path) else { return false };
+        let Ok(len) = f.metadata().map(|m| m.len() as usize) else { return false };
+        if len < 32 {
+            return false;
+        }
+        use std::os::fd::AsRawFd;
+        let map = unsafe { libc::mmap(std::ptr::null_mut(), len, libc::PROT_READ, libc::MAP_SHARED, f.as_raw_fd(), 0) };
+        if map == libc::MAP_FAILED {
+            return false;
+        }
+        let map = map as *const u8;
+        let head = unsafe { std::slice::from_raw_parts(map, 32) };
+        let u32_at = |i: usize| u32::from_le_bytes(head[i..i + 4].try_into().unwrap()) as usize;
+        let (nlangs, nwords, ntext) = (u32_at(8), u32_at(12), u32_at(16));
+        let words = 32 + nlangs * 16;
+        let alpha = words + nwords * std::mem::size_of::<Entry>();
+        let text = alpha + nwords * 4;
+        if &head[..8] != CACHE_MAGIC || nlangs > MAX_LANGS || text + ntext != len {
+            unsafe { libc::munmap(map as *mut libc::c_void, len) };
+            return false;
+        }
+        let codes = unsafe { std::slice::from_raw_parts(map.add(32), nlangs * 16) };
+        self.lang_codes = codes
+            .chunks(16)
+            .map(|c| String::from_utf8_lossy(&c[..c.iter().position(|&b| b == 0).unwrap_or(16)]).into_owned())
+            .collect();
+        self.store = Store::Mapped { map, len, words: (words, nwords), alpha: (alpha, nwords), text: (text, ntext) };
+        true
+    }
+
+    fn save_cache(&self, path: &std::path::Path) {
+        let mut out = Vec::with_capacity(32 + self.text().len() + self.words().len() * 16);
+        out.extend_from_slice(CACHE_MAGIC);
+        for n in [self.lang_codes.len(), self.words().len(), self.text().len(), 0] {
+            out.extend_from_slice(&(n as u32).to_le_bytes());
+        }
+        out.extend_from_slice(&[0; 8]);
+        for c in &self.lang_codes {
+            let mut b = [0u8; 16];
+            let n = c.len().min(15);
+            b[..n].copy_from_slice(&c.as_bytes()[..n]);
+            out.extend_from_slice(&b);
+        }
+        let words = self.words();
+        out.extend_from_slice(unsafe { std::slice::from_raw_parts(words.as_ptr() as *const u8, std::mem::size_of_val(words)) });
+        for a in self.alpha() {
+            out.extend_from_slice(&a.to_le_bytes());
+        }
+        out.extend_from_slice(self.text());
+        let Some(dir) = path.parent() else { return };
+        if std::fs::create_dir_all(dir).is_err() {
+            return;
+        }
+        // older caches of other word lists go
+        if let Ok(rd) = std::fs::read_dir(dir) {
+            for e in rd.flatten() {
+                let n = e.file_name();
+                let n = n.to_string_lossy();
+                if n.starts_with("words-") && e.path() != path {
+                    let _ = std::fs::remove_file(e.path());
+                }
+            }
+        }
+        let tmp = path.with_extension(format!("tmp{}", std::process::id()));
+        if std::fs::write(&tmp, &out).is_ok() && std::fs::rename(&tmp, path).is_err() {
+            let _ = std::fs::remove_file(&tmp);
+        }
+    }
+
+    fn load_one(&mut self, path: &str, lang: u8, text: &mut Vec<u8>, out: &mut Vec<Entry>) {
         let Ok(data) = std::fs::read(path) else {
             eprintln!("omarchy-osk: cannot open dictionary {path}");
             return;
@@ -256,44 +414,66 @@ impl Dict {
             if maxcount == 0.0 {
                 maxcount = count;
             }
-            out.push(Entry { off: self.text.len() as u32, len: w.len() as u8, lang, lp: (count / maxcount).ln() as f32 });
-            self.text.extend_from_slice(w);
+            out.push(Entry { off: text.len() as u32, len: w.len() as u8, lang, lp: (count / maxcount).ln() as f32 });
+            text.extend_from_slice(w);
         }
     }
 
-    /// Load one or more "word count" frequency lists (comma separated paths).
+    /// Load one or more "word count" frequency lists (comma separated
+    /// paths), from the cache when it was built from these same files.
     pub fn load(&mut self, paths: &str) -> usize {
-        let mut words = Vec::new();
-        for p in paths.split(',').filter(|p| !p.is_empty()) {
-            if self.lang_codes.len() >= MAX_LANGS {
-                break;
+        let list: Vec<&str> = paths.split(',').filter(|p| !p.is_empty()).take(MAX_LANGS).collect();
+        let cache = std::env::var_os("OSK_NO_CACHE").is_none().then(|| Self::cache_path(&list));
+        self.load_from(&list, cache.as_deref())
+    }
+
+    fn load_from(&mut self, list: &[&str], cache: Option<&std::path::Path>) -> usize {
+        self.templates.borrow_mut().clear();
+        let cached = cache.is_some_and(|c| self.load_cache(c));
+        if !cached {
+            self.build(list);
+            if let Some(c) = cache {
+                self.save_cache(c);
             }
+        } else {
+            for p in list {
+                if std::fs::metadata(p).is_err() {
+                    eprintln!("omarchy-osk: cannot open dictionary {p}");
+                }
+            }
+        }
+        eprintln!("omarchy-osk: {} dictionary words", self.words().len());
+        self.words().len()
+    }
+
+    fn build(&mut self, list: &[&str]) {
+        let (mut text, mut words) = (Vec::new(), Vec::new());
+        self.lang_codes.clear();
+        for p in list {
             // language code from the file name, e.g. ".../fi.txt" -> "fi"
             let base = p.rsplit('/').next().unwrap_or(p);
             let code: String = base.split('.').next().unwrap_or("").chars().take(15).collect();
             let lang = self.lang_codes.len() as u8;
             self.lang_codes.push(code);
-            self.load_one(p, lang, &mut words);
+            self.load_one(p, lang, &mut text, &mut words);
         }
         // words shared between languages keep their best frequency, and the
         // merged list is ordered by frequency (ties alphabetically) for
         // completions
+        let word = |e: &Entry| &text[e.off as usize..e.off as usize + e.len as usize];
         let desc = |a: f32, b: f32| b.partial_cmp(&a).unwrap_or(std::cmp::Ordering::Equal);
-        words.sort_unstable_by(|a, b| self.word(a).cmp(self.word(b)).then(a.lang.cmp(&b.lang)).then(desc(a.lp, b.lp)));
-        words.dedup_by(|b, a| self.word(a) == self.word(b) && a.lang == b.lang);
+        words.sort_unstable_by(|a, b| word(a).cmp(word(b)).then(a.lang.cmp(&b.lang)).then(desc(a.lp, b.lp)));
+        words.dedup_by(|b, a| word(a) == word(b) && a.lang == b.lang);
         words.sort_by(|a, b| desc(a.lp, b.lp));
-        self.words.extend(words);
-        let mut alpha: Vec<u32> = (0..self.words.len() as u32).collect();
-        alpha.sort_unstable_by(|&a, &b| self.word(&self.words[a as usize]).cmp(self.word(&self.words[b as usize])).then(a.cmp(&b)));
-        self.alpha = alpha;
-        self.text.shrink_to_fit();
-        self.templates.borrow_mut().clear();
-        eprintln!("omarchy-osk: {} dictionary words", self.words.len());
-        self.words.len()
+        let mut alpha: Vec<u32> = (0..words.len() as u32).collect();
+        alpha.sort_unstable_by(|&a, &b| word(&words[a as usize]).cmp(word(&words[b as usize])).then(a.cmp(&b)));
+        text.shrink_to_fit();
+        words.shrink_to_fit();
+        self.store = Store::Built { text, words, alpha };
     }
 
     pub fn loaded(&self) -> bool {
-        !self.words.is_empty()
+        !self.words().is_empty()
     }
 
     pub fn lang_count(&self) -> usize {
@@ -323,7 +503,7 @@ impl Dict {
 
     /// a dictionary is in use: gestures and completions work
     pub fn lang_active(&self) -> bool {
-        !self.words.is_empty() && self.active != NO_LANG
+        !self.words().is_empty() && self.active != NO_LANG
     }
 
     fn lang_ok(&self, w: &Entry) -> bool {
@@ -340,11 +520,11 @@ impl Dict {
         let mut t = Templates {
             keys: keys.to_vec(),
             active: self.active,
-            at: Vec::with_capacity(self.words.len()),
+            at: Vec::with_capacity(self.words().len()),
             seq: Vec::new(),
             by_ends: vec![Vec::new(); keys.len() * keys.len()],
         };
-        for (wi, e) in self.words.iter().enumerate() {
+        for (wi, e) in self.words().iter().enumerate() {
             let start = t.seq.len();
             let mut ok = self.lang_ok(e);
             let mut last = None;
@@ -396,7 +576,7 @@ impl Dict {
     /// get ready for gestures on this layout (done while idle, so the first
     /// gesture is as quick as the others)
     pub fn prepare(&self, g: &Geom) {
-        if !self.words.is_empty() && !g.keys.is_empty() && self.active != NO_LANG {
+        if !self.words().is_empty() && !g.keys.is_empty() && self.active != NO_LANG {
             self.templates_for(&g.keys[..g.keys.len().min(MAX_KEYS)]);
         }
     }
@@ -404,7 +584,7 @@ impl Dict {
     /// Decode a gesture path into the most likely words.
     pub fn decode(&self, g: &Geom, xs: &[f64], ys: &[f64]) -> Results {
         let npts = xs.len();
-        if self.words.is_empty() || npts < 2 || g.keys.is_empty() {
+        if self.words().is_empty() || npts < 2 || g.keys.is_empty() {
             return Results::default();
         }
         let keys = &g.keys[..g.keys.len().min(MAX_KEYS)];
@@ -443,7 +623,7 @@ impl Dict {
         let (mut tx, mut ty) = ([0.0; MAX_CPS], [0.0; MAX_CPS]);
         let (mut rx, mut ry) = ([0.0; RESAMPLE], [0.0; RESAMPLE]);
         'words: for &wi in &cand {
-            let e = &self.words[wi as usize];
+            let e = &self.words()[wi as usize];
             // a cost is never below the word's own -lp, and the candidates
             // come most frequent first: once that can't beat the third
             // result, no later word can either
@@ -510,19 +690,19 @@ impl Dict {
         };
         // common prefixes: the most frequent words have them
         const QUICK: usize = 1024;
-        let out = pick(&mut self.words.iter().take(QUICK));
-        if out.len() == MAX_RESULTS || self.words.len() <= QUICK {
+        let out = pick(&mut self.words().iter().take(QUICK));
+        if out.len() == MAX_RESULTS || self.words().len() <= QUICK {
             return to_results(out);
         }
         // otherwise only the words with the prefix, in frequency order
-        let lo = self.alpha.partition_point(|&i| self.word(&self.words[i as usize]) < p);
-        let mut hits: Vec<u32> = self.alpha[lo..]
+        let lo = self.alpha().partition_point(|&i| self.word(&self.words()[i as usize]) < p);
+        let mut hits: Vec<u32> = self.alpha()[lo..]
             .iter()
             .copied()
-            .take_while(|&i| self.word(&self.words[i as usize]).starts_with(p))
+            .take_while(|&i| self.word(&self.words()[i as usize]).starts_with(p))
             .collect();
         hits.sort_unstable();
-        to_results(pick(&mut hits.iter().map(|&i| &self.words[i as usize])))
+        to_results(pick(&mut hits.iter().map(|&i| &self.words()[i as usize])))
     }
 }
 
@@ -534,7 +714,7 @@ mod tests {
     #[test]
     fn decodes_finnish_words() {
         let mut d = Dict::default();
-        d.load(&format!("{}/dict/fi.txt", env!("CARGO_MANIFEST_DIR")));
+        d.load_from(&[&format!("{}/dict/fi.txt", env!("CARGO_MANIFEST_DIR"))], None);
         let rows = ["qwertyuiopå", "asdfghjklöä", "zxcvbnm"];
         let offs = [0.0, 0.0, 2.0];
         let (unit, kh) = (2160.0 / 11.0, 120.0);
@@ -567,13 +747,35 @@ mod tests {
     #[test]
     fn completes_by_frequency() {
         let mut d = Dict::default();
-        d.load(&format!("{}/dict/en.txt", env!("CARGO_MANIFEST_DIR")));
+        d.load_from(&[&format!("{}/dict/en.txt", env!("CARGO_MANIFEST_DIR"))], None);
         let r = d.complete("hel");
         assert_eq!(r.words.len(), 3);
         assert!(r.words.iter().all(|w| w.starts_with("hel") && w != "hel"));
         // the slow path: a rare prefix
         let r = d.complete("zyg");
         assert!(r.words.iter().all(|w| w.starts_with("zyg")));
+    }
+
+    #[test]
+    fn cache_holds_the_same_dictionary() {
+        let root = env!("CARGO_MANIFEST_DIR");
+        let (en, fi) = (format!("{root}/dict/en.txt"), format!("{root}/dict/fi.txt"));
+        let list = [en.as_str(), fi.as_str()];
+        let dir = std::env::temp_dir().join(format!("osk-cache-test-{}", std::process::id()));
+        let cache = dir.join("words-test.bin");
+        let (mut built, mut mapped) = (Dict::default(), Dict::default());
+        built.load_from(&list, Some(&cache));
+        mapped.load_from(&list, Some(&cache));
+        assert!(matches!(built.store, Store::Built { .. }) && matches!(mapped.store, Store::Mapped { .. }));
+        assert_eq!(built.text(), mapped.text());
+        assert_eq!(built.alpha(), mapped.alpha());
+        assert_eq!(built.lang_codes, mapped.lang_codes);
+        assert!(built.words().iter().zip(mapped.words()).all(|(a, b)| (a.off, a.len, a.lang, a.lp.to_bits()) == (b.off, b.len, b.lang, b.lp.to_bits())));
+        assert_eq!(built.complete("ki"), mapped.complete("ki"));
+        // a changed word list is not taken from the old cache
+        let other = Dict::cache_path(&list);
+        assert_ne!(other, Dict::cache_path(&[en.as_str()]));
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]

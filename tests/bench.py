@@ -42,26 +42,35 @@ def pct(xs, p):
 
 
 def bench_decoder(binary, runs):
-    res = {"load_ms": [], "decode_us": [], "complete_us": []}
+    """word lists load from scratch on the first run (cold), later runs may
+    use a cache the program keeps (warm); the first gesture on a layout may
+    include one-off preparation"""
+    res = {"load_ms": [], "cold_ms": [], "first_us": [], "decode_us": [], "complete_us": []}
     base = tempfile.mkdtemp(prefix="osk-bench-")
     dicts = ",".join(os.path.join(ROOT, "dict", f"{l}.txt") for l in ("en", "fi", "sv"))
-    for _ in range(runs):
+    env = dict(os.environ, OSK_TIME="1", XDG_CACHE_HOME=os.path.join(base, "cache"))
+    for run in range(runs + 1):
         for lang, layout in golden.DECODE_LANGS:
             geom, text = golden.decode_input(lang, layout, 300)
             g = os.path.join(base, f"{lang}.geo")
             open(g, "w").write(geom)
-            p = subprocess.run([binary, dicts, g], input=text, capture_output=True, text=True,
-                               env=dict(os.environ, OSK_TIME="1"))
+            p = subprocess.run([binary, dicts, g], input=text, capture_output=True, text=True, env=env)
+            first = True
             for line in p.stderr.splitlines():
                 parts = line.split()
                 if len(parts) == 2 and parts[0] in ("load", "decode", "complete"):
                     v = float(parts[1])
                     if parts[0] == "load":
-                        res["load_ms"].append(v / 1000)
-                    else:
+                        res["cold_ms" if run == 0 and lang == "en" else "load_ms"].append(v / 1000)
+                    elif parts[0] == "decode" and first:
+                        res["first_us"].append(v)
+                        first = False
+                    elif run > 0:
                         res[f"{parts[0]}_us"].append(v)
     return {
+        "dict_load_cold_ms": statistics.median(res["cold_ms"]),
         "dict_load_ms": statistics.median(res["load_ms"]),
+        "decode_us_first": statistics.median(res["first_us"]),
         "decode_us_p50": pct(res["decode_us"], 50),
         "decode_us_p95": pct(res["decode_us"], 95),
         "decode_us_max": max(res["decode_us"]),
@@ -70,11 +79,11 @@ def bench_decoder(binary, runs):
     }
 
 
-def trace_once(binary, lines, langs="en,fi", w=2160, h=576):
-    base = tempfile.mkdtemp(prefix="osk-bench-")
+def trace_once(binary, lines, langs="en,fi", w=2160, h=576, base=None):
+    base = base or tempfile.mkdtemp(prefix="osk-bench-")
     args = [binary, "-W", str(w), "-H", str(h), *THEME_ARGS, "--data", os.path.join(ROOT, "data"),
             "--langs", langs, "--dict", DICTS]
-    env = dict(os.environ, XDG_RUNTIME_DIR=base, XDG_STATE_HOME=base)
+    env = dict(os.environ, XDG_RUNTIME_DIR=base, XDG_STATE_HOME=base, XDG_CACHE_HOME=os.path.join(base, "cache"))
     p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                          text=True, env=env, cwd=base)
     p.stdin.write("\n".join(lines) + "\n")
@@ -83,23 +92,29 @@ def trace_once(binary, lines, langs="en,fi", w=2160, h=576):
     return ru.ru_utime + ru.ru_stime, ru.ru_maxrss
 
 
+REPEAT = 4  # scripts run this many times over, so steps outweigh startup
+
+
 def bench_trace(binary, runs):
-    startup = [trace_once(binary, [])[0] for _ in range(runs)]
+    base = tempfile.mkdtemp(prefix="osk-bench-")
+    cold = trace_once(binary, [], base=base)[0]
+    startup = [trace_once(binary, [], base=base)[0] for _ in range(runs)]
     peak = 0
     per_step = {}
     for name in TRACE_SCENARIOS:
         langs, dicts, build, extra, w, h, rows_of = golden.scenarios()[name]
         t = golden.Script(golden.Geo(golden.load_rows(rows_of), w, h, swipe=bool(dicts)))
         build(t)
-        lines = [l for l in t.lines if not l.startswith(("png ", "keymap ", "#"))]
+        lines = [l for l in t.lines if not l.startswith(("png ", "keymap ", "#"))] * REPEAT
         steps = sum(1 for l in lines if not l.startswith("sleep"))
         cpu = []
         for _ in range(runs):
-            c, rss = trace_once(binary, lines, langs or "en,fi", w, h)
+            c, rss = trace_once(binary, lines, langs or "en,fi", w, h, base=base)
             cpu.append(c)
             peak = max(peak, rss)
         per_step[name] = (statistics.median(cpu) - statistics.median(startup)) / steps * 1000
     return {
+        "startup_cold_cpu_ms": cold * 1000,
         "startup_cpu_ms": statistics.median(startup) * 1000,
         "step_cpu_ms": {k: round(v, 3) for k, v in per_step.items()},
         "step_cpu_ms_mean": statistics.mean(per_step.values()),
@@ -130,12 +145,14 @@ def proc_cpu(pid):
 def bench_daemon(binary, runs):
     out = {"ready_ms": [], "show_ms": [], "hidden_rss_mb": [], "hidden_pss_mb": [], "shown_rss_mb": [],
            "shown_pss_mb": [], "idle_cpu_ms_per_10s": [], "idle_wakeups_per_10s": []}
-    for _ in range(runs):
+    cache = tempfile.mkdtemp(prefix="osk-bench-cache-")
+    for run in range(runs + 1):
         base = tempfile.mkdtemp(prefix="osk-bench-")
         args = [binary, "-D", "--hidden", "-L", "576", "-H", "576", "--xkb", "fi", *THEME_ARGS,
                 "--data", os.path.join(ROOT, "data"), "--langs", "en,fi", "--dict", DICTS]
         log = open(os.path.join(base, "log"), "w+")
-        env = dict(os.environ, XDG_RUNTIME_DIR=os.environ.get("XDG_RUNTIME_DIR", base), XDG_STATE_HOME=base)
+        env = dict(os.environ, XDG_RUNTIME_DIR=os.environ.get("XDG_RUNTIME_DIR", base), XDG_STATE_HOME=base,
+                   XDG_CACHE_HOME=cache)
         t0 = time.monotonic()
         p = subprocess.Popen(args, stdout=log, stderr=log, env=env)
 
@@ -151,6 +168,9 @@ def bench_daemon(binary, runs):
 
         try:
             wait_for(r"using xkb layout")
+            if run == 0:
+                out.setdefault("ready_cold_ms", []).append((time.monotonic() - t0) * 1000)
+                continue
             out["ready_ms"].append((time.monotonic() - t0) * 1000)
             time.sleep(1.0)
             r, s = proc_mem(p.pid)
@@ -186,14 +206,18 @@ def main():
     ap.add_argument("--runs", type=int, default=5)
     ap.add_argument("--live", action="store_true")
     ap.add_argument("--json")
+    ap.add_argument("--only", help="comma separated: decoder,trace,daemon")
     a = ap.parse_args()
     for k in ("trace", "decode", "daemon"):
         setattr(a, k, os.path.abspath(getattr(a, k)))
 
+    only = set(a.only.split(",")) if a.only else {"decoder", "trace", "daemon"}
     r = {"binary_kb": os.path.getsize(a.daemon) / 1024}
-    r["decoder"] = bench_decoder(a.decode, max(1, a.runs // 2))
-    r["trace"] = bench_trace(a.trace, a.runs)
-    if a.live:
+    if "decoder" in only:
+        r["decoder"] = bench_decoder(a.decode, max(1, a.runs // 2))
+    if "trace" in only:
+        r["trace"] = bench_trace(a.trace, a.runs)
+    if a.live and "daemon" in only:
         r["daemon"] = bench_daemon(a.daemon, max(1, a.runs // 2))
 
     def show(d, indent=""):
