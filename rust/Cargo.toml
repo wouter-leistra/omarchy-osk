@@ -1,0 +1,24 @@
+[package]
+name = "omarchy-osk"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+description = "Gboard-style on-screen keyboard for Omarchy (Rust port of the wvkbd fork)"
+
+[[bin]]
+name = "omarchy-oskd"
+path = "src/main.rs"
+
+[dependencies]
+wayland-client = "0.31"
+wayland-protocols = { version = "0.32", features = ["client", "staging", "unstable"] }
+wayland-protocols-wlr = { version = "0.3", features = ["client"] }
+wayland-protocols-misc = { version = "0.3", features = ["client"] }
+xkbcommon = { version = "0.9", default-features = false }
+cairo-rs = { version = "0.22", features = ["png"] }
+pango = "0.22"
+pangocairo = "0.22"
+libc = "0.2"
+
+[profile.release]
+debug = 1
