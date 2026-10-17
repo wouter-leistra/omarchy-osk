@@ -31,6 +31,7 @@
 static void kbd_draw_suggestions(struct kbd *kb);
 static void kbd_clear_trail(struct kbd *kb);
 static void kbd_update_completions(struct kbd *kb);
+static void kbd_init_langs(struct kbd *kb);
 
 /* ---------------------------------------------------------------------- */
 /* typing through the xkb keymap                                           */
@@ -102,30 +103,6 @@ kbd_lookup_cp(struct kbd *kb, uint32_t cp, xkb_keycode_t *kc_out,
 }
 
 #define LONGPRESS_MS 350
-
-/* long-press alternates, Gboard style: numbers on the top row first */
-static const char *alternates[][2] = {
-	{"q", "1"}, {"w", "2"}, {"e", "3éèêë€"}, {"r", "4"}, {"t", "5"},
-	{"y", "6ÿý"}, {"u", "7üúùû"}, {"i", "8íìîï"}, {"o", "9óòôõøœ"},
-	{"p", "0"}, {"a", "áàâãæ"}, {"s", "šß§"}, {"d", "ð"}, {"g", "ğ"},
-	{"l", "ł"}, {"z", "žź"}, {"c", "çč©"}, {"n", "ñń"}, {"ö", "øœ"},
-	{"ä", "æ"}, {".", "?!…"}, {",", ":;'\""}, {"-", "–—_·"},
-	{"$", "£€¥¢"}, {"€", "£$¥¢"}, {"?", "¿"}, {"!", "¡"}, {"'", "‘’‚"},
-	{"\"", "“”„«»"}, {"%", "‰"}, {"0", "°"}, {"/", "\\"}, {"(", "[{<"},
-	{")", "]}>"}, {"*", "×†"}, {"+", "±"}, {"=", "≠≈"}, {"&", "§"},
-	{"1", "¹½⅓¼"}, {"2", "²⅔"}, {"3", "³¾"},
-};
-
-static const char *
-key_alternates(struct key *k)
-{
-	if (k->type != Char)
-		return NULL;
-	for (size_t i = 0; i < sizeof(alternates) / sizeof(*alternates); i++)
-		if (!strcmp(alternates[i][0], k->label))
-			return alternates[i][1];
-	return NULL;
-}
 
 static void kbd_upload_keymap(struct kbd *kb, const char *str);
 
@@ -202,14 +179,6 @@ kbd_backspace(struct kbd *kb, uint32_t time, int count)
 		kbd_tap_code(kb, time, KEY_BACKSPACE, 0);
 }
 
-static uint32_t
-cp_upper(uint32_t cp)
-{
-	if ((cp >= 'a' && cp <= 'z') || (cp >= 0xE0 && cp <= 0xFE && cp != 0xF7))
-		return cp - 32;
-	return cp;
-}
-
 static void
 utf8_capitalize(char *s, bool all)
 {
@@ -218,7 +187,7 @@ utf8_capitalize(char *s, bool all)
 	char out[SWIPE_MAX_WORD];
 	int o = 0;
 	for (int i = 0; i < n && o < SWIPE_MAX_WORD - 5; i++)
-		o += utf8_encode((all || i == 0) ? cp_upper(cps[i]) : cps[i], out + o);
+		o += utf8_encode((all || i == 0) ? lang_upper(cps[i]) : cps[i], out + o);
 	out[o] = 0;
 	strcpy(s, out);
 }
@@ -227,8 +196,8 @@ static bool
 utf8_starts_upper(const char *s)
 {
 	uint32_t cp;
-	return utf8_decode(s, &cp, 1) == 1 && cp_upper(cp) == cp &&
-	       cp_upper(cp + 32) == cp;
+	return utf8_decode(s, &cp, 1) == 1 && lang_upper(cp) == cp &&
+	       lang_lower(cp) != cp;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -337,6 +306,7 @@ kbd_init(struct kbd *kb, struct layout *layouts, char *layer_names_list,
 	kb->layout = &kb->layouts[layer];
 	kb->last_abc_layout = &kb->layouts[layer];
 
+	kbd_init_langs(kb);
 	create_and_upload_keymap(kb, kb->layout->keymap_name, 0);
 }
 
@@ -390,9 +360,16 @@ kbd_get_key(struct kbd *kb, uint32_t x, uint32_t y)
 {
 	struct key *k = kb->layout->keys;
 	while (k->type != Last) {
-		if ((k->type != EndRow) && (k->type != Pad) && (x >= k->x) &&
+		if ((k->type != EndRow) && (x >= k->x) &&
 		    (y >= k->y) && (x < k->x + k->w) && (y < k->y + k->h)) {
-			return k;
+			if (k->type != Pad)
+				return k;
+			/* the gap beside a centred row belongs to its outer key */
+			if (k[1].type != EndRow && k[1].type != Last && k[1].type != Pad)
+				return k + 1;
+			if (k != kb->layout->keys && k[-1].type != EndRow && k[-1].type != Pad)
+				return k - 1;
+			return NULL;
 		}
 		k++;
 	}
@@ -652,7 +629,7 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
 static bool
 key_is_letter(struct key *k)
 {
-	return k->type == Char && strcmp(k->label, k->shift_label) != 0;
+	return k->type == Char && k->letter;
 }
 
 static bool
@@ -674,20 +651,76 @@ kbd_commit_word(struct kbd *kb, uint32_t time, const char *w, bool replace_word)
 	kb->after_space = false;
 }
 
-static const char *
-lang_display_name(const char *code)
+/* long-press keys of a key, for the active language */
+static void
+kbd_key_alts(struct kbd *kb, struct key *k)
 {
-	static const char *names[][2] = {
-		{"en", "English"}, {"fi", "Suomi"},     {"sv", "Svenska"},
-		{"nb", "Norsk"},   {"da", "Dansk"},     {"de", "Deutsch"},
-		{"nl", "Nederlands"}, {"fr", "Français"}, {"es", "Español"},
-		{"it", "Italiano"}, {"pt", "Português"}, {"et", "Eesti"},
-		{"pl", "Polski"},
-	};
-	for (size_t i = 0; i < sizeof(names) / sizeof(*names); i++)
-		if (!strcmp(names[i][0], code))
-			return names[i][1];
-	return code;
+	k->nalts = 0;
+	if (k->type != Char)
+		return;
+	struct lang *l = &kb->langs[kb->cur_lang];
+	k->nalts = lang_alternates(l->nrows ? l : NULL, k->label,
+	                           k->lang_row ? k->lang_row - 1 : -1, k->lang_col,
+	                           k->alts, KBD_MAX_ALTS);
+}
+
+#define PUT_KEY(o, ...) memcpy((o)++, &(struct key){__VA_ARGS__}, sizeof(struct key))
+
+/* The letter layout of a language: its rows, centred, with Shift and
+ * Backspace around the last one (both from the built-in layout, as is the
+ * bottom row). */
+static struct key *
+kbd_build_lang_keys(struct lang *l, struct key *tmpl)
+{
+	struct key *shift = NULL, *bksp = NULL, *bottom = tmpl;
+	for (struct key *k = tmpl; k->type != Last; k++) {
+		if (k->type == Mod && k->code == Shift && !shift)
+			shift = k;
+		if (k->type == Code && k->code == KEY_BACKSPACE && !bksp)
+			bksp = k;
+		if (k->type == EndRow)
+			bottom = k + 1;
+	}
+	size_t nbottom = 1;
+	while (bottom[nbottom - 1].type != Last)
+		nbottom++;
+
+	int last = l->nrows - 1;
+	double units = l->nkeys[last] + 2;
+	for (int r = 0; r < last; r++)
+		units = fmax(units, l->nkeys[r]);
+	double side = (units - l->nkeys[last]) / 2;
+
+	struct key *keys = calloc(nbottom + l->nrows * (LANG_MAX_ROW_KEYS + 3),
+	                          sizeof(*keys));
+	struct key *o = keys;
+	for (int r = 0; r < l->nrows; r++) {
+		double pad = (units - l->nkeys[r]) / 2;
+		if (r == last && shift)
+			PUT_KEY(o, .label = shift->label, .shift_label = shift->shift_label,
+			        .width = side, .type = Mod, .code = Shift,
+			        .scheme = shift->scheme);
+		else if (pad > 0.01)
+			PUT_KEY(o, .label = "", .shift_label = "", .width = pad, .type = Pad);
+		for (int i = 0; i < l->nkeys[r]; i++) {
+			struct lang_key *lk = &l->rows[r][i];
+			uint32_t cp[2];
+			bool letter = utf8_decode(lk->label, cp, 2) == 1 &&
+			              lang_is_letter(cp[0]);
+			PUT_KEY(o, .label = strdup(lk->label), .shift_label = strdup(lk->shift),
+			        .width = 1.0, .type = Char, .letter = letter,
+			        .lang_row = r + 1, .lang_col = i);
+		}
+		if (r == last && bksp)
+			PUT_KEY(o, .label = bksp->label, .shift_label = bksp->shift_label,
+			        .width = side, .type = Code, .code = KEY_BACKSPACE,
+			        .scheme = bksp->scheme);
+		else if (pad > 0.01)
+			PUT_KEY(o, .label = "", .shift_label = "", .width = pad, .type = Pad);
+		PUT_KEY(o, .label = "", .shift_label = "", .type = EndRow);
+	}
+	memcpy(o, bottom, nbottom * sizeof(*o));
+	return keys;
 }
 
 static void
@@ -701,34 +734,84 @@ lang_state_path(char *buf, size_t len)
 		         getenv("HOME") ? getenv("HOME") : "");
 }
 
-/* pick the remembered language, or the first dictionary */
+static void
+kbd_set_lang(struct kbd *kb, int i)
+{
+	kb->cur_lang = i;
+	kb->layouts[Abc].keys = kb->lang_keys[i];
+	swipe_set_lang_code(kb->langs[i].code);
+	for (int j = 0; j < NumLayouts; j++)
+		for (struct key *k = kb->layouts[j].keys; k->type != Last; k++)
+			kbd_key_alts(kb, k);
+	if (kb->w)
+		kbd_init_layout(&kb->layouts[Abc], kb->w, kb->h, kb->suggest_h);
+}
+
+/* pick the remembered language, or the first one */
 void
 kbd_load_lang(struct kbd *kb)
 {
-	int n = swipe_lang_count();
-	if (n < 2)
-		return;
-	swipe_set_lang(0);
+	int pick = 0;
 	char path[512], code[16] = {0};
 	lang_state_path(path, sizeof(path));
 	FILE *f = fopen(path, "r");
-	if (!f)
-		return;
-	if (fscanf(f, "%15s", code) == 1)
-		for (int i = 0; i < n; i++)
-			if (!strcmp(swipe_lang_code(i), code))
-				swipe_set_lang(i);
-	fclose(f);
+	if (f) {
+		if (fscanf(f, "%15s", code) == 1)
+			for (int i = kb->nlangs - 1; i >= 0; i--)
+				if (!strcmp(kb->langs[i].code, code))
+					pick = i;
+		fclose(f);
+	}
+	kbd_set_lang(kb, pick);
+}
+
+/* Languages from --langs and the layout data. Without data the built-in
+ * layout is used for every dictionary. */
+static void
+kbd_init_langs(struct kbd *kb)
+{
+	struct key *tmpl = kb->layouts[Abc].keys;
+	for (int i = 0; i < NumLayouts; i++)
+		for (struct key *k = kb->layouts[i].keys; k->type != Last; k++) {
+			uint32_t cp[2];
+			k->letter = k->type == Char && strcmp(k->label, k->shift_label) &&
+			            utf8_decode(k->label, cp, 2) == 1 &&
+			            lang_is_letter(cp[0]);
+		}
+
+	kb->nlangs = langs_load(kb->lang_list, kb->data_dirs, &kb->langs);
+	if (!kb->nlangs) {
+		if (kb->lang_list)
+			fprintf(stderr, "omarchy-osk: no layout data, using the built-in layout\n");
+		kb->nlangs = swipe_lang_count() ? swipe_lang_count() : 1;
+		kb->langs = calloc(kb->nlangs, sizeof(*kb->langs));
+		for (int i = 0; i < kb->nlangs; i++) {
+			snprintf(kb->langs[i].code, sizeof(kb->langs[i].code), "%s",
+			         swipe_lang_count() ? swipe_lang_code(i) : "xkb");
+			snprintf(kb->langs[i].name, sizeof(kb->langs[i].name), "%s",
+			         kb->langs[i].code);
+		}
+	}
+	kb->lang_keys = calloc(kb->nlangs, sizeof(*kb->lang_keys));
+	for (int i = 0; i < kb->nlangs; i++) {
+		kb->lang_keys[i] = kb->langs[i].nrows
+		                       ? kbd_build_lang_keys(&kb->langs[i], tmpl)
+		                       : tmpl;
+		if (kb->debug)
+			fprintf(stderr, "omarchy-osk: language %s (%s), layout %s\n",
+			        kb->langs[i].code, kb->langs[i].name,
+			        kb->langs[i].nrows ? kb->langs[i].layout : "built-in");
+	}
+	kbd_load_lang(kb);
 }
 
 static void
 kbd_switch_lang(struct kbd *kb, int dir)
 {
-	int n = swipe_lang_count();
+	int n = kb->nlangs;
 	if (n < 2)
 		return;
-	int cur = swipe_get_lang() < 0 ? 0 : swipe_get_lang();
-	swipe_set_lang((cur + dir + n) % n);
+	kbd_set_lang(kb, (kb->cur_lang + dir + n) % n);
 	kbd_reset_text(kb);
 	kbd_draw_layout(kb);
 
@@ -736,13 +819,11 @@ kbd_switch_lang(struct kbd *kb, int dir)
 	lang_state_path(path, sizeof(path));
 	char *slash = strrchr(path, '/');
 	*slash = 0;
-	char cmd[600];
-	snprintf(cmd, sizeof(cmd), "%s", path);
-	mkdir(cmd, 0755);
+	mkdir(path, 0755);
 	*slash = '/';
 	FILE *f = fopen(path, "w");
 	if (f) {
-		fprintf(f, "%s\n", swipe_lang_code(swipe_get_lang()));
+		fprintf(f, "%s\n", kb->langs[kb->cur_lang].code);
 		fclose(f);
 	}
 }
@@ -795,10 +876,7 @@ kbd_update_completions(struct kbd *kb)
 	uint32_t cps[SWIPE_MAX_CPS];
 	int n = utf8_decode(kb->word, cps, SWIPE_MAX_CPS), o = 0;
 	for (int i = 0; i < n; i++) {
-		uint32_t c = cps[i];
-		if ((c >= 'A' && c <= 'Z') || (c >= 0xC0 && c <= 0xDE && c != 0xD7))
-			c += 32;
-		o += utf8_encode(c, lower + o);
+		o += utf8_encode(lang_lower(cps[i]), lower + o);
 	}
 	lower[o] = 0;
 	struct swipe_result r;
@@ -859,11 +937,18 @@ kbd_tap_cp(struct kbd *kb, uint32_t time, uint32_t cp, bool letter)
 static void
 kbd_tap_char(struct kbd *kb, struct key *k, uint32_t time)
 {
-	bool letter = key_is_letter(k);
-	const char *text = (letter && kbd_shifted(kb)) ? k->shift_label : k->label;
-	uint32_t cp;
-	if (utf8_decode(text, &cp, 1) == 1)
-		kbd_tap_cp(kb, time, cp, letter);
+	const char *text = kbd_shifted(kb) ? k->shift_label : k->label;
+	uint32_t cps[2];
+	int n = utf8_decode(text, cps, 2);
+	if (n == 1) {
+		kbd_tap_cp(kb, time, cps[0], key_is_letter(k));
+	} else if (n > 1) {
+		/* a letter with combining marks, or several characters */
+		kbd_type_utf8(kb, time, text);
+		kbd_reset_text(kb);
+		if (kb->mods & (Shift | Ctrl | Alt | Super))
+			kbd_unlatch(kb, time);
+	}
 }
 
 static void
@@ -1027,16 +1112,16 @@ kbd_longpress(struct kbd *kb)
 		kbd_clear_last_popup(kb);
 		return;
 	}
-	const char *alts = k ? key_alternates(k) : NULL;
 	if (kb->debug)
 		fprintf(stderr, "%ld longpress key=%s swiping=%d\n", (long)monotime(), k ? k->label : "-", kb->swiping);
-	if (!alts || kb->swiping)
+	if (!k || !k->nalts || kb->swiping)
 		return;
 
 	bool upper = key_is_letter(k) && kbd_shifted(kb);
-	kb->alt_n = utf8_decode(alts, kb->alt_cps, 16);
-	for (int i = 0; i < kb->alt_n && upper; i++)
-		kb->alt_cps[i] = cp_upper(kb->alt_cps[i]);
+	int fit = k->w ? kb->w / k->w : 1;
+	kb->alt_n = k->nalts < fit ? k->nalts : fit;
+	for (int i = 0; i < kb->alt_n; i++)
+		kb->alt_cps[i] = upper ? lang_upper(k->alts[i]) : k->alts[i];
 	kb->alt_sel = 0;
 	kb->alt_w = k->w;
 	kb->alt_h = k->h;
@@ -1081,7 +1166,7 @@ kbd_touch_down(struct kbd *kb, uint32_t time, int32_t x, int32_t y)
 		kbd_draw_key(kb, k, Press);
 		kb->space_mode = SpaceTap;
 		kb->lang_dir = 1;
-		if (key_alternates(k) || key_is_space(k))
+		if (k->nalts || key_is_space(k))
 			kb->longpress_at = monotime() + LONGPRESS_MS;
 		return;
 	}
@@ -1148,7 +1233,8 @@ kbd_touch_motion(struct kbd *kb, uint32_t time, int32_t x, int32_t y)
 	if (!kb->swiping) {
 		struct key *over = (x < 0 || y < 0) ? NULL : kbd_get_key(kb, x, y);
 		double fx = (double)x - kb->pts_x[0], fy = (double)y - kb->pts_y[0];
-		if (kb->swipe_enabled && !kb->private_mode && kb->layout->abc && key_is_letter(dk) &&
+		if (kb->swipe_enabled && swipe_lang_active() && !kb->private_mode &&
+		    kb->layout->abc && key_is_letter(dk) &&
 		    over != dk && fx * fx + fy * fy > dk->w * dk->w * 0.36) {
 			kb->swiping = true;
 			kb->longpress_at = 0;
@@ -1189,20 +1275,18 @@ kbd_touch_up(struct kbd *kb, uint32_t time)
 		kbd_close_alternates(kb);
 		kbd_draw_key(kb, dk, Unpress);
 		/* accented letters continue the current word */
-		bool letter = (cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z') ||
-		              (cp >= 0xC0 && cp <= 0x17F && cp != 0xD7 && cp != 0xF7);
-		kbd_tap_cp(kb, time, cp, letter);
+		kbd_tap_cp(kb, time, cp, lang_is_letter(cp));
 		kb->swiping = false;
 		return;
 	}
 
 	if (key_is_space(dk)) {
+		kbd_draw_key(kb, dk, Unpress);
 		if (kb->space_mode == SpaceLang)
 			kbd_switch_lang(kb, kb->lang_dir);
 		else if (kb->space_mode == SpaceTap)
 			kbd_tap_space(kb, time);
 		kb->space_mode = SpaceTap;
-		kbd_draw_key(kb, dk, Unpress);
 	} else if (kb->swiping) {
 		kbd_clear_trail(kb);
 		kbd_finish_swipe(kb, time);
@@ -1253,11 +1337,10 @@ kbd_key_label(struct kbd *kb, struct key *k)
 	if (k->type == Mod && k->code == Shift)
 		return (kb->mods & CapsLock) ? k->shift_label : k->label;
 	if (k->type == Char)
-		return (key_is_letter(k) && kbd_shifted(kb)) ? k->shift_label : k->label;
-	if (key_is_space(k) && swipe_lang_count() > 1) {
-		static char buf[64];
-		snprintf(buf, sizeof(buf), "‹  %s  ›",
-		         lang_display_name(swipe_lang_code(swipe_get_lang())));
+		return kbd_shifted(kb) ? k->shift_label : k->label;
+	if (key_is_space(k) && kb->nlangs > 1) {
+		static char buf[80];
+		snprintf(buf, sizeof(buf), "‹  %s  ›", kb->langs[kb->cur_lang].name);
 		return buf;
 	}
 	return k->label;
@@ -1284,10 +1367,12 @@ kbd_draw_key(struct kbd *kb, struct key *k, enum key_draw_type type)
 	drw_draw_text(kb->surf, text, k->x, k->y, k->w, k->h, KBD_KEY_BORDER,
 	              label, space_label ? kb->hint_font : scheme->font_description);
 
-	const char *alts = key_alternates(k);
-	if (alts && kb->hint_font && key_is_letter(k) && alts[0] >= '0' &&
-	    alts[0] <= '9') {
-		char hint[2] = {alts[0], 0};
+	/* the digit on long press of the top row */
+	if (k->nalts && kb->hint_font && k->lang_row == 1 &&
+	    k->lang_col < 10 &&
+	    k->alts[0] == kb->langs[kb->cur_lang].number_row[k->lang_col]) {
+		char hint[8] = {0};
+		utf8_encode(k->alts[0], hint);
 		Color dim = text;
 		dim.bgra[3] = 140;
 		drw_draw_text(kb->surf, dim, k->x + k->w * 0.62, k->y + KBD_KEY_BORDER,
@@ -1408,30 +1493,63 @@ draw_over_inset(struct drwsurf *ds, uint32_t x, uint32_t y, uint32_t width,
 }
 
 static void
-kbd_collect_cps(struct kbd *kb, const char *s, uint32_t *cps, int *n, int max)
+kbd_collect_cp(uint32_t cp, uint32_t *cps, int *n, int max)
+{
+	for (int j = 0; j < *n; j++)
+		if (cps[j] == cp)
+			return;
+	if (*n < max)
+		cps[(*n)++] = cp;
+}
+
+static void
+kbd_collect_cps(const char *s, uint32_t *cps, int *n, int max)
 {
 	uint32_t buf[32];
 	int m = utf8_decode(s, buf, 32);
-	for (int i = 0; i < m; i++) {
-		bool dup = false;
-		for (int j = 0; j < *n; j++)
-			dup |= cps[j] == buf[i];
-		if (!dup && *n < max)
-			cps[(*n)++] = buf[i];
-	}
+	for (int i = 0; i < m; i++)
+		kbd_collect_cp(buf[i], cps, n, max);
 }
 
-/* keycodes the on-screen keyboard never sends: unused ones and the keypad
- * (this keymap only belongs to the virtual keyboard, not the Type Cover) */
 static bool
-kbd_spare_keycode(struct kbd *kb, xkb_keycode_t kc)
+kbd_modifier_key(struct kbd *kb, xkb_keycode_t kc)
 {
-	const char *name = xkb_keymap_key_get_name(kb->xkb_keymap, kc);
-	if (!name)
-		return false;
-	if (xkb_keymap_num_layouts_for_key(kb->xkb_keymap, kc) == 0)
-		return true;
-	return !strncmp(name, "KP", 2) && strcmp(name, "KPEN") != 0;
+	const xkb_keysym_t *syms;
+	xkb_level_index_t levels = xkb_keymap_num_levels_for_key(kb->xkb_keymap, kc, 0);
+	for (xkb_level_index_t lvl = 0; lvl < levels; lvl++) {
+		int n = xkb_keymap_key_get_syms_by_level(kb->xkb_keymap, kc, 0, lvl, &syms);
+		for (int i = 0; i < n; i++)
+			if ((syms[i] >= XKB_KEY_ISO_Lock && syms[i] <= XKB_KEY_ISO_Level5_Lock) ||
+			    (syms[i] >= XKB_KEY_Shift_L && syms[i] <= XKB_KEY_Hyper_R) ||
+			    syms[i] == XKB_KEY_Mode_switch || syms[i] == XKB_KEY_Num_Lock)
+				return true;
+	}
+	return false;
+}
+
+/* Keycodes the on-screen keyboard never sends, best first: unused ones, the
+ * keypad, then keys such as F1-F24 and media keys. This keymap only belongs
+ * to the virtual keyboard, not to the Type Cover. Keys it does send (the
+ * ones of its Code keys and those that type the characters of its layouts)
+ * and modifiers stay as they are. */
+static int
+kbd_spare_keycodes(struct kbd *kb, const bool *used, xkb_keycode_t *out, int max)
+{
+	int n = 0;
+	xkb_keycode_t last = xkb_keymap_max_keycode(kb->xkb_keymap);
+	for (int pass = 0; pass < 3; pass++)
+		for (xkb_keycode_t kc = 9; kc <= last && kc < 256 && n < max; kc++) {
+			const char *name = xkb_keymap_key_get_name(kb->xkb_keymap, kc);
+			if (!name || used[kc])
+				continue;
+			bool empty = xkb_keymap_num_layouts_for_key(kb->xkb_keymap, kc) == 0;
+			bool keypad = !strncmp(name, "KP", 2) && strcmp(name, "KPEN") != 0;
+			if (empty ? pass == 0
+			          : keypad ? pass == 1
+			                   : pass == 2 && !kbd_modifier_key(kb, kc))
+				out[n++] = kc;
+		}
+	return n;
 }
 
 /* Characters on the keyboard that the xkb layout cannot produce (é, ñ, —,
@@ -1440,48 +1558,70 @@ kbd_spare_keycode(struct kbd *kb, xkb_keycode_t kc)
 static void
 kbd_extend_keymap(struct kbd *kb)
 {
-	uint32_t cps[256];
-	int n = 0;
-	for (int l = 0; l < NumLayouts; l++)
-		for (struct key *k = layouts[l].keys; k->type != Last; k++)
-			if (k->type == Char) {
-				kbd_collect_cps(kb, k->label, cps, &n, 256);
-				kbd_collect_cps(kb, k->shift_label, cps, &n, 256);
+	/* every character of every language: keys, shifted keys and
+	 * long-press keys with their upper case */
+	enum { MAX_CPS = 2048 };
+	static uint32_t cps[MAX_CPS], missing[MAX_CPS];
+	int n = 0, cur = kb->cur_lang;
+	for (int li = 0; li < kb->nlangs; li++) {
+		kbd_set_lang(kb, li);
+		for (int l = 0; l < NumLayouts; l++)
+			for (struct key *k = kb->layouts[l].keys; k->type != Last; k++) {
+				if (k->type != Char)
+					continue;
+				kbd_collect_cps(k->label, cps, &n, MAX_CPS);
+				kbd_collect_cps(k->shift_label, cps, &n, MAX_CPS);
+				for (int i = 0; i < k->nalts; i++) {
+					kbd_collect_cp(k->alts[i], cps, &n, MAX_CPS);
+					kbd_collect_cp(lang_upper(k->alts[i]), cps, &n, MAX_CPS);
+				}
 			}
-	for (size_t i = 0; i < sizeof(alternates) / sizeof(*alternates); i++) {
-		kbd_collect_cps(kb, alternates[i][1], cps, &n, 256);
-		/* uppercase variants of accented letters */
-		uint32_t buf[32];
-		int m = utf8_decode(alternates[i][1], buf, 32);
-		for (int j = 0; j < m; j++) {
-			char up[8] = {0};
-			utf8_encode(cp_upper(buf[j]), up);
-			kbd_collect_cps(kb, up, cps, &n, 256);
-		}
 	}
+	kbd_set_lang(kb, cur);
 
 	size_t extra_cap = 8192, extra_len = 0;
 	char *extra = calloc(1, extra_cap);
-	xkb_keycode_t kc = 9, max = xkb_keymap_max_keycode(kb->xkb_keymap);
 	int added = 0;
-	uint32_t missing[256];
 	int nmissing = 0;
+	bool used[256] = {0};
 	for (int i = 0; i < n; i++) {
-		xkb_keycode_t dummy_kc;
-		xkb_mod_mask_t dummy_mask;
-		if (!kbd_lookup_cp(kb, cps[i], &dummy_kc, &dummy_mask))
+		xkb_keycode_t kc;
+		xkb_mod_mask_t mask;
+		if (!kbd_lookup_cp(kb, cps[i], &kc, &mask))
 			missing[nmissing++] = cps[i];
+		else if (kc < 256)
+			used[kc] = true;
 	}
+	/* space and the digits type through the keymap too, as do shortcuts */
+	for (const char *c = " 0123456789abcdefghijklmnopqrstuvwxyz"; *c; c++) {
+		xkb_keycode_t kc;
+		xkb_mod_mask_t mask;
+		if (kbd_lookup_cp(kb, (uint8_t)*c, &kc, &mask) && kc < 256)
+			used[kc] = true;
+	}
+	for (int l = 0; l < NumLayouts; l++)
+		for (struct key *k = kb->layouts[l].keys; k->type != Last; k++)
+			if (k->type == Code && k->code + 8 < 256)
+				used[k->code + 8] = true;
+	static const int sent[] = {KEY_LEFTCTRL, KEY_LEFTALT, KEY_LEFTMETA,
+	                           KEY_LEFTSHIFT, KEY_LEFT, KEY_RIGHT, KEY_BACKSPACE};
+	for (size_t i = 0; i < sizeof(sent) / sizeof(*sent); i++)
+		used[sent[i] + 8] = true;
+	xkb_keycode_t spare[256];
+	int nspare = kbd_spare_keycodes(kb, used, spare, 256), next = 0;
 	if (kb->debug)
-		fprintf(stderr, "omarchy-osk: %d characters missing from the keymap\n", nmissing);
+		fprintf(stderr, "omarchy-osk: room for %d extra characters\n", nspare * 4);
+	if (kb->debug)
+		fprintf(stderr, "omarchy-osk: %d of %d characters missing from the keymap\n",
+		        nmissing, n);
 	/* four characters per free key: plain, Shift, AltGr, Shift+AltGr */
 	for (int i = 0; i < nmissing; i += 4) {
-		while (kc <= max && kc < 256 && !kbd_spare_keycode(kb, kc))
-			kc++;
-		if (kc > max || kc >= 256) {
-			fprintf(stderr, "omarchy-osk: no free keycodes left\n");
+		if (next == nspare) {
+			fprintf(stderr, "omarchy-osk: no free keycodes left for %d characters\n",
+			        nmissing - i);
 			break;
 		}
+		xkb_keycode_t kc = spare[next++];
 		char syms[4][64];
 		for (int j = 0; j < 4; j++) {
 			if (i + j < nmissing)
@@ -1500,7 +1640,6 @@ kbd_extend_keymap(struct kbd *kb)
 		}
 		extra_len += snprintf(extra + extra_len, extra_cap - extra_len, fmt,
 		                      kname, syms[0], syms[1], syms[2], syms[3]);
-		kc++;
 		added += i + 4 <= nmissing ? 4 : nmissing - i;
 	}
 	cp_cache_n = 0;

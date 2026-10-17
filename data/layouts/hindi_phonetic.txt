@@ -1,0 +1,28 @@
+ट !shift!ठ
+ड !shift!ढ ड़ ढ़
+े !shift!ै ए ऍ ऐ ऎ
+र !shift!ृ ऋ ॠ ॄ ऱ
+त !shift!थ त्र
+य !shift!य़ ॺ
+ु !shift!ू उ ऊ ॷ ॶ
+ि !shift!ी इ ई
+ो !shift!ौ ओ औ ऑ ॵ ॐ ॉ ॳ ॴ ऒ
+प !shift!फ़
+
+ा !shift!अ आ ॅ ॲ ऄ
+स !shift!श श्र ष
+द !shift!ध ड़ ॾ ढ़ ॸ
+फ !shift! ़ फ़
+ग !shift!घ ग़ ॻ
+ह !shift!ः
+ज !shift!झ ज़ ॼ ॹ
+क !shift!ख क़ ख़
+ल !shift!ळ ऴ ॣ ऌ ॡ ॢ
+
+ज्ञ !shift!ज़
+क्ष !shift!ष
+च !shift!छ
+व !shift!्
+ब !shift!भ ॿ ऽ ॰
+न !shift!ण ङ ऩ ञ
+म !shift!ं ँ ऀ

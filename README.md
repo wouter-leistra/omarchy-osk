@@ -12,10 +12,14 @@ original project.
   removes the whole word.
 - **English and Finnish dictionaries** (Swedish included); swipe across the
   space bar to switch language, the choice is remembered.
-- **Finnish/Swedish layout** (å ä ö), typed through a real `fi` xkb keymap so
-  symbols like `@ € | £` come out right.
-- **Long-press alternates** (numbers on the top row, é ü ñ ø …, extra
-  punctuation); characters the layout lacks are added to the keymap.
+- **A layout per language**, taken from
+  [HeliBoard](https://github.com/HeliBorg/HeliBoard): about 80 layouts
+  (qwerty, qwertz, azerty, Cyrillic, Greek, …) for 100+ languages. Finnish
+  gets `å ö ä`, English plain qwerty, German qwertz. Keys type through a
+  real xkb keymap (`fi` by default) so symbols like `@ € | £` come out right.
+- **Long-press alternates** per language (numbers on the top row, ä å on
+  `a` in English, é ü ñ ø …, extra punctuation); characters the keymap lacks
+  are added to it.
 - **Docks below windows**: Hyprland shrinks the windows instead of the
   keyboard covering what you type.
 - **Omarchy theme and font**, re-applied on theme/font change.
@@ -143,10 +147,17 @@ built (`unlock/omarchy-look`), so after a theme change run
 `~/.config/omarchy-osk/config`:
 
 ```sh
-OSK_LANGS=en,fi          # swipe dictionaries, in switching order
+OSK_LANGS=en,fi          # languages, in space-bar switching order
 OSK_HEIGHT_RATIO=0.40    # share of the screen height
 OSK_XKB=fi               # xkb layout[:variant] to type with
 ```
+
+Each language is a tag (`fi`, `de`, `de-CH`, `ru`, `fr-CA` …) with an
+optional layout: `OSK_LANGS=en,fi,de:qwerty` gives German on qwerty instead
+of its default qwertz. A layout name ending in `+` also gets the language's
+extra keys (`fi` uses `qwerty+`: qwerty plus `å ö ä`). The available tags
+and their default layouts are in `data/languages.txt`, the layouts in
+`data/layouts/`.
 
 ## Adding a language
 
@@ -162,28 +173,33 @@ world 456789
 1. Get a frequency list, for example from
    [FrequencyWords](https://github.com/hermitdave/FrequencyWords)
    (`content/2018/<code>/<code>_50k.txt`).
-2. Keep only words that can be swiped on the layout: lowercase letters that
-   have a key, plus `'`. For the Finnish/Swedish layout:
+2. Keep only words that can be swiped on the language's layout: lowercase
+   letters that have a key, plus `'`. For German (`de-DE`: qwertz with
+   `ü ö ä ß` keys):
 
    ```sh
    code=de
    curl -fsSL -o /tmp/$code.txt \
      https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/$code/${code}_50k.txt
-   LC_ALL=C.UTF-8 awk '{w=tolower($1); if (w ~ /^[a-zåäö'"'"']+$/ && $2 >= 5) print w" "$2}' \
+   LC_ALL=C.UTF-8 awk '{w=tolower($1); if (w ~ /^[a-zäöüß'"'"']+$/ && $2 >= 5) print w" "$2}' \
      /tmp/$code.txt > ~/.local/share/omarchy-osk/dict/$code.txt
    ```
 
-   Words containing letters the layout lacks (`ü`, `ß`, `é` …) are skipped
-   for gestures, so for such languages add those letters to the layout as
-   well (see below) and to the awk pattern.
+   Use the letters of the layout in the pattern (`[a-zåäö']` for Finnish,
+   `[а-яё']` for Russian). Letters that are only on long press can't be
+   swiped, so words with them are left out (plain `de` is qwertz with
+   `ü ö ä` only on long press; `de-DE` has them as keys).
 3. Add the code to `OSK_LANGS` in `~/.config/omarchy-osk/config`, in the
    order the space-bar swipe should cycle:
 
    ```sh
-   OSK_LANGS=en,fi,de
+   OSK_LANGS=en,fi,de-DE
    ```
-4. `omarchy-osk-restart`. The space bar shows the language name for common
-   codes (`lang_display_name()` in `keyboard.c`), otherwise the code.
+4. `omarchy-osk-restart`. The space bar shows the name from
+   `data/languages.txt`.
+
+A language without a word list still gets its layout and long-press keys;
+only gestures and suggestions are off while it is active.
 
 To add it to the repo itself, put the file in `dict/` and run
 `make install-user`.
@@ -197,19 +213,36 @@ Two separate things decide what you get:
   always arrive correctly, and characters the keymap lacks (é, ñ, — …) are
   added to spare keycodes automatically. Use the layout your physical
   keyboard uses, e.g. `OSK_XKB=us`, `OSK_XKB=se`, `OSK_XKB=de:nodeadkeys`.
-- **`layout.omarchy.h`** is what the keys *show*. It currently has the
-  Finnish/Swedish letter rows (`å ö ä`), a `?123` symbol page and a `=\<`
-  page with Esc/Tab/Ctrl/Alt/Super/arrows. Each `CH("x", "X")` key types its
-  label (lowercase / shifted), so changing a label is all it takes, e.g.
-  replace `CH("å", "Å")` with `CH("ü", "Ü")` for German. Rows are separated
-  by `EndRow`; key widths are relative within a row.
+- **The language's layout** decides what the letter keys *show* and type.
+  Layouts are plain text files (`data/layouts/`, imported from HeliBoard by
+  `tools/import-heliboard.py`): one key per line, its long-press keys after
+  it, and a blank line between rows:
 
-Long-press alternates live in the `alternates[]` table at the top of
-`keyboard.c` (`{"e", "3éèêë€"}`): the key label, then the characters offered,
-first one pre-selected. Letter keys whose first alternate is a digit show it
-as a hint.
+  ```
+  q
+  w
+  e é è
 
-After editing either file: `make install-user && omarchy-osk-restart`.
+  a
+  ```
+
+  Rows are centred; Shift and Backspace share what the last row leaves
+  free. The `?123` symbol pages and the bottom row stay in
+  `layout.omarchy.h`.
+
+Long-press keys come, in this order, from: the digit on the top row (or the
+language's `[number_row]`), the layout file, the language's `[popup_keys]`
+in `data/locales/<tag>.txt` (HeliBoard format), `data/popups.txt` (the same
+for every language: punctuation, symbols, common accents) and HeliBoard's
+common accents (`locales/more_popups_main.txt`). On a letter key the
+characters that are keys of the layout already are left out, so Finnish `a`
+doesn't offer `ä`, English `a` does.
+
+To change any of it, copy the file to `~/.config/omarchy-osk/` under the same
+name (e.g. `~/.config/omarchy-osk/layouts/qwerty.txt` or
+`~/.config/omarchy-osk/locales/en.txt`) and edit it there: those files win
+over the installed ones. Then `omarchy-osk-restart`. `make check` checks the
+data in the repo.
 
 ## Credits and thanks
 
@@ -233,6 +266,11 @@ After editing either file: `make install-user && omarchy-osk-restart`.
   generated with lv_font_conv from
   [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (Nerd Fonts build,
   SIL OFL 1.1) and Font Awesome 5 Free (SIL OFL 1.1), as upstream's are.
+- The layouts and per-language key data in `data/layouts/`, `data/locales/`
+  and `data/languages.txt` come from
+  [HeliBoard](https://github.com/HeliBorg/HeliBoard) (GPL-3.0), some of
+  whose layouts come from [FlorisBoard](https://github.com/florisboard/florisboard)
+  (Apache-2.0). See [data/README.md](data/README.md).
 - `os-compatibility.c` comes from the Wayland/Weston project (MIT, see
   [COPYING_WESTON](COPYING_WESTON)); the Wayland protocol files in `proto/` and
   `tests/proto/` carry their own copyright notices.

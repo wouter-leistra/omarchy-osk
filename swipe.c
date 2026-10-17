@@ -32,7 +32,8 @@ static int nwords, capwords;
 #define MAX_LANGS 8
 static char lang_codes[MAX_LANGS][16];
 static int nlangs;
-static int active_lang = -1; /* -1: all languages */
+#define NO_LANG -2
+static int active_lang = -1; /* -1: all languages, NO_LANG: none */
 
 int
 swipe_lang_count(void)
@@ -58,10 +59,32 @@ swipe_get_lang(void)
 	return active_lang;
 }
 
+bool
+swipe_set_lang_code(const char *code)
+{
+	/* "fi" for fi.txt; "de-CH" falls back to de.txt */
+	size_t base = strcspn(code, "-_");
+	for (int pass = 0; pass < 2; pass++)
+		for (int i = 0; i < nlangs; i++)
+			if (pass ? !strncmp(lang_codes[i], code, base) && !lang_codes[i][base]
+			         : !strcmp(lang_codes[i], code)) {
+				active_lang = i;
+				return true;
+			}
+	active_lang = nlangs ? NO_LANG : -1;
+	return !nlangs;
+}
+
+bool
+swipe_lang_active(void)
+{
+	return nwords && active_lang != NO_LANG;
+}
+
 static bool
 lang_ok(const struct word *w)
 {
-	return active_lang < 0 || w->lang == active_lang;
+	return active_lang == -1 || w->lang == active_lang;
 }
 
 int

@@ -792,6 +792,10 @@ usage(char *argv0)
     fprintf(stderr, "  -D          - Enable debug\n");
     fprintf(stderr, "  --xkb [layout[:variant]] - xkb layout to type with (default fi)\n");
     fprintf(stderr, "  --dict [file,file]     - Word frequency lists for gesture typing\n");
+    fprintf(stderr, "  --langs [tag[:layout],...] - Languages, each with its layout\n");
+    fprintf(stderr, "                           (default: the dictionaries)\n");
+    fprintf(stderr, "  --data [dir:dir]       - Layout data search path (default:\n");
+    fprintf(stderr, "                           ~/.config/omarchy-osk:~/.local/share/omarchy-osk)\n");
     fprintf(stderr, "  --no-swipe             - Disable gesture typing and suggestions\n");
     fprintf(stderr, "  --trail [rrggbb|aa]    - Set color of the gesture trail\n");
     fprintf(stderr, "  --fg-accent [rrggbb|aa]    - Set color of the enter key\n");
@@ -1233,6 +1237,18 @@ main(int argc, char **argv)
                 *colon = 0;
                 keyboard.xkb_variant = colon + 1;
             }
+        } else if (!strcmp(argv[i], "--langs")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            keyboard.lang_list = estrdup(argv[++i]);
+        } else if (!strcmp(argv[i], "--data")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            keyboard.data_dirs = estrdup(argv[++i]);
         } else if (!strcmp(argv[i], "--dict")) {
             if (i >= argc - 1) {
                 usage(argv[0]);
@@ -1358,7 +1374,24 @@ main(int argc, char **argv)
     if (dict_paths && !no_swipe)
         swipe_dict_load(dict_paths);
     keyboard.swipe_enabled = swipe_dict_loaded();
-    kbd_load_lang(&keyboard);
+
+    /* one language per dictionary unless --langs says otherwise */
+    if (!keyboard.lang_list && swipe_lang_count()) {
+        char list[256] = "";
+        for (i = 0; i < swipe_lang_count(); i++)
+            snprintf(list + strlen(list), sizeof(list) - strlen(list), "%s%s",
+                     i ? "," : "", swipe_lang_code(i));
+        keyboard.lang_list = estrdup(list);
+    }
+    if (!keyboard.data_dirs) {
+        const char *home = getenv("HOME") ? getenv("HOME") : "";
+        const char *cfg = getenv("XDG_CONFIG_HOME"), *data = getenv("XDG_DATA_HOME");
+        char dirs[1024];
+        snprintf(dirs, sizeof(dirs), "%s%s/omarchy-osk:%s%s/omarchy-osk",
+                 cfg && *cfg ? cfg : home, cfg && *cfg ? "" : "/.config",
+                 data && *data ? data : home, data && *data ? "" : "/.local/share");
+        keyboard.data_dirs = estrdup(dirs);
+    }
 
     if (corner_radius >= 0) {
         keyboard.corner_radius = corner_radius;

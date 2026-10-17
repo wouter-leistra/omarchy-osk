@@ -1,0 +1,32 @@
+দ !shift!ধ ধ
+ূ !shift!ঊ ঊ
+ী !shift!ঈ ঈ
+র !shift!ড় ড় র‍্য
+ট !shift!ঠ ঠ
+এ !shift!ঐ ঐ
+ু !shift!উ উ
+ি !shift!ই ই
+ও !shift!ঔ ঔ
+প !shift!ফ ফ
+ে !shift!ৈ ৈ
+
+া !shift!অ অ
+স !shift!ষ ষ
+ড !shift!ঢ ঢ
+ত !shift!থ থ ৎ
+গ !shift!ঘ ঘ
+হ !shift!ঃ ঃ
+জ !shift!ঝ ঝ
+ক !shift!খ খ
+ল !shift!ং ং
+ো !shift!ৌ ৌ
+
+য় !shift!য য ্য
+শ !shift!ঢ় ঢ়
+চ !shift!ছ ছ
+আ !shift!ঋ ঋ
+ব !shift!ভ ভ
+ন !shift!ণ ণ
+ম !shift!ঙ ঙ
+ঞ !shift!ৃ ৃ
+্ !shift!ঁ ঁ

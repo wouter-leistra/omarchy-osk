@@ -1,0 +1,28 @@
+ქ !shift!Q
+წ !shift!ჭ
+ე !shift!E
+რ !shift!ღ
+ტ !shift!თ
+ყ !shift!Y
+უ !shift!U
+ი !shift!I
+ო !shift!O
+პ !shift!P
+
+ა !shift!A
+ს !shift!შ
+დ !shift!D
+ფ !shift!F
+გ !shift!G
+ჰ !shift!H
+ჯ !shift!ჟ
+კ !shift!K
+ლ !shift!L
+
+ზ !shift!ძ
+ხ !shift!X
+ც !shift!ჩ
+ვ !shift!V
+ბ !shift!B
+ნ !shift!N
+მ !shift!M

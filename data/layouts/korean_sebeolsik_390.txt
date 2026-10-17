@@ -1,0 +1,41 @@
+ᇂ !shift!ᆽ ᆽ
+ᆻ !shift!@ @
+ᆸ !shift!# #
+ᅭ !shift!$ $
+ᅲ !shift!% %
+ᅣ !shift!^ ^
+ᅨ !shift!& &
+ᅴ !shift!* *
+ᅮ !shift!( (
+ᄏ !shift!) )
+
+ᆺ !shift!ᇁ ᇁ
+ᆯ !shift!ᇀ ᇀ
+ᅧ !shift!ᆬ ᆬ
+ᅢ !shift!ᆶ ᆶ
+ᅥ !shift!ᆳ ᆳ
+ᄅ !shift!< <
+ᄃ !shift!7 7
+ᄆ !shift!8 8
+ᄎ !shift!9 9
+ᄑ !shift!> >
+
+ᆼ !shift!ᆮ ᆮ
+ᆫ !shift!ᆭ ᆭ
+ᅵ !shift!ᆰ ᆰ
+ᅡ !shift!ᆩ ᆩ
+ᅳ !shift!/ /
+ᄂ !shift!' '
+ᄋ !shift!4 4
+ᄀ !shift!5 5
+ᄌ !shift!6 6
+ᄇ !shift!: :
+
+ᆷ !shift!ᆾ ᆾ
+ᆨ !shift!ᆹ ᆹ
+ᅦ !shift!ᆱ ᆱ
+ᅩ !shift!ᆶ ᆶ
+ᅮ !shift!0 0 !
+ᄉ !shift!1 1
+ᄒ !shift!2 2
+ᄐ !shift!3 3 "

@@ -1,25 +1,55 @@
-# emit vptr commands for taps/swipes on the omarchy-osk fi layout
+# emit vptr commands for taps/swipes on the omarchy-osk layouts
 import sys
 Y0, H, W = 864, 576, 2160
 SUG = int(H / 4.7 * 0.7)
 ROW = (H - SUG) // 4
-U = W / 11
-rows = ["qwertyuiopå", "asdfghjklöä", "zxcvbnm"]
-off = [0, 0, 2]
+
+# letter rows per language, as built from data/ (rows are centred, Shift
+# and Backspace share what the last row leaves free)
+LAYOUTS = {
+    "en": ["qwertyuiop", "asdfghjkl", "zxcvbnm"],
+    "fi": ["qwertyuiopå", "asdfghjklöä", "zxcvbnm"],
+}
+LANG = "en"
+
+
+def use(lang):
+    """geometry of the language the keyboard shows now"""
+    global LANG
+    LANG = lang
+
+
 def pos(c):
-    special = {" ": (6.5 * U, 3), "\n": (9.25 * U, 3), "<": (10 * U, 2), "^": (1 * U, 2), ".": (8 * U, 3), ",": (2 * U, 3)}
+    rows = LAYOUTS[LANG]
+    units = max(max(len(r) for r in rows[:-1]), len(rows[-1]) + 2)
+    u = W / units
+    side = (units - len(rows[-1])) / 2
+    b = W / 11  # the bottom row is the same for every language
+    special = {" ": (6.5 * b, 3), "\n": (9.25 * b, 3), ".": (8 * b, 3), ",": (2 * b, 3),
+               "<": (W - side * u / 2, 2), "^": (side * u / 2, 2)}
     if c in special:
         x, r = special[c]
     else:
         for r, s in enumerate(rows):
             if c in s:
-                x = (off[r] + s.index(c) + 0.5) * U
+                x = ((units - len(s)) / 2 + s.index(c) + 0.5) * u
                 break
+        else:
+            raise ValueError(f"{c!r} is not on the {LANG} layout")
     return x, Y0 + SUG + r * ROW + ROW / 2
+
+
+def key_width():
+    rows = LAYOUTS[LANG]
+    return W / max(max(len(r) for r in rows[:-1]), len(rows[-1]) + 2)
+
+
 def commands(tokens):
   out = []
   for tok in tokens:
-      if tok.startswith("tap:"):
+      if tok.startswith("lang:"):
+          use(tok[5:])
+      elif tok.startswith("tap:"):
           for c in tok[4:].replace("_", " ").replace("|", "\n"):
               x, y = pos(c)
               out += [f"move {x:.0f} {y:.0f}", "down", "sleep 40", "up", "sleep 60"]

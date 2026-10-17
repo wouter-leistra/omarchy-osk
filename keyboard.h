@@ -2,10 +2,12 @@
 #define __KEYBOARD_H
 
 #include "drw.h"
+#include "langs.h"
 #include "swipe.h"
 #include <xkbcommon/xkbcommon.h>
 
 #define MAX_LAYERS 25
+#define KBD_MAX_ALTS 16
 
 enum key_type;
 enum key_modifier_type;
@@ -87,6 +89,13 @@ struct key {
 	// actual coordinates on the surface (pixels), will be computed automatically
 	// for all keys
 	uint32_t x, y, w, h;
+
+	/* omarchy-osk */
+	bool letter;             // Char key typing a letter: swipes, shifts, words
+	uint8_t lang_row;        // 1-based row in the language layout, 0 if fixed
+	uint8_t lang_col;
+	uint8_t nalts;           // long-press keys for the active language
+	uint32_t alts[KBD_MAX_ALTS];
 };
 
 struct layout {
@@ -171,6 +180,13 @@ struct kbd {
 	uint32_t alt_x, alt_y, alt_w, alt_h; // first cell, in popup coordinates
 	PangoFontDescription *hint_font;
 	char *keymap_str;       // keymap as uploaded, for temporary extra keys
+
+	/* omarchy-osk: languages, each with its own letter layout */
+	char *lang_list;        // "en,fi,de:qwertz" (--langs)
+	char *data_dirs;        // ':' separated data search path (--data)
+	struct lang *langs;
+	struct key **lang_keys; // letter layout keys per language
+	int nlangs, cur_lang;
 
 	/* omarchy-osk: space bar gestures */
 	enum { SpaceTap = 0, SpaceCursor, SpaceLang } space_mode;

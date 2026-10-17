@@ -1,0 +1,49 @@
+ຢ !shift!໑ 1 ໑
+ຟ !shift!໒ 2 ໒
+ໂ !shift!໓ 3 ໓
+ຖ !shift!໔ 4 ໔
+ຸ !shift!໌
+ູ !shift!ຼ
+ຄ !shift!໕ 5 ໕
+ຕ !shift!໖ 6 ໖
+ຈ !shift!໗ 7 ໗
+ຂ !shift!໘ 8 ໘
+ຊ !shift!໙ 9 ໙
+ໍ !shift!ໍ່
+
+ົ !shift!ົ້
+ໄ !shift!໐ 0 ໐
+ຳ !shift!ຳ້
+ພ !shift!_
+ະ !shift!+
+ິ !shift!ິ້
+ີ !shift!ີ້
+ຮ !shift!ຣ
+ນ !shift!ໜ
+ຍ !shift!ຽ
+ບ !shift!ຫຼ
+ລ !shift!”
+
+ັ !shift!ັ້
+ຫ !shift!;
+ກ !shift!.
+ດ !shift!,
+ເ !shift!:
+້ !shift!໊
+່ !shift!໋
+າ !shift!!
+ສ !shift!\?
+ວ !shift!%
+ງ !shift!=
+“
+
+ຜ !shift!₭
+ປ !shift!(
+ແ !shift!ຯ
+ອ !shift!\@
+ຶ !shift!ຶ້
+ື !shift!ື້
+ທ !shift!ໆ
+ມ !shift!ໝ
+ໃ !shift!$
+ຝ !shift!)

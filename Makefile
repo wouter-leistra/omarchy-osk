@@ -54,6 +54,14 @@ wvkbd-${LAYOUT}: $(BUILDDIR)/config.h $(OBJECTS) layout.${LAYOUT}.h
 clean:
 	rm -rf "$(BUILDDIR)" wvkbd-$(LAYOUT)
 
+# omarchy-osk: offline checks of the layout data and the gesture decoder
+check:
+	mkdir -p $(BUILDDIR)
+	$(CC) -I. -o $(BUILDDIR)/layout_test tests/layout_test.c langs.c swipe.c -lm
+	$(BUILDDIR)/layout_test data --check
+	$(CC) -I. -o $(BUILDDIR)/decode_test tests/decode_test.c swipe.c -lm
+	$(BUILDDIR)/decode_test dict/fi.txt kiitos talo koira tämä | tail -1
+
 format:
 	clang-format -i $(WVKBD_SOURCES) $(WVKBD_HEADERS)
 
@@ -77,3 +85,7 @@ install-user: wvkbd-omarchy
 	mkdir -p $(HOME)/.config/systemd/user
 	install -m 644 omarchy/systemd/omarchy-osk-autoshow.service $(HOME)/.config/systemd/user/
 	install -m 644 dict/*.txt dict/README.md $(USER_PREFIX)/share/omarchy-osk/dict/
+	mkdir -p $(USER_PREFIX)/share/omarchy-osk/layouts $(USER_PREFIX)/share/omarchy-osk/locales
+	install -m 644 data/languages.txt data/popups.txt data/README.md $(USER_PREFIX)/share/omarchy-osk/
+	install -m 644 data/layouts/*.txt $(USER_PREFIX)/share/omarchy-osk/layouts/
+	install -m 644 data/locales/*.txt $(USER_PREFIX)/share/omarchy-osk/locales/

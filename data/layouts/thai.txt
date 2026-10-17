@@ -1,0 +1,49 @@
+ๅ !shift!+
+/ !shift!๑ 1 ๑
+_ !shift!๒ 2 ๒
+ภ !shift!๓ 3 ๓
+ถ !shift!๔ 4 ๔
+ ุ|ุ !shift! ู|ู
+ ึ|ึ !shift!฿
+ค !shift!๕ 5 ๕
+ต !shift!๖ 6 ๖
+จ !shift!๗ 7 ๗
+ข !shift!๘ 8 ๘
+ช !shift!๙ 9 ๙
+
+ๆ !shift!๐ 0 ๐
+ไ !shift!"
+ำ !shift!ฎ
+พ !shift!ฑ
+ะ !shift!ธ
+ ั|ั !shift! ํ|ํ
+ ี|ี !shift! ๊|๊
+ร !shift!ณ
+น !shift!ฯ
+ย !shift!ญ
+บ !shift!ฐ
+ล !shift!,
+
+ฟ !shift!ฤ
+ห !shift!ฆ
+ก !shift!ฏ
+ด !shift!โ
+เ !shift!ฌ
+ ้|้ !shift! ็|็
+ ่|่ !shift! ๋|๋
+า !shift!ษ
+ส !shift!ศ
+ว !shift!ซ
+ง !shift!.
+ฃ !shift!ฅ
+
+ผ !shift!(
+ป !shift!)
+แ !shift!ฉ
+อ !shift!ฮ
+ ิ|ิ !shift! ฺ|ฺ
+ ื|ื !shift! ์|์
+ท !shift!\?
+ม !shift!ฒ
+ใ !shift!ฬ
+ฝ !shift!ฦ

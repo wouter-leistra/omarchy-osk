@@ -1,0 +1,33 @@
+ধ !shift!ঢ
+থ !shift!ঠ
+ে !shift!ৈ
+র !shift!ড়
+ত !shift!ট
+য় !shift!ঞ
+ু !shift!ূ
+ি !shift!ী
+ো !shift!ৌ
+প !shift!ফ
+আ !shift!ঋ
+
+া !shift!অ
+স !shift!শ
+দ !shift!ড
+ৃ !shift!ঢ়
+গ !shift!ঘ
+্ !shift!হ
+জ !shift!ঝ
+ক !shift!খ
+ল !shift!ৎ
+ই !shift!ঈ
+উ !shift!ঊ
+
+য !shift!।
+ষ !shift!ঙ
+চ !shift!ছ
+ভ !shift!ঃ
+ব !shift!ঁ
+ন !shift!ণ
+ম !shift!ং
+এ !shift!ঐ
+ও !shift!ঔ

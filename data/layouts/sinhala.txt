@@ -1,0 +1,33 @@
+ු !shift!ූ
+අ !shift!උ
+ැ !shift!ෑ
+ර !shift!ඍ
+එ !shift!ඔ
+හ !shift!ශ
+ම !shift!ඹ
+ස !shift!ෂ
+ද !shift!ධ
+ච !shift!ඡ
+ඤ !shift!ඥ
+
+් !shift!ෟ
+ි !shift!ී
+ා !shift!ෘ
+ෙ !shift!ෆ
+ට !shift!ඨ
+ය !shift!්‍ය
+ව !shift!ළු
+න !shift!ණ
+ක !shift!ඛ
+ත !shift!ථ
+ඏ !shift!්‍ර
+
+ං !shift!ඞ
+ජ !shift!ඣ
+ඩ !shift!ඪ
+ඉ !shift!ඊ
+බ !shift!භ
+ප !shift!ඵ
+ල !shift!ළ
+ග !shift!ඝ
+ෳ !shift!ර්‍

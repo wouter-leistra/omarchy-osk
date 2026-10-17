@@ -1,0 +1,50 @@
+` !shift!~ ~
+1 !shift!! ! ¡
+2 !shift!\@ \@
+3 !shift!\# \#
+4 !shift!$ $
+5 !shift!\% \%
+6 !shift!^ ^
+7 !shift!& &
+8 !shift!* *
+9 !shift!( (
+0 !shift!) )
+- !shift!_ _ – — ·
+= !shift!+ + ∞ ≠ ≈
+
+q %
+w \
+e |
+r =
+t [
+y ]
+u <
+i >
+o {
+p }
+[ !shift!{ {
+] !shift!} }
+\ !shift!| \|
+
+a @
+s #
+d $$$
+f _
+g &
+h -
+j +
+k (
+l )
+; !shift!: :
+' !shift!" "
+
+z *
+x "
+c '
+v :
+b ;
+n !
+m ?
+, !shift!< <
+. !shift!> >
+/ !shift!\? \? ¿

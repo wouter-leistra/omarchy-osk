@@ -1,0 +1,33 @@
+અ !shift!ધ
+ા !shift!ન
+િ !shift!પ
+ી !shift!ફ
+ુ !shift!બ
+ૂ !shift!ભ
+ે !shift!મ
+ૈ !shift!ય
+ો !shift!ર
+ૌ !shift!લ
+ં !shift!વ
+
+ઃ !shift!શ ઍ
+ક !shift!ષ ઑ
+ખ !shift!સ ૅ
+ગ !shift!હ ૉ
+ઘ !shift!ળ ૃ
+ઙ !shift!ક્ષ ઋ
+ચ !shift!જ્ઞ ત્ર
+છ !shift!આ ત્ત
+જ !shift!ઇ દ્વ
+ઝ !shift!ઈ દ્ધ
+ઞ !shift!ઉ દ્ર
+
+ટ !shift!ઊ
+ઠ !shift!એ શ્ર
+ડ !shift!ઐ શ્વ
+ઢ !shift!ઓ દ્દ
+ણ !shift!ઔ હ્ય
+ત !shift!અં ꠰
+થ !shift!અઃ ꠱
+દ !shift!ૐ ꠲
+્ ૱

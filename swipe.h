@@ -36,6 +36,11 @@ int swipe_lang_count(void);
 const char *swipe_lang_code(int i);
 void swipe_set_lang(int i); /* -1 for all */
 int swipe_get_lang(void);
+/* use the dictionary of this language; false (and no words) if there is
+ * none */
+bool swipe_set_lang_code(const char *code);
+/* a dictionary is in use: gestures and completions work */
+bool swipe_lang_active(void);
 
 /* Decode a gesture path into the most likely words. */
 void swipe_decode(const struct swipe_geom *g, const double *xs,

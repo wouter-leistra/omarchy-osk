@@ -1,0 +1,29 @@
+ق !shift!ٔ
+و !shift!ْ
+ع !shift!ّ
+ر !shift!ً
+ت !shift!ٗ
+ے !shift!ٖ
+ء !shift!ٰ
+ی !shift!ُ
+ہ !shift!ِ
+پ !shift!َ
+
+ا !shift!؏
+س !shift!؎
+د !shift!ؔ
+ف !shift!ؒ
+گ !shift!ؓ
+ح !shift!ؑ
+ج !shift!ؐ
+ک !shift!ﷺ
+ل !shift!ﷻ
+
+َ !shift!ﷲ
+ز !shift!؀
+ش !shift!؂
+چ !shift!؃
+ط !shift!؍
+ب !shift!٘ (
+ن !shift!؟
+م !shift!٫ )

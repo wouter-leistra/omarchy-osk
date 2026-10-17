@@ -7,10 +7,12 @@ CONF="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy-osk/config"
 [[ -f $CONF ]] && source "$CONF"
 
 OSK_XKB="${OSK_XKB:-fi}"                 # xkb layout[:variant] to type with
-OSK_LANGS="${OSK_LANGS:-en,fi}"          # gesture typing dictionaries
+OSK_LANGS="${OSK_LANGS:-en,fi}"          # languages: tag[:layout], e.g. en,fi,de:qwertz
 OSK_HEIGHT_RATIO="${OSK_HEIGHT_RATIO:-0.40}"  # share of the screen height
 
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-osk"
+# layouts/, locales/, languages.txt and popups.txt here override the installed ones
+USER_DATA="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy-osk"
 THEME="$HOME/.local/state/omarchy/current/theme/colors.toml"
 
 color() {
@@ -54,12 +56,16 @@ font=${font:-Sans}
 dicts=""
 IFS=, read -ra langs <<< "$OSK_LANGS"
 for lang in "${langs[@]}"; do
-  [[ -f $DATA/dict/$lang.txt ]] && dicts+="${dicts:+,}$DATA/dict/$lang.txt"
+  lang=${lang%%:*}
+  for dict in "$DATA/dict/$lang.txt" "$DATA/dict/${lang%%[-_]*}.txt"; do
+    [[ -f $dict ]] && { dicts+="${dicts:+,}$dict"; break; }
+  done
 done
 
 exec omarchy-oskd \
   -L "$height" -H "$height" \
   --xkb "$OSK_XKB" \
+  --langs "$OSK_LANGS" --data "$USER_DATA:$DATA" \
   ${dicts:+--dict "$dicts"} \
   --fn "$font $font_size" -R "$rounding" \
   --bg "$bg" --fg "$key" --fg-sp "$special" \

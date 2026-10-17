@@ -220,8 +220,15 @@ def main():
                              hold_slide(*keys.pos("e"), keys.pos("e")[0] + U),
                              hold_slide(*keys.pos("n"), keys.pos("n")[0]),
                              hold_slide(*keys.pos("."), keys.pos(".")[0])], "1éñ?")
-        single("language", [SPACE_SWIPE, "swipe:kiitos", SPACE_SWIPE], "kiitos ")
+        single("language", [SPACE_SWIPE, "lang:fi", "swipe:kiitos", SPACE_SWIPE, "lang:en"],
+               "kiitos ")
         check("language-saved", open(STATE).read().strip(), "en")
+        # each language has its own layout: å ä ö are keys in Finnish, and
+        # long-press keys in English (a: á à â ã æ ä å ā)
+        single("layouts", [SPACE_SWIPE, "lang:fi", "tap:åäö_", SPACE_SWIPE, "lang:en",
+                           lambda: vptr(hold_slide(*keys.pos("a"),
+                                                   keys.pos("a")[0] + 5 * keys.key_width()))],
+               "åäö ä")
         single("cursor", ["tap:abc", hold_slide(6.5 * U, row_y(3), 6.5 * U - 2.4 * U * 5 / 14), "tap:x"],
                "axbc")
         single("symbols", [QWERTY123, tap_at(0.5 * U, row_y(1)), tap_at(2.5 * U, row_y(1)), QWERTY123],

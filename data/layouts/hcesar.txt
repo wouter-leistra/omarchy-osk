@@ -1,0 +1,32 @@
+h
+c
+e
+s
+a
+r
+o
+p
+z
+, !shift!« } 0 ; ! !fixedColumnOrder!4
+
+q
+t
+d
+i
+n
+u
+l
+m
+x
+. !shift!» / : ? !fixedColumnOrder!3
+
+ç
+j
+b
+f
+v
+g
+k
+
+y
+w

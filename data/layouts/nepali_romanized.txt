@@ -1,0 +1,32 @@
+ट !shift!ठ
+ौ !shift!औ
+े !shift!ै
+र !shift!ृ
+त !shift!थ
+य !shift!ञ
+ु !shift!ू
+ि !shift!ी
+ो !shift!ओ
+प !shift!फ
+इ !shift!ई
+
+ा !shift!आ
+स !shift!श
+द !shift!ध
+उ !shift!ऊ
+ग !shift!घ
+ह !shift!अ
+ज !shift!झ
+क !shift!ख
+ल !shift!॥
+ए !shift!ऐ
+ॐ !shift!ः
+
+ष !shift!ऋ
+ड !shift!ढ
+च !shift!छ
+व !shift!ँ
+ब !shift!भ
+न !shift!ण
+म !shift!ं
+् !shift!ङ

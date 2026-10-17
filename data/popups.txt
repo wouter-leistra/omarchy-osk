@@ -1,0 +1,41 @@
+# omarchy-osk: long-press keys for every language, after the keys of the
+# language itself (locales/<tag>.txt) and before HeliBoard's common accents
+# (locales/more_popups_main.txt). Same format as locale files: the key, then
+# its long-press keys. Escape a leading ! % $ or \ with a backslash.
+[popup_keys]
+e é è ê ë €
+y ÿ ý
+u ü ú ù û
+i í ì î ï
+o ó ò ô õ ø œ
+a á à â ã æ
+s š ß §
+d ð
+g ğ
+l ł
+z ž ź
+c ç č ©
+n ñ ń
+ö ø œ
+ä æ
+. ? \! …
+, : ; ' "
+- – — _ ·
+$ £ € ¥ ¢
+€ £ $ ¥ ¢
+? ¿
+\! ¡
+' ‘ ’ ‚
+" “ ” „ « »
+\% ‰
+0 °
+/ \\
+( [ { <
+) ] } >
+* × †
++ ±
+= ≠ ≈
+& §
+1 ¹ ½ ⅓ ¼
+2 ² ⅔
+3 ³ ¾
