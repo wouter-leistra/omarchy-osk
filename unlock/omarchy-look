@@ -1,0 +1,58 @@
+#!/bin/bash
+# Write unl0kr settings for the Omarchy look from a user's current Omarchy
+# theme: colours like the lock screen and omarchy-osk, and the wallpaper
+# blurred like the lock screen, as raw XRGB8888 at the screen size.
+#
+# usage: omarchy-look HOME OUTDIR WIDTH HEIGHT [WALLPAPER_PATH_AT_BOOT]
+set -euo pipefail
+
+home="$1" out="$2" width="$3" height="$4"
+at_boot="${5:-/etc/unl0kr/wallpaper.xrgb}"
+state="$home/.local/state/omarchy/current"
+theme="$state/theme/colors.toml"
+
+color() {
+  local value name
+  for name in "$@"; do
+    value=$(sed -n "s/^$name *= *\"#\{0,1\}\([0-9a-fA-F]\{6\}\)\".*/\1/p" "$theme" 2>/dev/null | head -1)
+    [[ -n $value ]] && { echo "$value"; return; }
+  done
+}
+
+background=$(color background); background=${background:-1e1e2e}
+foreground=$(color foreground); foreground=${foreground:-cdd6f4}
+accent=$(color accent blue); accent=${accent:-89b4fa}
+keyboard=$(color dark_background background); keyboard=${keyboard:-$background}
+key=$(color lighter_background selection); key=${key:-313244}
+special=$(color selection muted); special=${special:-45475a}
+pressed=$(color muted dark_foreground); pressed=${pressed:-585b70}
+
+mkdir -p "$out"
+{
+  echo "# from the Omarchy theme of $home, written by omarchy-look"
+  echo "[textarea]"
+  echo "bullet=●"
+  echo "[omarchy]"
+  echo "background=$background"
+  echo "foreground=$foreground"
+  echo "accent=$accent"
+  echo "accent_text=$background"
+  echo "keyboard=$keyboard"
+  echo "key=$key"
+  echo "key_special=$special"
+  echo "key_pressed=$pressed"
+} > "$out/omarchy.conf"
+
+wallpaper=$(readlink -f "$state/background" 2>/dev/null || true)
+if [[ -f $wallpaper ]] && command -v magick >/dev/null; then
+  # blur at an eighth of the size: the lock screen's blur, quickly
+  if magick "$wallpaper[0]" -resize "${width}x${height}^" -gravity center -extent "${width}x${height}" \
+      -resize 12.5% -blur 0x5 -resize "${width}x${height}!" \
+      -alpha set -channel A -evaluate set 100% +channel "BGRA:$out/wallpaper.xrgb" 2>/dev/null; then
+    {
+      echo "wallpaper=$at_boot"
+      echo "wallpaper_width=$width"
+      echo "wallpaper_height=$height"
+    } >> "$out/omarchy.conf"
+  fi
+fi

@@ -2,6 +2,37 @@
 # omarchy-osk-unlock: unl0kr touch keyboard for the LUKS passphrase.
 # Put it before encrypt in HOOKS.
 
+# The Omarchy look: the user's current theme colours and blurred wallpaper at
+# the screen's size, read each time the initramfs is built. OSK_USER comes
+# from /etc/omarchy-osk-unlock.conf (written by install.sh).
+omarchy_look() {
+    local look home mode tmp
+    [[ -r /etc/omarchy-osk-unlock.conf ]] && . /etc/omarchy-osk-unlock.conf
+    look="${OSK_LOOK:-/usr/local/lib/omarchy-osk/omarchy-look}"
+    [[ -x $look && -n ${OSK_USER:-} ]] || return 0
+    home="${OSK_HOME:-$(getent passwd "$OSK_USER" | cut -d: -f6)}"
+    [[ -d $home ]] || return 0
+
+    # the built-in panel's resolution, else the first connected screen's
+    mode="${OSK_SCREEN:-}"
+    if [[ -z $mode ]]; then
+        local c
+        for c in /sys/class/drm/card*-eDP-* /sys/class/drm/card*-*; do
+            [[ $(cat "$c/status" 2>/dev/null) == connected ]] || continue
+            mode=$(head -1 "$c/modes" 2>/dev/null)
+            [[ -n $mode ]] && break
+        done
+    fi
+    [[ $mode =~ ^([0-9]+)x([0-9]+) ]] || mode=1920x1080
+
+    tmp=$(mktemp -d)
+    if "$look" "$home" "$tmp" "${mode%%x*}" "${mode##*x}" /etc/unl0kr/wallpaper.xrgb; then
+        add_file "$tmp/omarchy.conf" /etc/unl0kr.conf.d/50-omarchy.conf
+        [[ -f $tmp/wallpaper.xrgb ]] && add_file "$tmp/wallpaper.xrgb" /etc/unl0kr/wallpaper.xrgb
+    fi
+    rm -rf "$tmp"
+}
+
 build() {
     local f
 
@@ -10,6 +41,8 @@ build() {
     # or in MODULES); more touchscreen drivers can be added with MODULES
     add_module i2c_hid_acpi
     add_module hid_multitouch
+
+    omarchy_look
 
     add_binary cryptsetup
     add_binary /usr/lib/libgcc_s.so.1   # cryptsetup's pthread_create dlopen()s it

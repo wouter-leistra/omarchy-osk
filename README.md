@@ -67,7 +67,16 @@ exclusiveZone: 0
 ```
 
 (In the image picker keep its condition: `root.opened && root.imagesLoaded ?
-WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None`.) Then `omarchy restart
+WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None`.) A cloned menu gets no app
+library from the shell, which leaves Apps empty; give it its own:
+
+```qml
+import qs.services
+
+readonly property var appLibrary: root.shell && root.shell.appLibrary ? root.shell.appLibrary : ownAppLibrary
+AppLibrary { id: ownAppLibrary; visible: false }
+```
+ Then `omarchy restart
 shell`. The menus open above the keyboard and take its typing. Clones don't get
 Omarchy updates, so re-clone after an update that changes these plugins.
 
@@ -109,6 +118,13 @@ happened is in the kernel log (`journalctl -b -k | grep omarchy-osk-unlock`).
 Settings such as the touch layout (`us`, `de`, `fr`, `es`) are in
 `/etc/unl0kr.conf`. `tests/unlock_vm.py` tests it in QEMU with a throwaway
 LUKS disk.
+
+It looks like the Omarchy lock screen: `unlock/unl0kr-omarchy.patch` adds an
+`[omarchy]` section to unl0kr (theme colours, the lock screen's password
+field, no header bar) and JetBrains Mono fonts. The colours and the blurred
+wallpaper are taken from your current Omarchy theme whenever the initramfs is
+built (`unlock/omarchy-look`), so after a theme change run
+`sudo limine-mkinitcpio`, or it follows at the next kernel update.
 
 ## Commands
 
@@ -210,7 +226,11 @@ After editing either file: `make install-user && omarchy-osk-restart`.
   Pen-based Computers", UIST 2004). No code was taken from any implementation.
 - The boot passphrase prompt uses
   [unl0kr](https://gitlab.postmarketos.org/postmarketOS/buffybox) from
-  postmarketOS (GPL-3.0-or-later), built from its source by `unlock/build.sh`.
+  postmarketOS (GPL-3.0-or-later), built from its source by `unlock/build.sh`
+  with `unlock/unl0kr-omarchy.patch`. Its fonts in `unlock/fonts/` are
+  generated with lv_font_conv from
+  [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (Nerd Fonts build,
+  SIL OFL 1.1) and Font Awesome 5 Free (SIL OFL 1.1), as upstream's are.
 - `os-compatibility.c` comes from the Wayland/Weston project (MIT, see
   [COPYING_WESTON](COPYING_WESTON)); the Wayland protocol files in `proto/` and
   `tests/proto/` carry their own copyright notices.

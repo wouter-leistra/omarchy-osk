@@ -1,5 +1,6 @@
 #!/bin/bash
-# Build unl0kr (postmarketOS buffybox) for the boot prompt, as a normal user.
+# Build unl0kr (postmarketOS buffybox) for the boot prompt, as a normal user,
+# with the Omarchy look patch.
 # The result is unlock/build/unl0kr; install.sh puts it in place.
 set -euo pipefail
 
@@ -16,6 +17,14 @@ if [[ ! -d $src ]]; then
     https://gitlab.postmarketos.org/postmarketOS/buffybox.git "$src"
 fi
 [[ $(git -C "$src" rev-parse HEAD) == "$COMMIT" ]] || { echo "buffybox $TAG is not $COMMIT" >&2; exit 1; }
+
+# the Omarchy look: an [omarchy] config section (colours, wallpaper, lock
+# screen field) and JetBrains Mono fonts made with lv_font_conv
+if ! git -C "$src" apply --check --reverse "$here/unl0kr-omarchy.patch" 2>/dev/null; then
+  git -C "$src" checkout -q -- .
+  git -C "$src" apply "$here/unl0kr-omarchy.patch"
+fi
+cp "$here/fonts/font_32.c" "$here/fonts/font_20.c" "$src/shared/fonts/"
 
 # meson and ninja from a private venv, no system packages needed
 if ! command -v meson >/dev/null || ! command -v ninja >/dev/null; then

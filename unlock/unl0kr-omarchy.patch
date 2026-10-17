@@ -1,0 +1,319 @@
+diff --git i/meson.build w/meson.build
+index cc2b681..8a10de5 100644
+--- i/meson.build
++++ w/meson.build
+@@ -37,6 +37,7 @@ common_include_dirs = include_directories('.')
+ shared_sources = files(
+     'shared/cursor/cursor.c',
+     'shared/fonts/font_32.c',
++    'shared/fonts/font_20.c',
+     'shared/cli_common.c',
+     'shared/config.c',
+     'shared/force_feedback.c',
+diff --git i/unl0kr/config.c w/unl0kr/config.c
+index 1149308..47b1717 100644
+--- i/unl0kr/config.c
++++ w/unl0kr/config.c
+@@ -40,7 +40,34 @@ static int parsing_handler(void* user_data, const char* section, const char* key
+ static int parsing_handler(void* user_data, const char* section, const char* key, const char* value) {
+     ul_config_opts *opts = (ul_config_opts *)user_data;
+ 
+-    if (strcmp(section, "general") == 0) {
++    if (strcmp(section, "omarchy") == 0) {
++        opts->omarchy.enabled = true;
++        if (strcmp(key, "wallpaper") == 0) {
++            opts->omarchy.wallpaper = strdup(value);
++            return 1;
++        }
++        if (strcmp(key, "wallpaper_width") == 0) {
++            opts->omarchy.wallpaper_width = (int32_t)strtol(value, NULL, 10);
++            return 1;
++        }
++        if (strcmp(key, "wallpaper_height") == 0) {
++            opts->omarchy.wallpaper_height = (int32_t)strtol(value, NULL, 10);
++            return 1;
++        }
++        uint32_t *color = NULL;
++        if (strcmp(key, "background") == 0) color = &opts->omarchy.background;
++        else if (strcmp(key, "foreground") == 0) color = &opts->omarchy.foreground;
++        else if (strcmp(key, "accent") == 0) color = &opts->omarchy.accent;
++        else if (strcmp(key, "accent_text") == 0) color = &opts->omarchy.accent_text;
++        else if (strcmp(key, "keyboard") == 0) color = &opts->omarchy.keyboard;
++        else if (strcmp(key, "key") == 0) color = &opts->omarchy.key;
++        else if (strcmp(key, "key_special") == 0) color = &opts->omarchy.key_special;
++        else if (strcmp(key, "key_pressed") == 0) color = &opts->omarchy.key_pressed;
++        if (color) {
++            *color = (uint32_t)strtoul(value[0] == '#' ? value + 1 : value, NULL, 16);
++            return 1;
++        }
++    } else if (strcmp(section, "general") == 0) {
+         if (strcmp(key, "animations") == 0) {
+             if (bbx_config_parse_bool(value, &(opts->general.animations))) {
+                 return 1;
+@@ -181,6 +208,18 @@ void ul_config_init_opts(ul_config_opts *opts) {
+     opts->quirks.fbdev_force_refresh = false;
+     opts->quirks.terminal_prevent_graphics_mode = false;
+     opts->quirks.terminal_allow_keyboard_input = false;
++    opts->omarchy.enabled = false;
++    opts->omarchy.background = 0x1e1e2e;
++    opts->omarchy.foreground = 0xcdd6f4;
++    opts->omarchy.accent = 0x89b4fa;
++    opts->omarchy.accent_text = 0x1e1e2e;
++    opts->omarchy.keyboard = 0x161622;
++    opts->omarchy.key = 0x313244;
++    opts->omarchy.key_special = 0x45475a;
++    opts->omarchy.key_pressed = 0x585b70;
++    opts->omarchy.wallpaper = NULL;
++    opts->omarchy.wallpaper_width = 0;
++    opts->omarchy.wallpaper_height = 0;
+ }
+ 
+ void ul_config_parse_directory(const char *path, ul_config_opts *opts) {
+diff --git i/unl0kr/config.h w/unl0kr/config.h
+index 72c33e5..374424c 100644
+--- i/unl0kr/config.h
++++ w/unl0kr/config.h
+@@ -90,6 +90,23 @@ typedef struct {
+ /**
+  * Options parsed from config file(s)
+  */
++/* Omarchy look (omarchy-osk), set by the [omarchy] section */
++typedef struct {
++    bool enabled;
++    uint32_t background;
++    uint32_t foreground;
++    uint32_t accent;
++    uint32_t accent_text;
++    uint32_t keyboard;
++    uint32_t key;
++    uint32_t key_special;
++    uint32_t key_pressed;
++    /* raw XRGB8888 (B, G, R, X bytes) wallpaper, already blurred */
++    const char *wallpaper;
++    int32_t wallpaper_width;
++    int32_t wallpaper_height;
++} ul_config_opts_omarchy;
++
+ typedef struct {
+     /* General options */
+     ul_config_opts_general general;
+@@ -105,6 +122,8 @@ typedef struct {
+     struct xkb_rule_names hw_keyboard;
+     /* Options related to (normally unneeded) quirks */
+     ul_config_opts_quirks quirks;
++    /* Omarchy look */
++    ul_config_opts_omarchy omarchy;
+ } ul_config_opts;
+ 
+ /**
+diff --git i/unl0kr/main.c w/unl0kr/main.c
+index 44f2235..7676bca 100644
+--- i/unl0kr/main.c
++++ w/unl0kr/main.c
+@@ -223,10 +223,103 @@ static void set_theme(bool is_alternate) {
+     bbx_theme_apply(get_theme(is_alternate));
+ }
+ 
++LV_FONT_DECLARE(bbx_font_20)
++
++/* Omarchy look: the lock screen's colours on adwaita-dark's sizes */
++static bbx_theme omarchy_theme;
++
++static void init_omarchy_theme(void) {
++    const ul_config_opts_omarchy *o = &conf_opts.omarchy;
++    bbx_theme *t = &omarchy_theme;
++    *t = *bbx_themes_themes[BBX_THEMES_THEME_ADWAITA_DARK];
++    t->name = "omarchy";
++    t->window.bg_color = o->background;
++
++    t->keyboard.bg_color = o->keyboard;
++    t->keyboard.border_width = 0;
++    t->keyboard.border_color = o->keyboard;
++    t->keyboard.pad = 8;
++    t->keyboard.gap = 6;
++    t->keyboard.keys.border_width = 0;
++    t->keyboard.keys.corner_radius = 6;
++    bbx_theme_key ch = { { o->foreground, o->key, o->key }, { o->foreground, o->key_pressed, o->key_pressed } };
++    bbx_theme_key sp = { { o->foreground, o->key_special, o->key_special }, { o->foreground, o->key_pressed, o->key_pressed } };
++    bbx_theme_key act = { { o->accent_text, o->accent, o->accent }, { o->foreground, o->key_pressed, o->key_pressed } };
++    t->keyboard.keys.key_char = ch;
++    t->keyboard.keys.key_non_char = sp;
++    t->keyboard.keys.key_mod_act = act;
++    t->keyboard.keys.key_mod_inact = sp;
++
++    t->button.border_width = 0;
++    t->button.corner_radius = 0;
++    t->button.normal = (bbx_theme_button_state){ o->foreground, o->key, o->key };
++    t->button.pressed = (bbx_theme_button_state){ o->foreground, o->key_pressed, o->key_pressed };
++
++    t->textarea.fg_color = o->foreground;
++    t->textarea.bg_color = o->background;
++    t->textarea.border_width = 0;      /* set in pixels below, like the lock screen */
++    t->textarea.border_color = o->accent;
++    t->textarea.corner_radius = 0;
++    t->textarea.placeholder_color = o->foreground;
++    t->textarea.cursor.color = o->foreground;
++
++    t->label.fg_color = o->foreground;
++    t->msgbox.fg_color = o->foreground;
++    t->msgbox.bg_color = o->background;
++    t->msgbox.border_color = o->accent;
++    t->msgbox.corner_radius = 0;
++}
++
+ static const bbx_theme * get_theme(bool is_alternate) {
++    if (conf_opts.omarchy.enabled)
++        return &omarchy_theme;
+     return bbx_themes_themes[is_alternate ? conf_opts.theme.alternate_id : conf_opts.theme.default_id];
+ }
+ 
++static void omarchy_textarea_changed_cb(lv_event_t *event) {
++    lv_obj_t *textarea = lv_event_get_target(event);
++    bool empty = lv_textarea_get_text(textarea)[0] == '\0';
++    lv_obj_set_style_opa(textarea, empty ? LV_OPA_TRANSP : LV_OPA_COVER, LV_PART_CURSOR | LV_STATE_FOCUSED);
++}
++
++/* The blurred wallpaper behind everything, from a raw XRGB8888 file */
++static lv_image_dsc_t omarchy_wallpaper;
++
++static void create_omarchy_wallpaper(lv_obj_t *screen, int32_t hor_res, int32_t ver_res) {
++    const ul_config_opts_omarchy *o = &conf_opts.omarchy;
++    if (!o->wallpaper || o->wallpaper_width <= 0 || o->wallpaper_height <= 0)
++        return;
++    uint32_t size = (uint32_t)o->wallpaper_width * (uint32_t)o->wallpaper_height * 4;
++    FILE *f = fopen(o->wallpaper, "rb");
++    if (!f)
++        return;
++    uint8_t *data = malloc(size);
++    if (!data || fread(data, 1, size, f) != size) {
++        free(data);
++        fclose(f);
++        return;
++    }
++    fclose(f);
++
++    memset(&omarchy_wallpaper, 0, sizeof(omarchy_wallpaper));
++    omarchy_wallpaper.header.magic = LV_IMAGE_HEADER_MAGIC;
++    omarchy_wallpaper.header.cf = LV_COLOR_FORMAT_XRGB8888;
++    omarchy_wallpaper.header.w = o->wallpaper_width;
++    omarchy_wallpaper.header.h = o->wallpaper_height;
++    omarchy_wallpaper.header.stride = o->wallpaper_width * 4;
++    omarchy_wallpaper.data_size = size;
++    omarchy_wallpaper.data = data;
++
++    lv_obj_t *image = lv_image_create(screen);
++    lv_obj_add_flag(image, LV_OBJ_FLAG_IGNORE_LAYOUT | LV_OBJ_FLAG_FLOATING);
++    lv_obj_remove_flag(image, LV_OBJ_FLAG_CLICKABLE);
++    lv_obj_set_pos(image, 0, 0);
++    lv_obj_set_size(image, hor_res, ver_res);
++    lv_image_set_src(image, &omarchy_wallpaper);
++    if (o->wallpaper_width != hor_res || o->wallpaper_height != ver_res)
++        lv_image_set_inner_align(image, LV_IMAGE_ALIGN_COVER);
++}
++
+ static void toggle_pw_btn_clicked_cb(lv_event_t *event) {
+     LV_UNUSED(event);
+     toggle_password_obscured();
+@@ -473,12 +566,18 @@ int main(int argc, char *argv[]) {
+     }
+ 
+     /* Initialise theme */
++    if (conf_opts.omarchy.enabled) {
++        init_omarchy_theme();
++        /* the keyboard is the way in on a tablet, keep it up */
++        is_keyboard_hidden = false;
++    }
+     set_theme(is_alternate_theme);
+ 
+     /* Figure out a few numbers for sizing and positioning */
+     const int32_t hor_res = lv_display_get_horizontal_resolution(disp);
+     const int32_t ver_res = lv_display_get_vertical_resolution(disp);
+-    const int32_t keyboard_height = ver_res > hor_res ? ver_res / 2.5 : ver_res / 1.8; /* Height for 5 rows */
++    const int32_t keyboard_height = conf_opts.omarchy.enabled ? ver_res * 0.42
++        : (ver_res > hor_res ? ver_res / 2.5 : ver_res / 1.8); /* Height for 5 rows */
+     const int32_t padding = keyboard_height / 10;
+     const int32_t side_pad = (hor_res > ver_res ? (hor_res - ver_res) / 2 : 0) + padding;
+ 
+@@ -488,6 +587,9 @@ int main(int argc, char *argv[]) {
+     lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
+     lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
+ 
++    if (conf_opts.omarchy.enabled)
++        create_omarchy_wallpaper(screen, hor_res, ver_res);
++
+     /* Configure header */
+     bbx_header_config_t header_config;
+     bbx_header_init_config(&header_config);
+@@ -508,14 +610,21 @@ int main(int argc, char *argv[]) {
+     lv_obj_add_event_cb(header_widgets.layout_dropdown, layout_dropdown_value_changed_cb, LV_EVENT_VALUE_CHANGED, NULL);
+     lv_obj_add_event_cb(header_widgets.shutdown_btn, shutdown_btn_clicked_cb, LV_EVENT_CLICKED, NULL);
+ 
++    /* Omarchy look: no header, like the lock screen (the power key still works) */
++    if (conf_opts.omarchy.enabled)
++        lv_obj_add_flag(header, LV_OBJ_FLAG_HIDDEN);
++
+     lv_obj_update_layout(header);
+-    content_height_without_kb = ver_res - lv_obj_get_height(header);
++    content_height_without_kb = ver_res - (conf_opts.omarchy.enabled ? 0 : lv_obj_get_height(header));
+     content_height_with_kb = content_height_without_kb - keyboard_height;
+ 
+     /* Container for a message and an input field */
+     container = lv_obj_create(screen);
+     lv_obj_set_flex_flow(container, LV_FLEX_FLOW_COLUMN);
+-    lv_obj_set_flex_align(container, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
++    if (conf_opts.omarchy.enabled)
++        lv_obj_set_flex_align(container, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
++    else
++        lv_obj_set_flex_align(container, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+     lv_obj_set_size(container, LV_PCT(100), is_keyboard_hidden? content_height_without_kb : content_height_with_kb);
+     lv_obj_set_style_pad_top(container, 10, LV_PART_MAIN);
+     lv_obj_set_style_pad_left(container, side_pad, LV_PART_MAIN);
+@@ -560,6 +669,34 @@ int main(int argc, char *argv[]) {
+     lv_obj_set_flex_grow(textarea, 1);
+     lv_obj_add_state(textarea, LV_STATE_FOCUSED);
+ 
++    /* Omarchy look: the lock screen's password field, 381x67 at 1440 lines,
++       translucent background, 3 px accent border, centred text */
++    if (conf_opts.omarchy.enabled) {
++        const float s = ver_res / 1440.0f;
++        lv_obj_set_size(textarea_container, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
++        lv_obj_set_flex_grow(textarea, 0);
++        lv_obj_set_size(textarea, (int32_t)(381 * s), (int32_t)(67 * s));
++        lv_obj_set_style_bg_opa(textarea, 204, LV_PART_MAIN);
++        lv_obj_set_style_border_width(textarea, 3, LV_PART_MAIN);
++        lv_obj_set_style_border_side(textarea, LV_BORDER_SIDE_FULL, LV_PART_MAIN);
++        lv_obj_set_style_radius(textarea, 0, LV_PART_MAIN);
++        lv_obj_set_style_text_font(textarea, &bbx_font_20, LV_PART_MAIN);
++        lv_obj_set_style_text_font(textarea, &bbx_font_20, LV_PART_TEXTAREA_PLACEHOLDER);
++        const int32_t line = lv_font_get_line_height(&bbx_font_20);
++        lv_obj_set_style_pad_ver(textarea, LV_MAX(0, ((int32_t)(67 * s) - 6 - line) / 2), LV_PART_MAIN);
++        /* the theme gives every object its 32 px font, the label included */
++        lv_obj_t *label = lv_textarea_get_label(textarea);
++        lv_obj_set_style_text_font(label, &bbx_font_20, LV_PART_MAIN);
++        lv_obj_set_style_text_letter_space(label, 3, LV_PART_MAIN);
++        /* like the lock screen, a cursor only once something is typed */
++        lv_obj_set_style_opa(textarea, LV_OPA_TRANSP, LV_PART_CURSOR | LV_STATE_FOCUSED);
++        lv_obj_add_event_cb(textarea, omarchy_textarea_changed_cb, LV_EVENT_VALUE_CHANGED, NULL);
++        lv_obj_set_style_pad_hor(textarea, (int32_t)(18 * s), LV_PART_MAIN);
++        lv_obj_set_style_text_align(textarea, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
++        lv_obj_set_style_text_opa(textarea, 168, LV_PART_TEXTAREA_PLACEHOLDER);
++        lv_textarea_set_placeholder_text(textarea, "Enter Password");
++    }
++
+     /* Route physical keyboard input into textarea */
+     lv_group_add_obj(keyboard_input_group, textarea);
+ 
+@@ -573,9 +710,13 @@ int main(int argc, char *argv[]) {
+     lv_obj_center(toggle_pw_btn_label);
+     lv_label_set_text(toggle_pw_btn_label, LV_SYMBOL_EYE_OPEN);
+     lv_obj_add_event_cb(toggle_pw_btn, toggle_pw_btn_clicked_cb, LV_EVENT_CLICKED, NULL);
++    if (conf_opts.omarchy.enabled)
++        lv_obj_add_flag(toggle_pw_btn, LV_OBJ_FLAG_HIDDEN);
+ 
+     /* The bottom pad is used to center content when the keyboard is hidden */
+     content_pad_bottom_with_kb = padding;
++    if (conf_opts.omarchy.enabled)
++        content_pad_bottom_with_kb = LV_MAX(padding, (content_height_with_kb - textarea_height) / 2);
+ 
+     int32_t content_native_height = textarea_height;
+     if (cli_opts.message) {

@@ -9,6 +9,10 @@ here="$(dirname "$(readlink -f "$0")")"
 
 install -Dm755 "$here/build/unl0kr" /usr/local/bin/unl0kr
 install -Dm644 "$here/unl0kr.conf" /etc/unl0kr.conf
+install -Dm755 "$here/omarchy-look" /usr/local/lib/omarchy-osk/omarchy-look
+# whose Omarchy theme the boot screen follows
+user="${SUDO_USER:-$(logname 2>/dev/null || true)}"
+[[ -n $user && $user != root ]] && printf 'OSK_USER=%s\n' "$user" > /etc/omarchy-osk-unlock.conf
 install -Dm644 "$here/install" /etc/initcpio/install/omarchy-osk-unlock
 install -Dm644 "$here/hook" /etc/initcpio/hooks/omarchy-osk-unlock
 install -Dm644 "$here/mkinitcpio.conf" /etc/mkinitcpio.conf.d/omarchy_osk_unlock.conf

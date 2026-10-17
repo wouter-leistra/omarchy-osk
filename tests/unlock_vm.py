@@ -22,7 +22,9 @@ UNLOCK = os.path.join(os.path.dirname(HERE), "unlock")
 OUT = "/tmp/osk-vm"
 KVER = os.uname().release
 PASSWORD = "osk test"
-W, H = 1440, 960
+# OSK_VM_SIZE=2160x1440 to check the look at the Surface's resolution
+# (the touch scenario's key positions are for 1440x960)
+W, H = (int(v) for v in os.environ.get("OSK_VM_SIZE", "1440x960").split("x"))
 
 
 def sh(*cmd, **kw):
@@ -54,7 +56,10 @@ HOOKS=("${_vm[@]}")
 MODULES+=(bochs virtio_pci virtio_blk virtio_input)
 """
     open(os.path.join(OUT, "mkinitcpio.conf"), "w").write(conf)
-    env = dict(os.environ, OSK_UNL0KR=os.path.join(UNLOCK, "build/unl0kr"))
+    # the Omarchy look from this user's theme, at the VM's screen size
+    env = dict(os.environ, OSK_UNL0KR=os.path.join(UNLOCK, "build/unl0kr"),
+               OSK_LOOK=os.path.join(UNLOCK, "omarchy-look"), OSK_USER=os.environ["USER"],
+               OSK_HOME=os.path.expanduser("~"), OSK_SCREEN=f"{W}x{H}")
     r = subprocess.run(["/usr/bin/mkinitcpio", "-c", f"{OUT}/mkinitcpio.conf",
                         "-D", f"{OUT}/initcpio", "-D", "/usr/lib/initcpio",
                         "-k", KVER, "-g", f"{OUT}/initramfs.img"],
