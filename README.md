@@ -227,6 +227,23 @@ name (e.g. `~/.config/omarchy-osk/layouts/qwerty.txt` or
 over the installed ones. Then `omarchy-osk-restart`. `make check` checks the
 data in the repo.
 
+## Rust port
+
+`rust/` is a port of the keyboard daemon (`omarchy-oskd`) to Rust: the same
+options, data files, signals and scripts, so it is a drop-in replacement.
+
+```sh
+make install-user-rust   # needs cargo; installs it as omarchy-oskd
+omarchy-osk-restart
+make install-user        # back to the C version
+```
+
+It is tested against the C version, which is the reference
+(`make check-rust`, see [tests/ref/README.md](tests/ref/README.md)): for
+the same touches both send exactly the same key events and keymap and draw
+the same pixels, and the gesture decoders give the same words. The
+end-to-end `tests/ui_test.py` passes with both.
+
 ## Credits and thanks
 
 - [wvkbd](https://github.com/jjsullivan5196/wvkbd) by John Sullivan and
