@@ -12,7 +12,7 @@
 usage: tests/bench.py [--runs N] [--live] [--json FILE]
                       [--trace BIN] [--decode BIN] [--daemon BIN]
 The C version is measured with the same inputs by pointing the options at
-its programs (see BENCHMARKS.md).
+its programs (see Performance in README.md).
 """
 
 import argparse

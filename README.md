@@ -1,9 +1,14 @@
 # omarchy-osk
 
-A Gboard-style on-screen keyboard for [Omarchy](https://omarchy.org) (Hyprland),
-built for a Surface Pro 3 but usable on any touchscreen, written in Rust. It
-began as a fork of [wvkbd](https://github.com/jjsullivan5196/wvkbd) (C) and
-was then rewritten in Rust; see `README.wvkbd.md` for the original project.
+A fast, Gboard-style on-screen keyboard for [Omarchy](https://omarchy.org)
+(Hyprland), written in Rust. Built for a Surface Pro 3, usable on any
+touchscreen: swipe typing with suggestions, a layout per language, long-press
+accents, and it docks below your windows instead of covering them.
+
+Inspired by [wvkbd](https://github.com/jjsullivan5196/wvkbd): omarchy-osk
+started as a fork of it in C and was then rewritten in Rust. No wvkbd code
+runs in it anymore, but because the Rust code was ported from wvkbd's, it
+keeps wvkbd's GPL-3.0 license and credits (see [Credits](#credits-and-thanks)).
 
 ## Features
 
@@ -28,6 +33,57 @@ was then rewritten in Rust; see `README.wvkbd.md` for the original project.
   punctuation attaches to the previous word; automatic capitals.
 - **Auto-show** for focused text fields while the Type Cover is detached,
   driven by fcitx5's virtual keyboard D-Bus interface.
+
+## Performance
+
+Measured on the Surface Pro 3 it was made for (Intel Core i5-4300U, 4 GB,
+Hyprland 0.56; keyboard 2160×576, English and Finnish word lists with
+96,428 words), against the C version it was rewritten from. Both behave
+identically: the tests compare every key event, keymap, rendered pixel and
+swipe result with recordings of the C version.
+
+| | C version | omarchy-osk | |
+|---|---:|---:|---|
+| **Daemon** (real Wayland session) | | | |
+| shown after the show signal | 144 ms | 2.6 ms | 55× faster |
+| ready after start | 323 ms | 31 ms | 10× faster |
+| ready after start, first time (nothing cached) | 192 ms | 146 ms | |
+| memory while shown, RSS / PSS | 39.7 / 27.4 MB | 26.0 / 13.6 MB | half the PSS |
+| memory while hidden, RSS / PSS | 27.1 / 21.3 MB | 26.0 / 15.9 MB | |
+| CPU and wakeups while idle | none | none | |
+| binary | 0.33 MB | 1.2 MB | |
+| **Gesture typing** (2,400 sloppy swipes and prefixes) | | | |
+| decode a swipe, median | 7.1 ms | 0.49 ms | 15× faster |
+| decode a swipe, 95th percentile | 14.8 ms | 1.9 ms | 8× faster |
+| decode a swipe, worst | 81 ms | 17 ms | |
+| complete a prefix, median / 95th percentile | 9 / 219 µs | 8 / 67 µs | |
+| load the word lists | 206 ms | 0.06 ms (cached), 129 ms (first time) | |
+| **Per input step** (headless, including drawing) | | | |
+| mean of typing, swiping, long press, languages, shift | 0.53 ms | 0.44 ms | |
+| peak memory | 45 MB | 33 MB | |
+
+How:
+
+- **Dictionary**: 12 bytes per word plus its text (the C version used 188);
+  the sorted dictionary is cached in `~/.cache/omarchy-osk` and
+  memory-mapped, so it costs no private memory.
+- **Gesture decoder**: each word's key sequence is worked out once per
+  layout, while idle, and words are grouped by first and last key, so a
+  swipe only looks at words that start and end where it does. Whether a
+  swipe passes every letter in order is answered from per-key lists of
+  nearby points. Results are the same as checking every word.
+- **Drawing**: straight into the one shared-memory buffer of each surface,
+  without a second buffer or a copy; laid-out labels are cached.
+- **Showing**: the buffers are kept while hidden and the next show is drawn
+  ahead of time, so showing only attaches them. Fonts load while idle.
+- **Signals** are blocked from the program's first code, so a show or hide
+  sent while it starts waits instead of ending the process.
+
+The first swipe on a newly chosen layout also builds its key sequences
+(38 ms); the keyboard does that while idle right after showing, so it
+doesn't delay typing. Reproduce with `make bench` (`tests/bench.py --live`;
+point `--trace`, `--decode` and `--daemon` at other builds to compare).
+Numbers vary with system load; it was about 2 during these runs.
 
 ## Install
 
@@ -239,10 +295,6 @@ make bench    # speed and resource use
 tests/ui_test.py   # end to end on the real desktop (needs the machine to itself)
 ```
 
-Speed and resource use against the C version are in
-[BENCHMARKS.md](BENCHMARKS.md): it shows in under 3 ms, decodes a swipe
-15× faster and uses half the memory.
-
 The golden tests (`tests/golden.py`) run touch scripts through a headless
 build (`osk-trace`) and compare every key event, the keymap and the pixels of
 both surfaces with recordings, and the gesture decoder's results on 2400
@@ -253,11 +305,12 @@ tagged `c-version` in this repository.
 ## Credits and thanks
 
 - [wvkbd](https://github.com/jjsullivan5196/wvkbd) by John Sullivan and
-  contributors (GPL-3.0). omarchy-osk is a modified version of it: first
-  changed in C, then translated to Rust, so it remains a derivative work
-  under the same license. The wvkbd history is kept in this repository;
-  everything since upstream commit `bbecd99` is the omarchy-osk work. The
-  original readme is in [README.wvkbd.md](README.wvkbd.md).
+  contributors (GPL-3.0), the inspiration and starting point. omarchy-osk
+  began as a fork of it in C and was then rewritten in Rust; as a port of
+  wvkbd's code it remains a derivative work under the same license. The
+  wvkbd history is kept in this repository (everything since upstream
+  commit `bbecd99` is omarchy-osk), and its readme is in
+  [README.wvkbd.md](README.wvkbd.md).
 - The Rust crates it builds on, listed in `Cargo.lock`, are under the MIT
   and/or Apache-2.0 licenses (some also Zlib, Unlicense or Unicode-3.0), all
   compatible with GPL-3.0: notably
@@ -294,6 +347,6 @@ tagged `c-version` in this repository.
 
 ## License
 
-GPL-3.0, like wvkbd: see [LICENSE](LICENSE) and [COPYING](COPYING). The word
+GPL-3.0, as wvkbd: see [LICENSE](LICENSE) and [COPYING](COPYING). The word
 lists in `dict/` are CC BY-SA 4.0; the layout data in `data/` comes from
 HeliBoard (GPL-3.0, partly FlorisBoard's Apache-2.0).
