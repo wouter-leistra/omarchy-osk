@@ -47,6 +47,30 @@ usable by touch:
 hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom", order = -10 })
 ```
 
+### Omarchy menu and theme switcher
+
+Out of the box the Omarchy menu (Super+Space) and the theme/background
+switcher cover the whole screen and take exclusive keyboard focus. Hyprland
+then sends every touch to them, so the on-screen keyboard can't type into
+them and a tap on it closes the menu. Clone both plugins and change two
+properties on their `PanelWindow`:
+
+```bash
+omarchy plugin clone omarchy.menu          # ~/.config/omarchy/plugins/<you>.menu/Menu.qml
+omarchy plugin clone omarchy.image-picker  # ~/.config/omarchy/plugins/<you>.image-picker/ImagePicker.qml
+```
+
+```qml
+WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand   // was Exclusive
+exclusionMode: ExclusionMode.Normal                      // was Ignore
+exclusiveZone: 0
+```
+
+(In the image picker keep its condition: `root.opened && root.imagesLoaded ?
+WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None`.) Then `omarchy restart
+shell`. The menus open above the keyboard and take its typing. Clones don't get
+Omarchy updates, so re-clone after an update that changes these plugins.
+
 ## Commands
 
 | Command | Does |
