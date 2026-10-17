@@ -1159,9 +1159,20 @@ impl Kbd {
         }
     }
 
+    /// get the gesture decoder ready for the letter layout (when idle)
+    pub fn prepare_swipe(&self) {
+        if self.swipe_enabled && self.w != 0 && self.dict.lang_active() {
+            self.dict.prepare(&self.swipe_geom_of(ABC));
+        }
+    }
+
     fn swipe_geom(&self) -> Geom {
+        self.swipe_geom_of(self.layout)
+    }
+
+    fn swipe_geom_of(&self, layout: usize) -> Geom {
         let mut g = Geom::default();
-        let set = self.layout_set(self.layout);
+        let set = self.layout_set(layout);
         for k in self.sets[set].iter().take_while(|k| k.ktype != KeyType::Last) {
             if !key_is_letter(k) || g.keys.len() >= swipe::MAX_KEYS {
                 continue;

@@ -598,6 +598,8 @@ fn main() {
         if let Err(e) = conn.flush() {
             die!("Wayland socket has been disconnected: {e}\n");
         }
+        // idle: everything is drawn and sent
+        app.kb.prepare_swipe();
         let timeout = if app.kb.longpress_at != 0 { (app.kb.longpress_at - monotime()).max(0) as i32 } else { -1 };
         let Some(guard) = queue.prepare_read() else { continue };
         let mut fds = [
