@@ -295,6 +295,9 @@ pub struct Kbd {
     pub h: u32,
     pub scale: f64,
     pub corner_radius: i32,
+    /// canvases draw into images of their own (tests) instead of waiting for
+    /// a buffer from the compositor
+    pub own_images: bool,
     pub landscape: bool,
     pub mods: u8,
     pub last_press: Option<KeyRef>,
@@ -424,6 +427,7 @@ impl Kbd {
             h: 0,
             scale: 1.0,
             corner_radius: 0,
+            own_images: true,
             landscape: true,
             mods: 0,
             last_press: None,
@@ -1685,8 +1689,8 @@ impl Kbd {
 
     pub fn resize(&mut self) {
         eprintln!("Resize {}x{} {:.6}, {} layouts", self.w, self.h, self.scale, NUM_LAYOUTS);
-        self.surf = Some(Canvas::new(self.w, self.h, self.scale));
-        self.popup_surf = Some(Canvas::new(self.w, self.h * 2, self.scale));
+        self.surf = Some(Canvas::new(self.w, self.h, self.scale, self.own_images));
+        self.popup_surf = Some(Canvas::new(self.w, self.h * 2, self.scale, self.own_images));
         if self.hint_font.is_none() {
             if let Some(f) = &self.schemes[0].font_desc {
                 let mut h = f.clone();

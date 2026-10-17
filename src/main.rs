@@ -6,7 +6,7 @@
 //! tablet pens drive it. Signals: USR1 hide, USR2 show, RTMIN toggle,
 //! RTMIN+1 text field changed, RTMIN+2/+3 private mode on/off.
 
-use omarchy_osk::draw::Rect;
+use omarchy_osk::draw::Memory;
 use omarchy_osk::keyboard::{monotime, Kbd, Output};
 use omarchy_osk::options::{self, Dock, Options, WlLayer};
 use std::os::fd::{AsFd, AsRawFd, FromRawFd, OwnedFd};
@@ -78,30 +78,28 @@ enum Which {
     Popup,
 }
 
+/// the one shared-memory buffer of a surface; the canvas draws into it
+/// while the compositor doesn't hold it
 struct ShmBuf {
     id: u64,
     buffer: WlBuffer,
-    data: *mut u8,
-    size: usize,
     busy: bool,
-    /// areas (surface coordinates) older than the canvas
-    stale: Vec<Rect>,
 }
 
 impl Drop for ShmBuf {
     fn drop(&mut self) {
         self.buffer.destroy();
-        unsafe { libc::munmap(self.data as *mut libc::c_void, self.size) };
     }
 }
 
 struct Surf {
     surface: WlSurface,
-    bufs: Vec<ShmBuf>,
+    buf: Option<ShmBuf>,
     frame_pending: bool,
+    /// attach even without changes (a freshly configured popup)
+    force: bool,
     /// a new generation for every surface, so events of old ones are ignored
     gen: u32,
-    size: (i32, i32),
 }
 
 fn anon_file(size: usize) -> OwnedFd {
@@ -281,14 +279,14 @@ impl App {
             s.destroy();
         }
         if let Some(s) = self.popup.take() {
-            drop(s.bufs);
+            drop(s.buf);
             s.surface.destroy();
         }
         ls.destroy();
         self.layer_configured = false;
         self.popup_configured = false;
         if let Some(s) = self.keys.take() {
-            drop(s.bufs);
+            drop(s.buf);
             s.surface.destroy();
         }
         self.hidden = true;
@@ -297,10 +295,38 @@ impl App {
     fn new_surf(&mut self) -> Surf {
         self.gen += 1;
         let surface = self.compositor.create_surface(&self.qh, self.gen);
-        Surf { surface, bufs: Vec::new(), frame_pending: false, gen: self.gen, size: (0, 0) }
+        Surf { surface, buf: None, frame_pending: false, force: false, gen: self.gen }
     }
 
-    /* drawing: copy what changed on the canvas into a free buffer */
+    /* drawing: the canvas plays its operations into the surface's buffer
+     * whenever the compositor has released it */
+
+    /// a buffer for the surface, the canvas draws into its memory
+    fn give_buffer(&mut self, which: Which) {
+        let (surf, canvas) = match which {
+            Which::Keys => (self.keys.as_mut(), self.kb.surf.as_mut()),
+            Which::Popup => (self.popup.as_mut(), self.kb.popup_surf.as_mut()),
+        };
+        let (Some(surf), Some(canvas)) = (surf, canvas) else { return };
+        let (pw, ph) = (canvas.pixel_width(), canvas.pixel_height());
+        let stride = pw * 4;
+        let size = (stride * ph) as usize;
+        let fd = anon_file(size);
+        let data = unsafe { libc::mmap(std::ptr::null_mut(), size, libc::PROT_READ | libc::PROT_WRITE, libc::MAP_SHARED, fd.as_raw_fd(), 0) };
+        if data == libc::MAP_FAILED {
+            die!("could not map buffer\n");
+        }
+        let pool: WlShmPool = self.shm.create_pool(fd.as_fd(), size as i32, &self.qh, ());
+        self.buf_serial += 1;
+        let id = self.buf_serial;
+        let buffer = pool.create_buffer(0, pw, ph, stride, wl_shm::Format::Argb8888, &self.qh, (which, surf.gen, id));
+        pool.destroy();
+        let addr = data as usize;
+        canvas.set_memory(unsafe { Memory::new(data as *mut u8, size, move || {
+            libc::munmap(addr as *mut libc::c_void, size);
+        }) });
+        surf.buf = Some(ShmBuf { id, buffer, busy: false });
+    }
 
     fn present(&mut self, which: Which) {
         let (surf, canvas) = match which {
@@ -309,64 +335,18 @@ impl App {
             _ => return,
         };
         let (Some(surf), Some(canvas)) = (surf, canvas) else { return };
-        if surf.frame_pending || !canvas.has_damage() {
+        let Some(buf) = surf.buf.as_mut() else { return };
+        if surf.frame_pending || buf.busy || !(canvas.has_damage() || surf.force) {
             return;
         }
-        let (pw, ph) = (canvas.pixel_width(), canvas.pixel_height());
-        if surf.size != (pw, ph) {
-            surf.bufs.clear();
-            surf.size = (pw, ph);
-        }
-        while surf.bufs.len() < 2 {
-            let stride = pw * 4;
-            let size = (stride * ph) as usize;
-            let fd = anon_file(size);
-            let data = unsafe { libc::mmap(std::ptr::null_mut(), size, libc::PROT_READ | libc::PROT_WRITE, libc::MAP_SHARED, fd.as_raw_fd(), 0) };
-            if data == libc::MAP_FAILED {
-                die!("could not map buffer\n");
-            }
-            let pool: WlShmPool = self.shm.create_pool(fd.as_fd(), size as i32, &self.qh, ());
-            self.buf_serial += 1;
-            let id = self.buf_serial;
-            let buffer = pool.create_buffer(0, pw, ph, stride, wl_shm::Format::Argb8888, &self.qh, (which, surf.gen, id));
-            pool.destroy();
-            let whole = Rect { x: 0, y: 0, w: i32::MAX / 4, h: i32::MAX / 4 };
-            surf.bufs.push(ShmBuf { id, buffer, data: data as *mut u8, size, busy: false, stale: vec![whole] });
-        }
-        let Some(i) = surf.bufs.iter().position(|b| !b.busy) else { return };
+        canvas.flush();
         let damage = canvas.take_damage();
-        for (j, b) in surf.bufs.iter_mut().enumerate() {
-            if j != i {
-                b.stale.extend_from_slice(&damage);
-            }
-        }
-        let s = canvas.scale;
-        let buf = &mut surf.bufs[i];
-        let mut rects = std::mem::take(&mut buf.stale);
-        rects.extend_from_slice(&damage);
-        let stride = (pw * 4) as usize;
-        let dst = buf.data;
-        let _ = canvas.surf.with_data(|src| {
-            for r in &rects {
-                let x0 = ((r.x as f64 * s).floor() as i64).clamp(0, pw as i64) as usize;
-                let y0 = ((r.y as f64 * s).floor() as i64).clamp(0, ph as i64) as usize;
-                let x1 = (((r.x as i64 + r.w as i64) as f64 * s).ceil() as i64).clamp(0, pw as i64) as usize;
-                let y1 = (((r.y as i64 + r.h as i64) as f64 * s).ceil() as i64).clamp(0, ph as i64) as usize;
-                if x1 <= x0 || y1 <= y0 {
-                    continue;
-                }
-                for y in y0..y1 {
-                    let off = y * stride + x0 * 4;
-                    let len = (x1 - x0) * 4;
-                    unsafe { std::ptr::copy_nonoverlapping(src.as_ptr().add(off), dst.add(off), len) };
-                }
-            }
-        });
         surf.surface.attach(Some(&buf.buffer), 0, 0);
         for r in &damage {
             surf.surface.damage(r.x, r.y, r.w, r.h);
         }
         buf.busy = true;
+        surf.force = false;
         surf.surface.frame(&self.qh, (which, surf.gen));
         surf.frame_pending = true;
         surf.surface.commit();
@@ -427,6 +407,8 @@ impl App {
         self.layer_surface.as_ref().unwrap().ack_configure(serial);
         let t = monotime();
         self.kb.resize();
+        self.give_buffer(Which::Keys);
+        self.give_buffer(Which::Popup);
         self.present(Which::Keys);
         if self.kb.debug {
             eprintln!("show: configured after {}ms, drawing took {}ms", t - self.show_started, monotime() - t);
@@ -495,6 +477,7 @@ fn main() {
     let opts = options::parse(&args);
     let mut kb = opts.build_kbd();
     kb.landscape = true;
+    kb.own_images = false;
 
     let conn = Connection::connect_to_env().unwrap_or_else(|_| die!("Failed to create display\n"));
     let (globals, mut queue) = registry_queue_init::<App>(&conn).unwrap_or_else(|_| die!("Failed to get the Wayland globals\n"));
@@ -927,7 +910,7 @@ impl Dispatch<WlBuffer, (Which, u32, u64)> for App {
                 Which::Keys => app.keys.as_mut(),
                 Which::Popup => app.popup.as_mut(),
             };
-            if let Some(b) = surf.filter(|s| s.gen == data.1).and_then(|s| s.bufs.iter_mut().find(|b| b.id == data.2)) {
+            if let Some(b) = surf.filter(|s| s.gen == data.1).and_then(|s| s.buf.as_mut()).filter(|b| b.id == data.2) {
                 b.busy = false;
             }
         }
@@ -970,8 +953,8 @@ impl Dispatch<XdgSurface, u32> for App {
             xs.ack_configure(serial);
             if app.popup.as_ref().is_some_and(|p| p.gen == *gen) {
                 app.popup_configured = true;
-                if let Some(c) = app.kb.popup_surf.as_mut() {
-                    c.damage_all();
+                if let Some(p) = app.popup.as_mut() {
+                    p.force = true;
                 }
                 app.present(Which::Popup);
             }
