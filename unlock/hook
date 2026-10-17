@@ -1,0 +1,83 @@
+#!/usr/bin/ash
+# omarchy-osk-unlock: type the disk encryption passphrase on the touchscreen
+# with unl0kr. Runs before the encrypt hook and only ever adds a way in: if
+# unl0kr is missing, fails, is closed or the passphrase is wrong three times,
+# nothing is opened here and encrypt asks the usual way (Plymouth prompt,
+# physical keyboard). oskunlock=0 on the kernel command line skips it.
+
+# to the kernel log, so it shows in journalctl -b
+osk_log() {
+    echo "<5>omarchy-osk-unlock: $*" > /dev/kmsg 2>/dev/null
+}
+
+run_hook() {
+    local cryptdev cryptname cryptoptions cryptopt cryptargs resolved
+    local pass tries plymouth_off
+
+    if [ "${oskunlock}" = "0" ]; then
+        osk_log "skipped (oskunlock=0)"
+        return 0
+    fi
+    command -v unl0kr >/dev/null 2>&1 || return 0
+    [ -n "${cryptdevice}" ] || return 0
+
+    # cryptdevice can contain : which needs to be escaped.
+    # shellcheck disable=SC2162
+    IFS=: read cryptdev cryptname cryptoptions <<EOF2
+$cryptdevice
+EOF2
+    [ -b "/dev/mapper/${cryptname}" ] && return 0
+
+    modprobe -a -q dm-crypt i2c_hid_acpi hid_multitouch >/dev/null 2>&1
+
+    # the same options as the encrypt hook
+    set -f
+    OLDIFS="$IFS"; IFS=,
+    for cryptopt in ${cryptoptions}; do
+        case ${cryptopt} in
+            allow-discards|discard) cryptargs="${cryptargs} --allow-discards" ;;
+            no-read-workqueue|perf-no_read_workqueue) cryptargs="${cryptargs} --perf-no_read_workqueue" ;;
+            no-write-workqueue|perf-no_write_workqueue) cryptargs="${cryptargs} --perf-no_write_workqueue" ;;
+            sector-size=*) cryptargs="${cryptargs} --sector-size ${cryptopt#*=}" ;;
+        esac
+    done
+    set +f
+    IFS="$OLDIFS"
+    unset OLDIFS
+
+    resolved=$(resolve_device "${cryptdev}" "$(getarg rootdelay)") || return 0
+    cryptsetup isLuks "${resolved}" >/dev/null 2>&1 || return 0
+
+    # Plymouth holds the display; hand it over while unl0kr runs
+    plymouth_off=0
+    if command -v plymouth >/dev/null 2>&1 && plymouth --ping 2>/dev/null; then
+        plymouth deactivate 2>/dev/null && plymouth_off=1
+    fi
+
+    tries=0
+    while [ "${tries}" -lt 3 ] && ! [ -b "/dev/mapper/${cryptname}" ]; do
+        # no passphrase (unl0kr failed or was closed): leave it to encrypt
+        if ! pass="$(unl0kr -n 2>/dev/null)" || [ -z "${pass}" ]; then
+            osk_log "unl0kr gave no passphrase, falling back"
+            break
+        fi
+        # shellcheck disable=SC2086
+        printf '%s' "${pass}" | cryptsetup open --type luks --key-file=- \
+            "${resolved}" "${cryptname}" ${cryptargs} >/dev/null 2>&1
+        tries=$((tries + 1))
+        export CRYPTTAB_TRIED="${tries}"
+        if [ -b "/dev/mapper/${cryptname}" ]; then
+            osk_log "unlocked ${cryptname}"
+        else
+            osk_log "wrong passphrase (${tries})"
+        fi
+    done
+    [ -b "/dev/mapper/${cryptname}" ] || osk_log "leaving ${cryptname} to encrypt"
+    pass=
+    unset CRYPTTAB_TRIED
+
+    [ "${plymouth_off}" = "1" ] && plymouth reactivate 2>/dev/null
+    return 0
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

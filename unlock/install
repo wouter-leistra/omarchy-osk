@@ -1,0 +1,43 @@
+#!/bin/bash
+# omarchy-osk-unlock: unl0kr touch keyboard for the LUKS passphrase.
+# Put it before encrypt in HOOKS.
+
+build() {
+    local f
+
+    add_module dm-crypt
+    # Surface touchscreen: HID over I2C (the LPSS I2C controller is built in
+    # or in MODULES); more touchscreen drivers can be added with MODULES
+    add_module i2c_hid_acpi
+    add_module hid_multitouch
+
+    add_binary cryptsetup
+    add_binary /usr/lib/libgcc_s.so.1   # cryptsetup's pthread_create dlopen()s it
+    # mkinitcpio searches only /usr/bin:/bin
+    add_binary "${OSK_UNL0KR:-$(type -P unl0kr || echo /usr/local/bin/unl0kr)}" /usr/bin/unl0kr
+    for f in /etc/unl0kr.conf /usr/share/unl0kr/unl0kr.conf; do
+        [[ -f $f ]] && add_file "$f"
+    done
+
+    # libinput needs udev's input tagging and its quirks; xkb for the Type Cover
+    map add_udev_rule \
+        '60-input-id.rules' \
+        '60-evdev.rules' \
+        '70-touchpad.rules' \
+        '65-libwacom.rules'
+    add_full_dir /usr/share/libinput
+    add_full_dir /usr/share/X11/xkb
+
+    add_runscript
+}
+
+help() {
+    cat <<HELPEOF
+Type the disk encryption passphrase with unl0kr's on-screen keyboard (touch,
+mouse or physical keyboard). Place it before 'encrypt'; when unl0kr can't run
+or is closed, 'encrypt' asks the usual way. Add oskunlock=0 to the kernel
+command line to skip it for one boot.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

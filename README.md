@@ -89,8 +89,26 @@ the password never appears on screen) and shows itself while the Type Cover is
 detached. A button under the password field shows or hides it. Unlocking
 switches private mode off again.
 
-The disk encryption passphrase at boot comes before any of this runs, so it
-still needs a physical keyboard.
+### Disk encryption passphrase at boot
+
+The LUKS passphrase is asked in the initramfs, long before Wayland. `unlock/`
+adds an mkinitcpio hook that asks it with
+[unl0kr](https://gitlab.postmarketos.org/postmarketOS/buffybox) (postmarketOS),
+a full-screen touch keyboard that also takes the physical keyboard:
+
+```bash
+unlock/build.sh      # builds unl0kr 3.6.0 as your user (meson/ninja in a venv)
+unlock/install.sh    # needs sudo: installs it and rebuilds the initramfs
+```
+
+The hook runs right before `encrypt` and only adds a way in: when unl0kr
+can't start, is closed, or gets a wrong passphrase three times, `encrypt`
+asks the usual way (Plymouth prompt). Add `oskunlock=0` to the kernel command
+line in the boot menu to skip it once; `unlock/uninstall.sh` removes it. What
+happened is in the kernel log (`journalctl -b -k | grep omarchy-osk-unlock`).
+Settings such as the touch layout (`us`, `de`, `fr`, `es`) are in
+`/etc/unl0kr.conf`. `tests/unlock_vm.py` tests it in QEMU with a throwaway
+LUKS disk.
 
 ## Commands
 
@@ -190,6 +208,9 @@ After editing either file: `make install-user && omarchy-osk-restart`.
 - The swipe decoder follows the idea of SHARK² by Per Ola Kristensson and
   Shumin Zhai ("SHARK²: A Large Vocabulary Shorthand Writing System for
   Pen-based Computers", UIST 2004). No code was taken from any implementation.
+- The boot passphrase prompt uses
+  [unl0kr](https://gitlab.postmarketos.org/postmarketOS/buffybox) from
+  postmarketOS (GPL-3.0-or-later), built from its source by `unlock/build.sh`.
 - `os-compatibility.c` comes from the Wayland/Weston project (MIT, see
   [COPYING_WESTON](COPYING_WESTON)); the Wayland protocol files in `proto/` and
   `tests/proto/` carry their own copyright notices.
