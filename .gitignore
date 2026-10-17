@@ -10,3 +10,4 @@ build-*/*
 wvkbd-*
 wvkbd-omarchy
 tests/proto/vp.[ch]
+__pycache__/
