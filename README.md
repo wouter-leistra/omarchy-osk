@@ -121,7 +121,9 @@ LUKS disk.
 
 It looks like the Omarchy lock screen: `unlock/unl0kr-omarchy.patch` adds an
 `[omarchy]` section to unl0kr (theme colours, the lock screen's password
-field, no header bar) and JetBrains Mono fonts. The colours and the blurred
+field, no header bar) and JetBrains Mono fonts. The on-screen keyboard
+hides while the Type Cover is attached and slides up when it is detached
+(`OSK_COVER_NAME`, as for auto-show). The colours and the blurred
 wallpaper are taken from your current Omarchy theme whenever the initramfs is
 built (`unlock/omarchy-look`), so after a theme change run
 `sudo limine-mkinitcpio`, or it follows at the next kernel update.

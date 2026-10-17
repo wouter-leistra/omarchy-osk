@@ -5,7 +5,7 @@ omarchy-osk-unlock hook and a throwaway LUKS disk, then drive unl0kr.
 usage: tests/unlock_vm.py build
        tests/unlock_vm.py run SCENARIO [SCENARIO...]
 
-Scenarios: keyboard, wrong-then-right, touch, fallback, skip. Everything goes
+Scenarios: keyboard, wrong-then-right, touch, cover, fallback, skip. Everything goes
 to /tmp/osk-vm (screenshots, serial logs). Needs qemu-base and unlock/build.sh.
 """
 
@@ -59,7 +59,9 @@ MODULES+=(bochs virtio_pci virtio_blk virtio_input)
     # the Omarchy look from this user's theme, at the VM's screen size
     env = dict(os.environ, OSK_UNL0KR=os.path.join(UNLOCK, "build/unl0kr"),
                OSK_LOOK=os.path.join(UNLOCK, "omarchy-look"), OSK_USER=os.environ["USER"],
-               OSK_HOME=os.path.expanduser("~"), OSK_SCREEN=f"{W}x{H}")
+               OSK_HOME=os.path.expanduser("~"), OSK_SCREEN=f"{W}x{H}",
+               # the VM's keyboard plays the Type Cover
+               OSK_COVER_NAME="Virtio Keyboard")
     r = subprocess.run(["/usr/bin/mkinitcpio", "-c", f"{OUT}/mkinitcpio.conf",
                         "-D", f"{OUT}/initcpio", "-D", "/usr/lib/initcpio",
                         "-k", KVER, "-g", f"{OUT}/initramfs.img"],
@@ -89,7 +91,7 @@ class VM:
             "-kernel", f"/usr/lib/modules/{KVER}/vmlinuz", "-initrd", f"{OUT}/initramfs.img",
             "-append", cmdline, "-display", "none",
             "-device", f"VGA,xres={W},yres={H},edid=on",
-            "-device", "virtio-tablet-pci", "-device", "virtio-keyboard-pci",
+            "-device", "virtio-tablet-pci", "-device", "virtio-keyboard-pci,id=kbd",
             "-drive", f"file={OUT}/luks.img,format=raw,if=virtio,snapshot=on",
             "-serial", f"file:{self.serial}", "-qmp", f"unix:{sock},server=on,wait=off",
             "-no-reboot"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -146,6 +148,13 @@ class VM:
         self.qmp("input-send-event", events=[{"type": "btn", "data": {"down": False, "button": "left"}}])
         time.sleep(0.15)
 
+    def cover(self, attached):
+        if attached:
+            self.qmp("device_add", driver="virtio-keyboard-pci", id="kbd")
+        else:
+            self.qmp("device_del", id="kbd")
+        time.sleep(2)
+
     def close(self):
         self.proc.kill()
         self.proc.wait()
@@ -179,11 +188,21 @@ def scenario(name):
             ok = vm.wait_log(OURS)
         elif name == "touch":
             wait_for_unl0kr(vm)
+            vm.cover(False)      # the on-screen keyboard shows without the cover
             from unlock_vm_keys import KEYS    # positions measured from a screenshot
             for c in PASSWORD:
                 vm.tap(*KEYS[c])
             vm.shot("typed")
             vm.tap(*KEYS["\n"])
+            ok = vm.wait_log(OURS)
+        elif name == "cover":
+            # keyboard hidden with the cover, shown without, hidden again
+            wait_for_unl0kr(vm)
+            vm.cover(False)
+            vm.shot("detached")
+            vm.cover(True)
+            vm.shot("attached")
+            vm.type(PASSWORD)
             ok = vm.wait_log(OURS)
         elif name == "fallback":
             # three wrong passphrases: unl0kr gives up, Plymouth asks

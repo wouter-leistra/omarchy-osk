@@ -10,11 +10,104 @@ index cc2b681..8a10de5 100644
      'shared/cli_common.c',
      'shared/config.c',
      'shared/force_feedback.c',
+diff --git i/shared/indev.c w/shared/indev.c
+index ebf3c5f..fae344b 100644
+--- i/shared/indev.c
++++ w/shared/indev.c
+@@ -54,6 +54,8 @@ struct input_device_ext {
+     struct xkb_state* xkb_state;
+ #endif
+     enum input_device_type type;
++    /* a keyboard whose name contains watched_name (the Type Cover) */
++    bool watched;
+ };
+ 
+ /* The analog of lv_indev_data_t, but without unused fields */
+@@ -86,6 +88,11 @@ static uint8_t num_touchpads = 0;
+ 
+ #ifndef BBX_APP_BUFFYBOARD
+ static void (*on_key_power_cb)() = NULL;
++
++/* Keyboards named like watched_name (e.g. a detachable Type Cover) */
++static const char *watched_name = NULL;
++static uint8_t num_watched = 0;
++static void (*on_watched_cb)(bool connected) = NULL;
+ #endif
+ static void (*on_tablet_tool_button_cb)() = NULL;
+ 
+@@ -191,6 +198,7 @@ static void add_device_extension(struct libinput_device* device) {
+     ext->xkb_state = NULL;
+ #endif
+     ext->type = type;
++    ext->watched = false;
+ 
+ #ifndef BBX_APP_BUFFYBOARD
+     if (libinput_device_has_capability(device, LIBINPUT_DEVICE_CAP_KEYBOARD)) {
+@@ -294,6 +302,12 @@ static void add_device_extension(struct libinput_device* device) {
+     libinput_device_set_user_data(device, ext);
+ 
+ #ifndef BBX_APP_BUFFYBOARD
++    if (watched_name && ext->type == BBX_INDEV_KEYBOARD
++            && strstr(libinput_device_get_name(device), watched_name)) {
++        ext->watched = true;
++        if (num_watched++ == 0 && on_watched_cb)
++            on_watched_cb(true);
++    }
+     if (ext->type == BBX_INDEV_KEYBOARD)
+         num_keyboards++;
+     else
+@@ -369,6 +383,8 @@ static void on_input_event() {
+                 xkb_state_unref(ext->xkb_state);
+             }
+ 
++            if (ext->watched && --num_watched == 0 && on_watched_cb)
++                on_watched_cb(false);
+             if (ext->type == BBX_INDEV_KEYBOARD) {
+                 assert(num_keyboards > 0);
+                 num_keyboards--;
+@@ -941,6 +957,15 @@ bool bbx_indev_is_keyboard_connected() {
+     return num_keyboards != 0;
+ }
+ 
++void bbx_indev_watch_keyboard(const char *name, void (*callback)(bool connected)) {
++    watched_name = name;
++    on_watched_cb = callback;
++}
++
++bool bbx_indev_is_watched_keyboard_connected() {
++    return num_watched != 0;
++}
++
+ void bbx_indev_set_key_power_cb(void (*callback)()) {
+     on_key_power_cb = callback;
+ }
+diff --git i/shared/indev.h w/shared/indev.h
+index 59e2b2d..86164bd 100644
+--- i/shared/indev.h
++++ w/shared/indev.h
+@@ -59,6 +59,17 @@ bool bbx_indev_is_keyboard_connected();
+  * Set a function that will be called on pressing KEY_POWER.
+  */
+ void bbx_indev_set_key_power_cb(void (*callback)());
++
++/**
++ * Watch for keyboards whose name contains name (call before bbx_indev_init).
++ * The callback runs when the first one appears and when the last one goes.
++ */
++void bbx_indev_watch_keyboard(const char *name, void (*callback)(bool connected));
++
++/**
++ * Check if a watched keyboard is connected.
++ */
++bool bbx_indev_is_watched_keyboard_connected();
+ #endif
+ 
+ /**
 diff --git i/unl0kr/config.c w/unl0kr/config.c
-index 1149308..47b1717 100644
+index 1149308..c60c0db 100644
 --- i/unl0kr/config.c
 +++ w/unl0kr/config.c
-@@ -40,7 +40,34 @@ static int parsing_handler(void* user_data, const char* section, const char* key
+@@ -40,7 +40,38 @@ static int parsing_handler(void* user_data, const char* section, const char* key
  static int parsing_handler(void* user_data, const char* section, const char* key, const char* value) {
      ul_config_opts *opts = (ul_config_opts *)user_data;
  
@@ -23,6 +116,10 @@ index 1149308..47b1717 100644
 +        opts->omarchy.enabled = true;
 +        if (strcmp(key, "wallpaper") == 0) {
 +            opts->omarchy.wallpaper = strdup(value);
++            return 1;
++        }
++        if (strcmp(key, "cover") == 0) {
++            opts->omarchy.cover = strdup(value);
 +            return 1;
 +        }
 +        if (strcmp(key, "wallpaper_width") == 0) {
@@ -50,7 +147,7 @@ index 1149308..47b1717 100644
          if (strcmp(key, "animations") == 0) {
              if (bbx_config_parse_bool(value, &(opts->general.animations))) {
                  return 1;
-@@ -181,6 +208,18 @@ void ul_config_init_opts(ul_config_opts *opts) {
+@@ -181,6 +212,19 @@ void ul_config_init_opts(ul_config_opts *opts) {
      opts->quirks.fbdev_force_refresh = false;
      opts->quirks.terminal_prevent_graphics_mode = false;
      opts->quirks.terminal_allow_keyboard_input = false;
@@ -64,16 +161,17 @@ index 1149308..47b1717 100644
 +    opts->omarchy.key_special = 0x45475a;
 +    opts->omarchy.key_pressed = 0x585b70;
 +    opts->omarchy.wallpaper = NULL;
++    opts->omarchy.cover = NULL;
 +    opts->omarchy.wallpaper_width = 0;
 +    opts->omarchy.wallpaper_height = 0;
  }
  
  void ul_config_parse_directory(const char *path, ul_config_opts *opts) {
 diff --git i/unl0kr/config.h w/unl0kr/config.h
-index 72c33e5..374424c 100644
+index 72c33e5..7d28bbd 100644
 --- i/unl0kr/config.h
 +++ w/unl0kr/config.h
-@@ -90,6 +90,23 @@ typedef struct {
+@@ -90,6 +90,26 @@ typedef struct {
  /**
   * Options parsed from config file(s)
   */
@@ -90,6 +188,9 @@ index 72c33e5..374424c 100644
 +    uint32_t key_pressed;
 +    /* raw XRGB8888 (B, G, R, X bytes) wallpaper, already blurred */
 +    const char *wallpaper;
++    /* hide the on-screen keyboard while a keyboard with this in its name is
++       attached (the Surface Type Cover), show it when it goes */
++    const char *cover;
 +    int32_t wallpaper_width;
 +    int32_t wallpaper_height;
 +} ul_config_opts_omarchy;
@@ -97,7 +198,7 @@ index 72c33e5..374424c 100644
  typedef struct {
      /* General options */
      ul_config_opts_general general;
-@@ -105,6 +122,8 @@ typedef struct {
+@@ -105,6 +125,8 @@ typedef struct {
      struct xkb_rule_names hw_keyboard;
      /* Options related to (normally unneeded) quirks */
      ul_config_opts_quirks quirks;
@@ -107,10 +208,10 @@ index 72c33e5..374424c 100644
  
  /**
 diff --git i/unl0kr/main.c w/unl0kr/main.c
-index 44f2235..7676bca 100644
+index 44f2235..04d35a8 100644
 --- i/unl0kr/main.c
 +++ w/unl0kr/main.c
-@@ -223,10 +223,103 @@ static void set_theme(bool is_alternate) {
+@@ -223,10 +223,115 @@ static void set_theme(bool is_alternate) {
      bbx_theme_apply(get_theme(is_alternate));
  }
  
@@ -167,6 +268,18 @@ index 44f2235..7676bca 100644
      return bbx_themes_themes[is_alternate ? conf_opts.theme.alternate_id : conf_opts.theme.default_id];
  }
  
++/* the Type Cover attached or detached: hide or show the on-screen keyboard */
++static void cover_changed_cb(bool connected) {
++    if (!keyboard) {
++        is_keyboard_hidden = connected;   /* before the UI exists */
++        return;
++    }
++    if (is_keyboard_hidden == connected)
++        return;
++    is_keyboard_hidden = connected;
++    set_keyboard_hidden(is_keyboard_hidden);
++}
++
 +static void omarchy_textarea_changed_cb(lv_event_t *event) {
 +    lv_obj_t *textarea = lv_event_get_target(event);
 +    bool empty = lv_textarea_get_text(textarea)[0] == '\0';
@@ -214,14 +327,24 @@ index 44f2235..7676bca 100644
  static void toggle_pw_btn_clicked_cb(lv_event_t *event) {
      LV_UNUSED(event);
      toggle_password_obscured();
-@@ -473,12 +566,18 @@ int main(int argc, char *argv[]) {
+@@ -461,6 +566,8 @@ int main(int argc, char *argv[]) {
+         .touchscreen = conf_opts.input.touchscreen,
+         .force_feedback = conf_opts.keyboard.haptic_feedback
+     };
++    if (conf_opts.omarchy.enabled && conf_opts.omarchy.cover && conf_opts.omarchy.cover[0])
++        bbx_indev_watch_keyboard(conf_opts.omarchy.cover, cover_changed_cb);
+     if (bbx_indev_init(fd_epoll, &input_config) == 0)
+         exit_failure();
+ 
+@@ -473,12 +580,19 @@ int main(int argc, char *argv[]) {
      }
  
      /* Initialise theme */
 +    if (conf_opts.omarchy.enabled) {
 +        init_omarchy_theme();
-+        /* the keyboard is the way in on a tablet, keep it up */
-+        is_keyboard_hidden = false;
++        /* the keyboard is the way in on a tablet: up unless the Type Cover
++           is attached (then cover_changed_cb follows it) */
++        is_keyboard_hidden = conf_opts.omarchy.cover && bbx_indev_is_watched_keyboard_connected();
 +    }
      set_theme(is_alternate_theme);
  
@@ -234,7 +357,7 @@ index 44f2235..7676bca 100644
      const int32_t padding = keyboard_height / 10;
      const int32_t side_pad = (hor_res > ver_res ? (hor_res - ver_res) / 2 : 0) + padding;
  
-@@ -488,6 +587,9 @@ int main(int argc, char *argv[]) {
+@@ -488,6 +602,9 @@ int main(int argc, char *argv[]) {
      lv_obj_set_flex_flow(screen, LV_FLEX_FLOW_COLUMN);
      lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
  
@@ -244,7 +367,7 @@ index 44f2235..7676bca 100644
      /* Configure header */
      bbx_header_config_t header_config;
      bbx_header_init_config(&header_config);
-@@ -508,14 +610,21 @@ int main(int argc, char *argv[]) {
+@@ -508,14 +625,21 @@ int main(int argc, char *argv[]) {
      lv_obj_add_event_cb(header_widgets.layout_dropdown, layout_dropdown_value_changed_cb, LV_EVENT_VALUE_CHANGED, NULL);
      lv_obj_add_event_cb(header_widgets.shutdown_btn, shutdown_btn_clicked_cb, LV_EVENT_CLICKED, NULL);
  
@@ -268,7 +391,7 @@ index 44f2235..7676bca 100644
      lv_obj_set_size(container, LV_PCT(100), is_keyboard_hidden? content_height_without_kb : content_height_with_kb);
      lv_obj_set_style_pad_top(container, 10, LV_PART_MAIN);
      lv_obj_set_style_pad_left(container, side_pad, LV_PART_MAIN);
-@@ -560,6 +669,34 @@ int main(int argc, char *argv[]) {
+@@ -560,6 +684,34 @@ int main(int argc, char *argv[]) {
      lv_obj_set_flex_grow(textarea, 1);
      lv_obj_add_state(textarea, LV_STATE_FOCUSED);
  
@@ -303,7 +426,7 @@ index 44f2235..7676bca 100644
      /* Route physical keyboard input into textarea */
      lv_group_add_obj(keyboard_input_group, textarea);
  
-@@ -573,9 +710,13 @@ int main(int argc, char *argv[]) {
+@@ -573,9 +725,13 @@ int main(int argc, char *argv[]) {
      lv_obj_center(toggle_pw_btn_label);
      lv_label_set_text(toggle_pw_btn_label, LV_SYMBOL_EYE_OPEN);
      lv_obj_add_event_cb(toggle_pw_btn, toggle_pw_btn_clicked_cb, LV_EVENT_CLICKED, NULL);

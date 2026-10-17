@@ -41,6 +41,8 @@ mkdir -p "$out"
   echo "key=$key"
   echo "key_special=$special"
   echo "key_pressed=$pressed"
+  # the on-screen keyboard hides while this keyboard is attached
+  echo "cover=${OSK_COVER_NAME:-Type Cover Keyboard}"
 } > "$out/omarchy.conf"
 
 wallpaper=$(readlink -f "$state/background" 2>/dev/null || true)
