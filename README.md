@@ -239,6 +239,10 @@ make bench    # speed and resource use
 tests/ui_test.py   # end to end on the real desktop (needs the machine to itself)
 ```
 
+Speed and resource use against the C version are in
+[BENCHMARKS.md](BENCHMARKS.md): it shows in under 3 ms, decodes a swipe
+15× faster and uses half the memory.
+
 The golden tests (`tests/golden.py`) run touch scripts through a headless
 build (`osk-trace`) and compare every key event, the keymap and the pixels of
 both surfaces with recordings, and the gesture decoder's results on 2400
