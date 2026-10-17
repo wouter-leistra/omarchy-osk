@@ -1,14 +1,29 @@
 # omarchy-osk
 
 A fast, Gboard-style on-screen keyboard for [Omarchy](https://omarchy.org)
-(Hyprland), written in Rust. Built for a Surface Pro 3, usable on any
-touchscreen: swipe typing with suggestions, a layout per language, long-press
-accents, and it docks below your windows instead of covering them.
+(Hyprland), written in Rust, made for the Surface Pro 3 and its Type Cover:
+swipe typing with suggestions, a layout per language, long-press accents,
+and it docks below your windows instead of covering them.
 
 Inspired by [wvkbd](https://github.com/jjsullivan5196/wvkbd): omarchy-osk
 started as a fork of it in C and was then rewritten in Rust. No wvkbd code
 runs in it anymore, but because the Rust code was ported from wvkbd's, it
 keeps wvkbd's GPL-3.0 license and credits (see [Credits](#credits-and-thanks)).
+
+> **Made for one device.** omarchy-osk is built and tested on a **Microsoft
+> Surface Pro 3 with the Surface Type Cover**, on **Omarchy 4.0.4**. Other
+> tablets, touch laptops and touchscreens may work, but nothing is
+> guaranteed: touch, pen and the "show while the keyboard is detached"
+> behaviour are only tested there, and newer Omarchy versions may break the
+> parts that patch Omarchy's own menu, theme switcher and lock screen.
+>
+> **The boot passphrase prompt is a different keyboard.** The optional disk
+> encryption prompt (`unlock/`) uses [unl0kr](https://gitlab.postmarketos.org/postmarketOS/buffybox)
+> from postmarketOS, not omarchy-osk: no swipe typing, no suggestions and
+> none of omarchy-osk's layouts. Its touch keyboard is US English (unl0kr
+> also has German, Spanish and French layouts), so characters such as
+> `å ä ö` can't be typed by touch there. The Type Cover does type your own
+> layout (`fi` here), so a passphrase with such characters needs the cover.
 
 ## Features
 
