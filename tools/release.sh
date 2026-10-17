@@ -5,8 +5,9 @@
 #
 # 1. the tree must be clean and Cargo.toml's version must match
 # 2. installs this build for your user and runs every test: unit and golden
-#    tests (make check), the end-to-end tests/ui_test.py (needs the machine
-#    to itself; --skip-ui to leave them out, which TESTED then says)
+#    tests (make check), the installer test, the end-to-end tests/ui_test.py
+#    (needs the machine to itself; --skip-ui to leave them out, which TESTED
+#    then says)
 # 3. writes target/TESTED: Omarchy and Hyprland versions, device, commit,
 #    date and what passed
 # 4. makes the tarball and SHA256SUMS (make dist), with TESTED inside
@@ -36,10 +37,12 @@ omarchy-osk-restart || true
 make check | tee target/check.log
 golden=$(grep -c '^PASS' target/check.log)
 units=$(grep -o 'test result: ok. [0-9]* passed' target/check.log | awk '{s += $4} END {print s}')
+python3 -I tests/install_test.py | tee target/install.log
+installer="installer $(tail -1 target/install.log)"
 if ((skip_ui)); then
   ui="end-to-end tests not run"
 else
-  tests/ui_test.py | tee target/ui.log
+  python3 -I tests/ui_test.py | tee target/ui.log
   ui="end-to-end $(tail -1 target/ui.log)"
 fi
 
@@ -52,7 +55,7 @@ date=$(date -u +%Y-%m-%d)
 omarchy=$(omarchy version | head -1 | cut -d- -f1)
 hyprland=$(hyprctl version -j | jq -r .version)
 device=$device
-tests=$units unit tests and $golden golden tests passed; $ui
+tests=$units unit tests and $golden golden tests passed; $installer; $ui
 EOF
 cat target/TESTED
 
