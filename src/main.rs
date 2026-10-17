@@ -548,9 +548,45 @@ static BLOCK_SIGNALS_EARLY: extern "C" fn() = {
     early
 };
 
+/// omarchy-oskd [--data DIRS] --filter-dict LANG < frequency list > word list
+fn filter_dict(args: &[String]) -> ! {
+    let mut dirs = options::default_data_dirs();
+    let mut lang = None;
+    let mut i = 1;
+    while i < args.len() {
+        match args[i].as_str() {
+            "--data" if i + 1 < args.len() => {
+                dirs = args[i + 1].clone();
+                i += 1;
+            }
+            "--filter-dict" if i + 1 < args.len() => {
+                lang = Some(args[i + 1].clone());
+                i += 1;
+            }
+            a => die!("--filter-dict: unexpected {a}\n"),
+        }
+        i += 1;
+    }
+    let Some(tag) = lang else { die!("--filter-dict needs a language\n") };
+    let Some(l) = omarchy_osk::langs::load(&tag, &dirs).into_iter().next() else {
+        die!("no layout for language {tag}\n")
+    };
+    let stdout = std::io::stdout();
+    match omarchy_osk::dictfilter::filter(&l, std::io::stdin().lock(), std::io::BufWriter::new(stdout.lock())) {
+        Ok(n) => {
+            eprintln!("omarchy-osk: {n} words for {tag} ({} layout)", l.layout);
+            std::process::exit(if n > 0 { 0 } else { 1 })
+        }
+        Err(e) => die!("--filter-dict: {e}\n"),
+    }
+}
+
 fn main() {
     let mask = block_signals();
     let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--filter-dict") {
+        filter_dict(&args);
+    }
     let opts = options::parse(&args);
     let mut kb = opts.build_kbd();
     kb.landscape = true;

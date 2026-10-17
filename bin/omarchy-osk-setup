@@ -1,0 +1,291 @@
+#!/bin/bash
+# Set up omarchy-osk: languages, auto-show, keyboard height, the bar button,
+# the Omarchy patches (menu, theme switcher, lock screen) and the Hyprland
+# layer rule. Run it again any time to change your choices.
+#
+#   omarchy-osk-setup            ask (with your current settings preselected)
+#   omarchy-osk-setup --yes      no questions: current settings or defaults
+# Answers can also be given as options:
+#   --langs en,fi,de-DE   --autoshow cover|always|never   --cover "NAME"
+#   --height small|medium|large   --bar yes|no   --patches yes|no
+#   --layer-rule yes|no   --download yes|no (word lists for new languages)
+set -uo pipefail
+
+PREFIX="${OSK_PREFIX:-$HOME/.local}"
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-osk"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+CONF="$CONFIG_DIR/omarchy-osk/config"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-osk"
+HOOKS="$CONFIG_DIR/omarchy/hooks"
+PLUGIN_DIR="$CONFIG_DIR/omarchy/plugins/omarchy-osk"
+LAYER_FILE="$CONFIG_DIR/hypr/looknfeel.lua"
+FREQ_URL="https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018"
+
+yes=0 a_langs="" a_autoshow="" a_cover="" a_height="" a_bar="" a_patches="" a_rule="" a_download=""
+while (($#)); do
+  case $1 in
+    --yes|-y) yes=1 ;;
+    --langs) a_langs=$2; shift ;;
+    --autoshow) a_autoshow=$2; shift ;;
+    --cover) a_cover=$2; shift ;;
+    --height) a_height=$2; shift ;;
+    --bar) a_bar=$2; shift ;;
+    --patches) a_patches=$2; shift ;;
+    --layer-rule) a_rule=$2; shift ;;
+    --download) a_download=$2; shift ;;
+    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "unknown option $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+
+mkdir -p "$STATE" "$(dirname "$CONF")"
+touch "$STATE/files"
+interactive=1
+if ((yes)) || ! [[ -t 0 ]] || ! command -v gum >/dev/null; then interactive=0; fi
+
+say() { echo "omarchy-osk: $*"; }
+record() { grep -qxF "$1" "$STATE/files" || echo "$1" >>"$STATE/files"; }
+title() { ((interactive)) && gum style --bold --foreground 4 "$1" || echo "== $1"; }
+
+conf_get() { [[ -f $CONF ]] && sed -n "s/^$1=\"\{0,1\}\([^\"]*\)\"\{0,1\}$/\1/p" "$CONF" | tail -1; }
+conf_set() {
+  touch "$CONF"
+  if grep -q "^$1=" "$CONF"; then
+    local v=${2//\\/\\\\}
+    v=${v//&/\\&}
+    sed -i "s|^$1=.*|$1=\"${v//|/\\|}\"|" "$CONF"
+  else
+    echo "$1=\"$2\"" >>"$CONF"
+  fi
+}
+state_get() { sed -n "s/^$1=//p" "$STATE/setup" 2>/dev/null | tail -1; }
+state_set() {
+  touch "$STATE/setup"
+  sed -i "/^$1=/d" "$STATE/setup"
+  echo "$1=$2" >>"$STATE/setup"
+}
+
+# yes/no question: ask PROMPT DEFAULT(yes|no) [ANSWER-FROM-OPTION]
+ask() {
+  local answer=${3:-}
+  if [[ -n $answer ]]; then [[ $answer == yes ]]; return; fi
+  if ((!interactive)); then [[ $2 == yes ]]; return; fi
+  if [[ $2 == yes ]]; then gum confirm --default=true "$1"; else gum confirm --default=false "$1"; fi
+}
+
+# ---------------------------------------------------------------- welcome
+if ((interactive)); then
+  gum style --border rounded --padding "0 2" --border-foreground 4 \
+    "omarchy-osk setup" "" \
+    "A Gboard-style on-screen keyboard for Omarchy, made and tested on a" \
+    "Microsoft Surface Pro 3 with the Surface Type Cover. Other tablets and" \
+    "touchscreens may work, but nothing is guaranteed there."
+fi
+omarchy-osk-tested --banner
+tested_status=$?
+
+# ---------------------------------------------------------------- languages
+title "Languages"
+lang_name() { awk -v t="$1" '$1 == t { $1 = ""; $2 = ""; sub(/^  */, ""); print; exit }' "$DATA/languages.txt"; }
+current=$(conf_get OSK_LANGS)
+# English and the system's language, unless set before
+sys=${LANG:-en}
+sys=${sys%%[._@]*}
+sys=${sys%%_*}
+[[ $sys == C || $sys == POSIX ]] && sys=en
+grep -q "^$sys[ -]" "$DATA/languages.txt" || sys=en
+default=${current:-en,$sys}
+[[ $default == en,en ]] && default=en
+if [[ -n $a_langs ]]; then
+  langs=$a_langs
+elif ((!interactive)); then
+  langs=$default
+else
+  # "tag  Name" for every language (en for en-US etc.)
+  list=$( { echo "en English"; grep -v '^#' "$DATA/languages.txt" | grep -v '^en-' | awk '{ t = $1; $1 = ""; $2 = ""; sub(/^  */, ""); print t " " $0 }'; } )
+  selected=$(echo "$list" | awk -v d=",$default," 'index(d, "," $1 ",") { printf "%s%s", sep, $0; sep = "," }')
+  picked=$(echo "$list" | gum choose --no-limit --height 15 --selected "$selected" \
+    --header "Which languages? (space to pick, enter when done; swipe the space bar to switch)") || picked=""
+  [[ -n $picked ]] || picked=$(echo "$list" | awk '$1 == "en"')
+  # keep the order you had, new ones after it
+  new=$(echo "$picked" | awk '{print $1}')
+  langs=""
+  for t in ${default//,/ } $new; do
+    echo "$new" | grep -qxF "$t" || continue
+    [[ ,$langs, == *",$t,"* ]] || langs+="${langs:+,}$t"
+  done
+fi
+say "languages: $langs"
+
+# word lists for gesture typing
+fw_code() {
+  case $1 in
+    nb*) echo no ;; iw*) echo he ;; in) echo id ;; pt-BR) echo pt_br ;;
+    *) echo "${1%%-*}" | tr 'A-Z' 'a-z' ;;
+  esac
+}
+need=()
+for t in ${langs//,/ }; do
+  [[ -f $DATA/dict/$t.txt || -f $DATA/dict/${t%%-*}.txt ]] || need+=("$t")
+done
+if ((${#need[@]})); then
+  if ask "Download word lists for gesture typing in ${need[*]}? (FrequencyWords, CC BY-SA 4.0)" yes "$a_download"; then
+    for t in "${need[@]}"; do
+      code=$(fw_code "$t")
+      tmpf=$(mktemp)
+      if curl -fsSL "$FREQ_URL/$code/${code}_50k.txt" -o "$tmpf" &&
+         "$PREFIX/bin/omarchy-oskd" --data "$CONFIG_DIR/omarchy-osk:$DATA" --filter-dict "$t" <"$tmpf" >"$DATA/dict/$t.txt.new"; then
+        mv "$DATA/dict/$t.txt.new" "$DATA/dict/$t.txt"
+        record "$DATA/dict/$t.txt"
+        say "word list for $t: $(wc -l <"$DATA/dict/$t.txt") words"
+      else
+        rm -f "$DATA/dict/$t.txt.new"
+        say "no word list for $t: it gets its layout and long-press keys, without gesture typing"
+      fi
+      rm -f "$tmpf"
+    done
+  else
+    say "without word lists ${need[*]} get their layouts and long-press keys, without gesture typing"
+  fi
+fi
+conf_set OSK_LANGS "$langs"
+
+# the layout of the physical keyboard, which the keys type through
+xkb=$(hyprctl getoption input:kb_layout -j 2>/dev/null | jq -r '.str // empty' | cut -d, -f1)
+variant=$(hyprctl getoption input:kb_variant -j 2>/dev/null | jq -r '.str // empty' | cut -d, -f1)
+xkb=${xkb:-$(conf_get OSK_XKB)}
+xkb=${xkb:-us}
+[[ -n $variant && $xkb != *:* ]] && xkb="$xkb:$variant"
+conf_set OSK_XKB "$xkb"
+
+# ---------------------------------------------------------------- auto-show
+title "Showing the keyboard"
+keyboards=$(sed -n 's/^N: Name="\(.*\)"$/\1/p' /proc/bus/input/devices 2>/dev/null |
+  grep -i 'keyboard' | grep -viE 'virtual|omarchy|wvkbd|ydotool|consumer|system control' | sort -u)
+cover=${a_cover:-$(conf_get OSK_COVER_NAME)}
+cover=${cover:-$(echo "$keyboards" | grep -i 'type cover' | head -1)}
+mode=${a_autoshow:-$(conf_get OSK_AUTOSHOW)}
+if [[ -z $mode ]]; then
+  if [[ -n $cover ]]; then mode=cover
+  elif [[ -z $keyboards ]]; then mode=always
+  else mode=never
+  fi
+fi
+if ((interactive)) && [[ -z $a_autoshow ]]; then
+  options=()
+  while IFS= read -r k; do [[ -n $k ]] && options+=("When a text field gets focus and \"$k\" is detached"); done <<<"$keyboards"
+  options+=("Whenever a text field gets focus" "Never: only with the bar button or omarchy-osk-toggle")
+  case $mode in
+    cover) sel="When a text field gets focus and \"$cover\" is detached" ;;
+    always) sel="Whenever a text field gets focus" ;;
+    *) sel="Never: only with the bar button or omarchy-osk-toggle" ;;
+  esac
+  choice=$(printf '%s\n' "${options[@]}" | gum choose --selected "$sel" \
+    --header "Show the keyboard automatically?") || choice=$sel
+  case $choice in
+    When*) mode=cover; cover=$(echo "$choice" | sed 's/.*and "\(.*\)" is detached/\1/') ;;
+    Whenever*) mode=always ;;
+    *) mode=never ;;
+  esac
+fi
+conf_set OSK_AUTOSHOW "$mode"
+[[ $mode == cover ]] && conf_set OSK_COVER_NAME "$cover"
+if [[ $mode == cover ]]; then say "auto-show: while \"$cover\" is detached"; else say "auto-show: $mode"; fi
+
+height=${a_height:-}
+current_ratio=$(conf_get OSK_HEIGHT_RATIO)
+if [[ -z $height ]] && ((interactive)); then
+  case ${current_ratio:-0.40} in 0.33) sel=small ;; 0.47) sel=large ;; *) sel=medium ;; esac
+  height=$(printf '%s\n' small medium large | gum choose --selected "$sel" --header "Keyboard height (a third, 40% or almost half of the screen)") || height=$sel
+fi
+case ${height:-} in
+  small) conf_set OSK_HEIGHT_RATIO 0.33 ;;
+  medium) conf_set OSK_HEIGHT_RATIO 0.40 ;;
+  large) conf_set OSK_HEIGHT_RATIO 0.47 ;;
+  *) [[ -n $current_ratio ]] || conf_set OSK_HEIGHT_RATIO 0.40 ;;
+esac
+
+# ---------------------------------------------------------------- Omarchy
+title "Omarchy"
+# restyle with the theme and font
+for h in theme-set font-set; do
+  install -Dm 755 "$DATA/plugin/theme-hook.sh" "$HOOKS/$h.d/omarchy-osk"
+  record "$HOOKS/$h.d/omarchy-osk"
+done
+
+bar_default=yes
+[[ $(state_get bar) == no ]] && bar_default=no
+if ask "Add a keyboard button to the bar?" $bar_default "$a_bar"; then
+  mkdir -p "$PLUGIN_DIR"
+  for f in BarWidget.qml manifest.json; do
+    install -m 644 "$DATA/plugin/$f" "$PLUGIN_DIR/$f"
+    record "$PLUGIN_DIR/$f"
+  done
+  omarchy plugin enable user.osk right >/dev/null 2>&1 || say "could not enable the bar button (omarchy plugin enable user.osk right)"
+  state_set bar yes
+else
+  if [[ -d $PLUGIN_DIR ]]; then
+    omarchy plugin disable user.osk >/dev/null 2>&1
+    rm -rf "$PLUGIN_DIR"
+  fi
+  state_set bar no
+fi
+
+patch_default=yes
+(( tested_status >= 2 )) && patch_default=no
+[[ $(state_get patches) == no ]] && patch_default=no
+((interactive)) && [[ -z $a_patches ]] && gum style --faint \
+  "Omarchy's menu (Super+Space), theme switcher and lock screen take all touch input," \
+  "so the keyboard can't type into them. omarchy-osk can use patched copies of these" \
+  "three Omarchy plugins (kept up to date after omarchy update). The lock screen copy" \
+  "shows the keyboard in private mode. Newer Omarchy versions may break them."
+if ask "Use the patched Omarchy menu, theme switcher and lock screen?" $patch_default "$a_patches"; then
+  install -Dm 755 "$DATA/hooks/post-update" "$HOOKS/post-update.d/omarchy-osk"
+  record "$HOOKS/post-update.d/omarchy-osk"
+  omarchy-osk-plugins || say "omarchy-osk-plugins reported a problem (see above)"
+  state_set patches yes
+else
+  [[ $(state_get patches) == yes ]] && omarchy-osk-uninstall --patches-only
+  rm -f "$HOOKS/post-update.d/omarchy-osk"
+  state_set patches no
+fi
+
+rule='hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom", order = -10, above_lock = 2 })'
+if grep -qF 'namespace = "^omarchy-osk$"' "$LAYER_FILE" 2>/dev/null; then
+  say "Hyprland layer rule: already in $LAYER_FILE"
+elif [[ ! -f $LAYER_FILE ]]; then
+  say "no $LAYER_FILE: add this Hyprland layer rule yourself for the slide-in and the lock screen:"
+  echo "  $rule"
+elif ask "Add the Hyprland layer rule (slide-in, above Omarchy's menus, on the lock screen) to ${LAYER_FILE/#$HOME/\~}?" yes "$a_rule"; then
+  {
+    echo ""
+    echo "-- omarchy-osk: slide in from the bottom, stay above Omarchy's overlays, work on the lock screen"
+    echo "-- (added by omarchy-osk-setup, removed by omarchy-osk-uninstall)"
+    echo "$rule"
+    echo "-- end omarchy-osk"
+  } >>"$LAYER_FILE"
+  state_set layer_rule yes
+  hyprctl reload >/dev/null 2>&1 || true
+fi
+
+# ---------------------------------------------------------------- start
+if command -v systemctl >/dev/null; then
+  if [[ $mode == never ]]; then
+    systemctl --user disable --now omarchy-osk-autoshow.service >/dev/null 2>&1
+  else
+    systemctl --user enable omarchy-osk-autoshow.service >/dev/null 2>&1
+    systemctl --user restart omarchy-osk-autoshow.service >/dev/null 2>&1 ||
+      say "could not start auto-show (systemctl --user status omarchy-osk-autoshow)"
+  fi
+fi
+if pgrep -x omarchy-oskd >/dev/null; then
+  omarchy-osk-restart
+fi
+
+state_set version "$(cat "$DATA/VERSION" 2>/dev/null)"
+say "done. Show or hide the keyboard with the bar button or omarchy-osk-toggle; run omarchy-osk-setup again to change this."
+((interactive)) && gum style --faint \
+  "The disk encryption prompt at boot is a separate, optional keyboard (unl0kr, US touch" \
+  "layout, needs sudo). See unlock/ in https://github.com/wouter-leistra/omarchy-osk"
+exit 0

@@ -107,6 +107,8 @@ pub fn usage(argv0: &str) {
   --data [dir:dir]       - Layout data search path (default:
                            ~/.config/omarchy-osk:~/.local/share/omarchy-osk)
   --no-swipe             - Disable gesture typing and suggestions
+  --filter-dict LANG     - Turn a \"word count\" frequency list on stdin into a
+                           gesture word list for LANG (to stdout)
   --trail [rrggbb|aa]    - Set color of the gesture trail
   --fg-accent [rrggbb|aa]    - Set color of the enter key
   --press-accent [rrggbb|aa] - Set color of the pressed enter key
@@ -399,7 +401,7 @@ pub fn parse(args: &[String]) -> Options {
     o
 }
 
-fn default_data_dirs() -> String {
+pub fn default_data_dirs() -> String {
     let home = std::env::var("HOME").unwrap_or_default();
     let cfg = std::env::var("XDG_CONFIG_HOME").ok().filter(|s| !s.is_empty()).unwrap_or(format!("{home}/.config"));
     let data = std::env::var("XDG_DATA_HOME").ok().filter(|s| !s.is_empty()).unwrap_or(format!("{home}/.local/share"));

@@ -1,4 +1,7 @@
 #!/bin/bash
-# omarchy-osk: re-apply the on-screen keyboard patches to fresh copies of
-# Omarchy's menu, theme switcher and lock screen when an update changed them
+# omarchy-osk after `omarchy update`: re-apply the on-screen keyboard patches
+# to fresh copies of Omarchy's menu, theme switcher and lock screen when the
+# update changed them, and say so when Omarchy is now newer than the version
+# this omarchy-osk was tested with.
+omarchy-osk-tested --notify
 exec omarchy-osk-plugins

@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 """Show the on-screen keyboard when a text field gets focus, but only while
-the Type Cover is detached.
+the Type Cover is detached (OSK_AUTOSHOW=cover, the keyboard named by
+OSK_COVER_NAME) or always (OSK_AUTOSHOW=always), as set in
+~/.config/omarchy-osk/config by omarchy-osk-setup.
 
 fcitx5 (Omarchy's input method) knows which text field has focus. Its DBus
 virtual keyboard module asks a frontend named org.fcitx.Fcitx5.VirtualKeyboard
@@ -23,7 +25,24 @@ import traceback
 
 from gi.repository import Gio, GLib
 
-COVER_NAME = os.environ.get("OSK_COVER_NAME", "Type Cover Keyboard")
+def setting(key, default):
+    """from the environment, else ~/.config/omarchy-osk/config"""
+    if key in os.environ:
+        return os.environ[key]
+    path = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "omarchy-osk", "config")
+    try:
+        for line in open(path):
+            k, sep, v = line.strip().partition("=")
+            if sep and k == key:
+                default = v.strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return default
+
+
+# cover: show while this keyboard is detached; always: on every text field
+COVER_NAME = setting("OSK_COVER_NAME", "Type Cover Keyboard")
+AUTOSHOW = setting("OSK_AUTOSHOW", "cover")
 TYPED_FILE = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "omarchy-osk-typed")
 HIDE_DELAY_MS = 150      # focus changes arrive as hide+show pairs
 OWN_TYPING_WINDOW = 1.0  # seconds after our typing in which a hide is ours
@@ -46,6 +65,8 @@ def log(msg):
 
 
 def cover_attached():
+    if AUTOSHOW == "always":
+        return False
     try:
         with open("/proc/bus/input/devices") as f:
             return re.search(r'^N: Name=".*%s"' % re.escape(COVER_NAME), f.read(), re.M) is not None

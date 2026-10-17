@@ -1,5 +1,5 @@
 [Unit]
-Description=Show the on-screen keyboard for focused text fields while the Type Cover is detached
+Description=Show the on-screen keyboard for focused text fields (omarchy-osk)
 After=graphical-session.target omarchy-fcitx5.service
 PartOf=graphical-session.target
 ConditionEnvironment=WAYLAND_DISPLAY

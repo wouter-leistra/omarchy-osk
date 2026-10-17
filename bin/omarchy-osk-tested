@@ -1,0 +1,57 @@
+#!/bin/bash
+# Compare the running Omarchy with the version this omarchy-osk release was
+# tested on (share/omarchy-osk/TESTED, written when the release was made).
+#
+#   omarchy-osk-tested            print a line about it
+#   omarchy-osk-tested --banner   a warning box for the installer (if needed)
+#   omarchy-osk-tested --notify   a desktop notification (if needed)
+# Exit status: 0 tested version (or older patch), 1 newer patch release,
+# 2 newer minor/major release or older than tested, 3 unknown.
+
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-osk"
+TESTED_FILE="${OSK_TESTED_FILE:-$DATA/TESTED}"
+
+tested=$(sed -n 's/^omarchy=//p' "$TESTED_FILE" 2>/dev/null | head -1)
+device=$(sed -n 's/^device=//p' "$TESTED_FILE" 2>/dev/null | head -1)
+current=$(omarchy version 2>/dev/null | head -1)
+current=${current%%-*}
+
+status=3
+if [[ -n $tested && -n $current ]]; then
+  IFS=. read -r tM tm tp <<<"$tested"
+  IFS=. read -r cM cm cp <<<"$current"
+  if [[ $cM == "$tM" && $cm == "$tm" ]]; then
+    if (( ${cp:-0} <= ${tp:-0} )); then status=0; else status=1; fi
+  else
+    status=2
+  fi
+fi
+
+case $status in
+  0) msg="Tested with Omarchy $tested on ${device:-a Surface Pro 3}; you have Omarchy $current." ;;
+  1) msg="Tested with Omarchy $tested; you have $current, a newer patch release. It should work; if Omarchy's menu, theme switcher or lock screen misbehave, run omarchy-osk-setup and turn the Omarchy patches off." ;;
+  2) msg="Tested with Omarchy $tested; you have $current. Things may break, most likely the patched Omarchy menu, theme switcher and lock screen." ;;
+  *)
+    if [[ -z $tested ]]; then
+      msg="This is a development build, not a tested release."
+    else
+      msg="Could not tell which Omarchy version this is (tested with $tested)."
+    fi ;;
+esac
+
+case ${1:-} in
+  --banner)
+    if (( status >= 1 )); then
+      if command -v gum >/dev/null; then
+        gum style --border rounded --padding "0 1" --border-foreground 3 "⚠  $msg"
+      else
+        echo "WARNING: $msg"
+      fi
+    fi
+    ;;
+  --notify)
+    (( status >= 2 )) && notify-send -a omarchy-osk "On-screen keyboard" "$msg" 2>/dev/null
+    ;;
+  *) echo "$msg" ;;
+esac
+exit $status

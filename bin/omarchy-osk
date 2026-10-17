@@ -6,8 +6,12 @@
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy-osk/config"
 [[ -f $CONF ]] && source "$CONF"
 
-OSK_XKB="${OSK_XKB:-fi}"                 # xkb layout[:variant] to type with
-OSK_LANGS="${OSK_LANGS:-en,fi}"          # languages: tag[:layout], e.g. en,fi,de:qwertz
+# xkb layout[:variant] to type with: the physical keyboard's (as in Hyprland)
+if [[ -z ${OSK_XKB:-} ]]; then
+  OSK_XKB=$(hyprctl getoption input:kb_layout -j 2>/dev/null | jq -r '.str // empty' | cut -d, -f1)
+  OSK_XKB=${OSK_XKB:-us}
+fi
+OSK_LANGS="${OSK_LANGS:-en}"          # languages: tag[:layout], e.g. en,fi,de:qwertz
 OSK_HEIGHT_RATIO="${OSK_HEIGHT_RATIO:-0.40}"  # share of the screen height
 
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-osk"

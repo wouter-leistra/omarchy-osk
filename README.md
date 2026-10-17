@@ -102,24 +102,49 @@ Numbers vary with system load; it was about 2 during these runs.
 
 ## Install
 
-Needs Rust (`cargo`), `wayland`, `libxkbcommon`, `pango`, `cairo`,
-`python-gobject` (for auto-show) and Omarchy.
-
 ```sh
-make install-user        # installs to ~/.local, no root needed
-systemctl --user enable --now omarchy-osk-autoshow
+curl -fsSL https://github.com/wouter-leistra/omarchy-osk/releases/latest/download/install.sh | bash
 ```
 
-Bar toggle: copy `omarchy/plugin/` to `~/.config/omarchy/plugins/omarchy-osk/`
-and run `omarchy plugin enable user.osk right`. Theme hooks:
-`omarchy hook install theme-set omarchy/plugin/theme-hook.sh` (and `font-set`).
+The installer downloads the latest release (a prebuilt keyboard, its scripts
+and data; the checksum is verified), installs it for your user in
+`~/.local` (no root needed) and runs `omarchy-osk-setup`, which asks:
 
-Hyprland layer rule (`~/.config/hypr/looknfeel.lua`): slide-in animation,
-keep the keyboard above other overlays such as the Omarchy menu so those stay
-usable by touch, and allow it on the lock screen:
+- **languages** (in space-bar switching order). English, Finnish and
+  Swedish come with word lists for swipe typing; for other languages it
+  offers to download one from
+  [FrequencyWords](https://github.com/hermitdave/FrequencyWords) and keep
+  the words that can be swiped on that language's layout. Without a word
+  list a language still gets its layout and long-press keys.
+- **when to show the keyboard**: when a text field gets focus while a
+  keyboard you pick (the Surface Type Cover) is detached, on every text
+  field, or only with the bar button.
+- **its height**, a **button in the bar**, and the **patched Omarchy menu,
+  theme switcher and lock screen** (below).
+- the **Hyprland layer rule** for the slide-in and the lock screen, added to
+  `~/.config/hypr/looknfeel.lua` between marker comments.
 
-```lua
-hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom", order = -10, above_lock = 2 })
+It also adds theme and font hooks, so the keyboard follows your Omarchy
+theme. Run `omarchy-osk-setup` again any time to change the answers, and
+`omarchy-osk-uninstall` to remove everything again (Omarchy's own menu,
+theme switcher and lock screen come back; `--purge` also removes your
+settings).
+
+**Tested versions.** Every release is made on the Surface Pro 3 with all
+tests passing (`tools/release.sh`), and records which Omarchy and Hyprland
+it was tested with (`~/.local/share/omarchy-osk/TESTED`). The installer
+warns when your Omarchy is newer, and after an `omarchy update` past the
+tested version a notification says so: the keyboard itself should keep
+working, the patched Omarchy plugins are the parts most likely to break.
+
+Needs Omarchy (x86_64), which brings everything else: pango, cairo,
+libxkbcommon, gum, jq and python-gobject (for auto-show).
+
+### From source
+
+```sh
+make install-user        # needs Rust: builds and installs the files to ~/.local
+omarchy-osk-setup        # the same questions as above
 ```
 
 ### Omarchy menu, theme switcher and lock screen
@@ -141,7 +166,7 @@ omarchy-osk-plugins    # copies menu, image-picker and lock to ~/.config/omarchy
   (a copied menu gets none from the shell, which leaves Apps empty).
 - lock screen: shows the keyboard on lock (see below).
 
-`make install-user` adds an Omarchy post-update hook that runs it after
+When you choose them in setup, an Omarchy post-update hook runs it after
 every `omarchy update`: when Omarchy changed one of these plugins, it takes
 the new version and patches it again. If a patch no longer fits, your
 previous copy stays and a notification says so. `omarchy-osk-plugins --force`
@@ -154,12 +179,20 @@ automatic capitals or smart punctuation, so the password never appears on
 screen) and shows itself while the Type Cover is detached. A button under the password field shows or hides it. Unlocking
 switches private mode off again.
 
-### Disk encryption passphrase at boot
+### Disk encryption passphrase at boot (optional, separate)
 
-The LUKS passphrase is asked in the initramfs, long before Wayland. `unlock/`
-adds an mkinitcpio hook that asks it with
-[unl0kr](https://gitlab.postmarketos.org/postmarketOS/buffybox) (postmarketOS),
-a full-screen touch keyboard that also takes the physical keyboard:
+This is **not omarchy-osk** and not part of the installer. The LUKS
+passphrase is asked in the initramfs, long before Wayland, where
+omarchy-osk can't run. `unlock/` adds an mkinitcpio hook that asks it with
+[unl0kr](https://gitlab.postmarketos.org/postmarketOS/buffybox) from
+postmarketOS: a full-screen touch keyboard without swipe typing,
+suggestions or omarchy-osk's layouts. Its touch layout is US English
+(unl0kr also has German, Spanish and French), so `å ä ö` and other
+characters outside that layout can't be typed by touch; the Type Cover
+types your own layout (`fi` here), so such a passphrase needs the cover.
+It needs sudo and changes your initramfs, so only install it if you know
+how to recover from a boot problem (the hook falls back to Omarchy's own
+prompt, see below):
 
 ```bash
 unlock/build.sh      # builds unl0kr 3.6.0 as your user (meson/ninja in a venv)
@@ -190,9 +223,13 @@ look built into the initramfs is the fallback.
 
 | Command | Does |
 |---|---|
-| `omarchy-osk` | start the keyboard with theme colours (extra args passed on, e.g. `--hidden`) |
+| `omarchy-osk-setup` | choose languages, auto-show, height, bar button, Omarchy patches |
 | `omarchy-osk-toggle` | show/hide, starting it if needed |
-| `omarchy-osk-restart` | restart hidden (used by the theme/font hooks) |
+| `omarchy-osk` | start the keyboard with theme colours (extra args passed on, e.g. `--hidden`) |
+| `omarchy-osk-restart` | restart it (used by the theme/font hooks) |
+| `omarchy-osk-tested` | which Omarchy version this release was tested with, against yours |
+| `omarchy-osk-plugins` | update the patched Omarchy plugins (run after `omarchy update`) |
+| `omarchy-osk-uninstall` | remove everything (`--purge`: settings too) |
 | `omarchy-osk-autoshow` | auto-show daemon (run via the user service) |
 | `omarchy-osk-lock` | lock screen: `lock`, `show`, `hide`, `unlock` |
 
@@ -201,10 +238,16 @@ look built into the initramfs is the fallback.
 `~/.config/omarchy-osk/config`:
 
 ```sh
-OSK_LANGS=en,fi          # languages, in space-bar switching order
-OSK_HEIGHT_RATIO=0.40    # share of the screen height
-OSK_XKB=fi               # xkb layout[:variant] to type with
+OSK_LANGS="en,fi"         # languages, in space-bar switching order
+OSK_HEIGHT_RATIO="0.40"   # share of the screen height
+OSK_XKB="fi"              # xkb layout[:variant] to type with (default: Hyprland's)
+OSK_AUTOSHOW="cover"      # cover: while OSK_COVER_NAME is detached; always; never
+OSK_COVER_NAME="Microsoft Surface Type Cover Keyboard"
 ```
+
+`omarchy-osk-setup` writes these; edit them by hand and run
+`omarchy-osk-restart` (and `systemctl --user restart omarchy-osk-autoshow`
+for the last two) if you prefer.
 
 Each language is a tag (`fi`, `de`, `de-CH`, `ru`, `fr-CA` …) with an
 optional layout: `OSK_LANGS=en,fi,de:qwerty` gives German on qwerty instead
@@ -215,48 +258,22 @@ and their default layouts are in `data/languages.txt`, the layouts in
 
 ## Adding a language
 
-Swipe typing and suggestions use plain word-frequency lists, one per
-language, in `~/.local/share/omarchy-osk/dict/<code>.txt` (the repo copies
-are in `dict/`). Each line is `word count`, most frequent first:
+`omarchy-osk-setup` adds languages and fetches their word lists. To make a
+word list yourself: swipe typing and suggestions use plain word-frequency
+lists in `~/.local/share/omarchy-osk/dict/<tag>.txt` (the repo copies are in
+`dict/`), `word count` per line, most frequent first. The keyboard turns
+any such list into one with only the words that can be swiped on a
+language's layout (lower case, letters that have a key, plus `'`):
 
+```sh
+curl -fsSL https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/de/de_50k.txt |
+  omarchy-oskd --filter-dict de-DE > ~/.local/share/omarchy-osk/dict/de-DE.txt
 ```
-hello 1234567
-world 456789
-```
 
-1. Get a frequency list, for example from
-   [FrequencyWords](https://github.com/hermitdave/FrequencyWords)
-   (`content/2018/<code>/<code>_50k.txt`).
-2. Keep only words that can be swiped on the language's layout: lowercase
-   letters that have a key, plus `'`. For German (`de-DE`: qwertz with
-   `ü ö ä ß` keys):
-
-   ```sh
-   code=de
-   curl -fsSL -o /tmp/$code.txt \
-     https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/$code/${code}_50k.txt
-   LC_ALL=C.UTF-8 awk '{w=tolower($1); if (w ~ /^[a-zäöüß'"'"']+$/ && $2 >= 5) print w" "$2}' \
-     /tmp/$code.txt > ~/.local/share/omarchy-osk/dict/$code.txt
-   ```
-
-   Use the letters of the layout in the pattern (`[a-zåäö']` for Finnish,
-   `[а-яё']` for Russian). Letters that are only on long press can't be
-   swiped, so words with them are left out (plain `de` is qwertz with
-   `ü ö ä` only on long press; `de-DE` has them as keys).
-3. Add the code to `OSK_LANGS` in `~/.config/omarchy-osk/config`, in the
-   order the space-bar swipe should cycle:
-
-   ```sh
-   OSK_LANGS=en,fi,de-DE
-   ```
-4. `omarchy-osk-restart`. The space bar shows the name from
-   `data/languages.txt`.
-
-A language without a word list still gets its layout and long-press keys;
-only gestures and suggestions are off while it is active.
-
-To add it to the repo itself, put the file in `dict/` and run
-`make install-user`.
+Letters that are only on long press can't be swiped, so words with them are
+left out (plain `de` is qwertz with `ü ö ä` on long press; `de-DE` has them
+as keys). Then add the tag to `OSK_LANGS` and `omarchy-osk-restart`. To add
+a list to the repo itself, put it in `dict/`.
 
 ## Keymap and layout
 
@@ -305,9 +322,12 @@ keys, gestures, suggestions and drawing, `src/swipe.rs`: the gesture
 decoder, `src/langs.rs`: layout data, `src/keymap.rs`: the xkb keymap).
 
 ```sh
-make check    # unit tests and the golden tests
-make bench    # speed and resource use
-tests/ui_test.py   # end to end on the real desktop (needs the machine to itself)
+make check              # unit tests and the golden tests
+make bench              # speed and resource use
+tests/install_test.py   # installer, setup and uninstaller in a throwaway home
+tests/ui_test.py        # end to end on the real desktop (needs the machine to itself)
+make dist               # the release tarball
+tools/release.sh vX.Y.Z [--publish]   # all of the above on this machine, TESTED, release
 ```
 
 The golden tests (`tests/golden.py`) run touch scripts through a headless
