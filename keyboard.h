@@ -142,6 +142,7 @@ struct kbd {
 
 	/* omarchy-osk: gesture typing */
 	bool swipe_enabled;
+	bool private_mode;      // password entry: no suggestions, gestures or autocorrect
 	struct key *down_key;   // Char key under the finger, typed on release
 	bool swiping;
 	int npts;
@@ -194,6 +195,7 @@ void kbd_reset_text(struct kbd *kb);
 void kbd_longpress(struct kbd *kb);
 void kbd_load_lang(struct kbd *kb);
 void kbd_clear_mods(struct kbd *kb);
+void kbd_set_private(struct kbd *kb, bool on);
 struct key *kbd_get_key(struct kbd *kb, uint32_t x, uint32_t y);
 size_t kbd_get_layer_index(struct kbd *kb, struct layout *l);
 void kbd_unpress_key(struct kbd *kb, uint32_t time);

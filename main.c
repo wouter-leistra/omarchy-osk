@@ -1477,6 +1477,8 @@ main(int argc, char **argv)
     sigaddset(&signal_mask, SIGUSR2);
     sigaddset(&signal_mask, SIGRTMIN);
     sigaddset(&signal_mask, SIGRTMIN + 1);
+    sigaddset(&signal_mask, SIGRTMIN + 2);
+    sigaddset(&signal_mask, SIGRTMIN + 3);
     sigaddset(&signal_mask, SIGPIPE);
     if (sigprocmask(SIG_BLOCK, &signal_mask, NULL) == -1) {
         die("Failed to disable handled signals: %d\n", errno);
@@ -1519,6 +1521,10 @@ main(int argc, char **argv)
                 show();
             else if (si.ssi_signo == (uint32_t)SIGRTMIN + 1)
                 kbd_reset_text(&keyboard); /* focus moved to another field */
+            else if (si.ssi_signo == (uint32_t)SIGRTMIN + 2)
+                kbd_set_private(&keyboard, true); /* password field */
+            else if (si.ssi_signo == (uint32_t)SIGRTMIN + 3)
+                kbd_set_private(&keyboard, false);
             else if (si.ssi_signo == SIGRTMIN)
                 toggle_visibility();
             else if (si.ssi_signo == SIGPIPE)

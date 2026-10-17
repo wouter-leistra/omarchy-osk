@@ -39,12 +39,12 @@ Bar toggle: copy `omarchy/plugin/` to `~/.config/omarchy/plugins/omarchy-osk/`
 and run `omarchy plugin enable user.osk right`. Theme hooks:
 `omarchy hook install theme-set omarchy/plugin/theme-hook.sh` (and `font-set`).
 
-Hyprland layer rule (`~/.config/hypr/looknfeel.lua`): slide-in animation, and
-keep the keyboard above other overlays such as the Omarchy menu, so those stay
-usable by touch:
+Hyprland layer rule (`~/.config/hypr/looknfeel.lua`): slide-in animation,
+keep the keyboard above other overlays such as the Omarchy menu so those stay
+usable by touch, and allow it on the lock screen:
 
 ```lua
-hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom", order = -10 })
+hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom", order = -10, above_lock = 2 })
 ```
 
 ### Omarchy menu and theme switcher
@@ -71,6 +71,26 @@ WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None`.) Then `omarchy restart
 shell`. The menus open above the keyboard and take its typing. Clones don't get
 Omarchy updates, so re-clone after an update that changes these plugins.
 
+### Lock screen
+
+`above_lock = 2` lets the keyboard show and take touches on the lock screen.
+To bring it up there automatically, clone the lock plugin and apply the patch:
+
+```bash
+omarchy plugin clone omarchy.lock    # ~/.config/omarchy/plugins/<you>.lock
+patch ~/.config/omarchy/plugins/<you>.lock/LockView.qml omarchy/lock/LockView.qml.patch
+omarchy restart shell
+```
+
+On lock it runs `omarchy-osk-lock lock`: the keyboard switches to private
+mode (no suggestions, gestures, automatic capitals or smart punctuation, so
+the password never appears on screen) and shows itself while the Type Cover is
+detached. A button under the password field shows or hides it. Unlocking
+switches private mode off again.
+
+The disk encryption passphrase at boot comes before any of this runs, so it
+still needs a physical keyboard.
+
 ## Commands
 
 | Command | Does |
@@ -79,6 +99,7 @@ Omarchy updates, so re-clone after an update that changes these plugins.
 | `omarchy-osk-toggle` | show/hide, starting it if needed |
 | `omarchy-osk-restart` | restart hidden (used by the theme/font hooks) |
 | `omarchy-osk-autoshow` | auto-show daemon (run via the user service) |
+| `omarchy-osk-lock` | lock screen: `lock`, `show`, `hide`, `unlock` |
 
 ## Settings
 

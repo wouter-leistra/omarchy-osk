@@ -447,11 +447,27 @@ kbd_unlatch(struct kbd *kb, uint32_t time)
 static void
 kbd_autocap(struct kbd *kb)
 {
-	if (!(kb->mods & CapsLock) && kb->layout->abc) {
+	if (!kb->private_mode && !(kb->mods & CapsLock) && kb->layout->abc) {
 		kb->mods |= Shift;
 		autocap_latched = true;
 		kbd_draw_layout(kb);
 	}
+}
+
+/* password entry: plain typing, no suggestions, gestures, automatic
+ * capitals or smart punctuation, and nothing of the text is kept */
+void
+kbd_set_private(struct kbd *kb, bool on)
+{
+	if (kb->private_mode == on)
+		return;
+	kb->private_mode = on;
+	if (autocap_latched) {
+		kb->mods &= ~Shift;
+		autocap_latched = false;
+	}
+	kbd_reset_text(kb);
+	kbd_draw_layout(kb);
 }
 
 /* forget latched modifiers (caps lock stays) */
@@ -741,6 +757,10 @@ kbd_tap_space(struct kbd *kb, uint32_t time)
 		kbd_unlatch(kb, time);
 		return;
 	}
+	if (kb->private_mode) {
+		kbd_type_cp(kb, time, ' ', 0);
+		return;
+	}
 	if (kb->after_commit) {
 		/* the gesture already added a space */
 		kb->after_commit = false;
@@ -793,6 +813,13 @@ kbd_update_completions(struct kbd *kb)
 static void
 kbd_tap_cp(struct kbd *kb, uint32_t time, uint32_t cp, bool letter)
 {
+	if (kb->private_mode) {
+		/* exactly what the key shows, nothing remembered */
+		kbd_type_cp(kb, time, cp, kb->mods & (Ctrl | Alt | Super));
+		if (kb->mods & (Shift | Ctrl | Alt | Super))
+			kbd_unlatch(kb, time);
+		return;
+	}
 	bool sentence_end = cp == '.' || cp == '?' || cp == '!';
 	if ((kb->after_commit || kb->after_space) && !letter &&
 	    strchr(".,?!:;", (int)cp)) {
@@ -1121,7 +1148,7 @@ kbd_touch_motion(struct kbd *kb, uint32_t time, int32_t x, int32_t y)
 	if (!kb->swiping) {
 		struct key *over = (x < 0 || y < 0) ? NULL : kbd_get_key(kb, x, y);
 		double fx = (double)x - kb->pts_x[0], fy = (double)y - kb->pts_y[0];
-		if (kb->swipe_enabled && kb->layout->abc && key_is_letter(dk) &&
+		if (kb->swipe_enabled && !kb->private_mode && kb->layout->abc && key_is_letter(dk) &&
 		    over != dk && fx * fx + fy * fy > dk->w * dk->w * 0.36) {
 			kb->swiping = true;
 			kb->longpress_at = 0;
@@ -1293,6 +1320,11 @@ kbd_draw_suggestions(struct kbd *kb)
 	struct clr_scheme *s0 = &kb->schemes[0], *s1 = &kb->schemes[1];
 	uint32_t h = kb->suggest_h, slot_w = kb->w / SUGG_SLOTS;
 	drw_fill_rectangle(kb->surf, s0->bg, 0, 0, kb->w, h, 0);
+	if (kb->private_mode) {
+		drw_draw_text(kb->surf, s0->text, 0, 0, kb->w, h, KBD_KEY_BORDER,
+		              "󰌾  private: no suggestions", s0->font_description);
+		return;
+	}
 
 	for (int slot = 0; slot < SUGG_SLOTS; slot++) {
 		int idx = slot_to_index[slot];

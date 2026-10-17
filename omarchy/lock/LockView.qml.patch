@@ -1,0 +1,109 @@
+--- a/LockView.qml
++++ b/LockView.qml
+@@ -1,5 +1,7 @@
+ import QtQuick
+ import QtQuick.Effects
++import Quickshell
++import Quickshell.Io
+ import qs.Commons
+ import qs.Ui
+ 
+@@ -16,6 +18,14 @@
+   property bool loadBackground: true
+   property string passwordText: ""
+   property bool syncingPasswordText: false
++  // omarchy-osk on the lock screen (layer rule above_lock = 2): shown while the
++  // Surface Type Cover is detached, or toggled with the button under the field.
++  // omarchy-osk-lock puts it in private mode, without suggestions or gestures.
++  property bool coverAttached: true
++  property bool keyboardToggled: false
++  property bool wasUnlockable: false
++  readonly property bool keyboardShown: inputEnabled && keyboardToggled === coverAttached
++  readonly property real keyboardHeight: Math.round(height * 0.40)
+ 
+   readonly property string placeholderText: "Enter Password"
+   readonly property int fieldWidth: 381
+@@ -67,13 +77,43 @@
+     syncingPasswordText = false
+   }
+ 
++  function osk(action) {
++    Quickshell.execDetached(["omarchy-osk-lock", action])
++  }
++
+   onPasswordTextChanged: syncPasswordText()
++  // the Type Cover attached or detached, or the button tapped
++  onKeyboardShownChanged: if (inputEnabled) osk(keyboardShown ? "show" : "hide")
+   onInputEnabledChanged: {
+-    if (inputEnabled) Qt.callLater(forcePasswordFocus)
++    if (inputEnabled) {
++      Qt.callLater(forcePasswordFocus)
++      coverCheck.running = true
++      wasUnlockable = true
++      osk("lock")
++    } else if (wasUnlockable) {
++      // back to the automatic choice for the next lock
++      wasUnlockable = false
++      keyboardToggled = false
++      osk("unlock")
++    }
++  }
++
++  Process {
++    id: coverCheck
++    command: ["grep", "-q", "^N: Name=\".*Type Cover Keyboard\"", "/proc/bus/input/devices"]
++    onExited: function(exitCode) { root.coverAttached = exitCode === 0 }
++  }
++
++  Timer {
++    interval: 1000
++    repeat: true
++    running: root.inputEnabled
++    onTriggered: coverCheck.running = true
+   }
+   Component.onCompleted: {
+     syncPasswordText()
+     if (inputEnabled) Qt.callLater(forcePasswordFocus)
++    coverCheck.running = inputEnabled
+   }
+ 
+   // Measures the masked password at full size; passwordDotScale compares this
+@@ -123,7 +163,9 @@
+       id: inputField
+       width: root.fieldWidth
+       height: root.fieldHeight
+-      anchors.centerIn: parent
++      anchors.horizontalCenter: parent.horizontalCenter
++      y: Math.round(((root.keyboardShown ? parent.height - root.keyboardHeight : parent.height) - height) / 2)
++      Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+       color: Color.lock.background
+       borderSpec: root.inputBorderSpec
+       radius: Style.cornerRadius
+@@ -215,5 +257,27 @@
+         verticalAlignment: Text.AlignVCenter
+       }
+     }
++
++    Text {
++      id: keyboardButton
++      anchors.horizontalCenter: inputField.horizontalCenter
++      anchors.top: inputField.bottom
++      anchors.topMargin: 24
++      visible: root.inputEnabled
++      text: "󰌌"
++      color: root.keyboardShown ? Color.lock.borderActive : Color.lock.placeholder
++      font.family: Style.font.family
++      font.pixelSize: Math.round(root.fieldFontSize * 1.6)
++
++      MouseArea {
++        anchors.fill: parent
++        anchors.margins: -20
++        onClicked: {
++          root.wakeRequested()
++          root.keyboardToggled = !root.keyboardToggled
++          root.forcePasswordFocus()
++        }
++      }
++    }
+   }
+ }

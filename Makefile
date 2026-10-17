@@ -73,7 +73,7 @@ USER_PREFIX ?= $(HOME)/.local
 install-user: wvkbd-omarchy
 	mkdir -p $(USER_PREFIX)/bin $(USER_PREFIX)/share/omarchy-osk/dict
 	install -m 755 wvkbd-omarchy $(USER_PREFIX)/bin/omarchy-oskd
-	install -m 755 bin/omarchy-osk bin/omarchy-osk-toggle bin/omarchy-osk-restart bin/omarchy-osk-autoshow $(USER_PREFIX)/bin/
+	install -m 755 bin/omarchy-osk bin/omarchy-osk-toggle bin/omarchy-osk-restart bin/omarchy-osk-lock bin/omarchy-osk-autoshow $(USER_PREFIX)/bin/
 	mkdir -p $(HOME)/.config/systemd/user
 	install -m 644 omarchy/systemd/omarchy-osk-autoshow.service $(HOME)/.config/systemd/user/
 	install -m 644 dict/*.txt dict/README.md $(USER_PREFIX)/share/omarchy-osk/dict/
