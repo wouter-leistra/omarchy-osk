@@ -1,0 +1,27 @@
+keymap 1 37260
+> down 1296 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1356 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1496 248
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> png trail
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "ho" "hoo" "jo" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="" sugg=3 "ho" "hoo" "jo" alt=0

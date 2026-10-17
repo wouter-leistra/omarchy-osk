@@ -1,0 +1,633 @@
+keymap 1 37260
+> down 1296 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1220 255
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1144 243
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1069 231
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 993 219
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 918 207
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 842 194
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 766 182
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 691 170
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 615 158
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 540 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 680 158
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 820 170
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 961 182
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1101 194
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1242 207
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1382 219
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1522 231
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1663 243
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1803 255
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1933 255
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1922 243
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1911 231
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1900 219
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1890 207
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1879 194
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1868 182
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1857 170
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1846 158
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> png swipe1
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> down 324 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 475 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 626 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 777 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 928 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1080 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1231 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1382 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1533 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1684 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1728 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1620 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1512 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1404 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1296 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1188 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1080 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 972 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 864 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 756 146
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 874 158
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 993 170
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1112 182
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1231 194
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1350 207
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1468 219
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1587 231
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1706 243
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1825 255
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1814 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1684 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1555 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1425 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1296 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1166 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 1036 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 907 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 777 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> move 648 268
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> up
+mods 0 0 0 0
+key 17 1
+key 17 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 19 1
+key 19 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 32 1
+key 32 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "world" "would" "withhold" alt=0
+> down 1570 512
+= layout=abc lang=en mods=0 word="" sugg=3 "world" "would" "withhold" alt=0
+> up
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 52 1
+key 52 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> down 1296 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1220 255
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1144 243
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1069 231
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 993 219
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 918 207
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 842 194
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 766 182
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 691 170
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 615 158
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 540 146
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 680 158
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 820 170
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 961 182
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1101 194
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1242 207
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1382 219
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1522 231
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1663 243
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1803 255
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1933 255
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1922 243
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1911 231
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1900 219
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1890 207
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1879 194
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1868 182
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1857 170
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1846 158
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "Hello" "Help" "Hell" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 1080 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1155 255
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1231 243
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1306 231
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1382 219
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1458 207
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1533 194
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1609 182
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1684 170
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1760 158
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1717 158
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1598 170
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1479 182
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1360 194
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1242 207
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1123 219
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1004 231
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 885 243
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 766 255
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 648 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 34 1
+key 34 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 32 1
+key 32 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "good" "god" "your" alt=0
+> down 360 42
+= layout=abc lang=en mods=0 word="" sugg=3 "good" "god" "your" alt=0
+> up
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 34 1
+key 34 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 32 1
+key 32 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> png swipe2
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> down 972 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1036 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1101 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1166 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1231 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1296 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1360 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1425 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1490 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1555 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1620 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1630 170
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1641 194
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1652 219
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1663 243
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1674 268
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1684 292
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1695 316
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1706 341
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1717 365
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1728 390
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1609 365
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1490 341
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1371 316
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1252 292
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1134 268
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 1015 243
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 896 219
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 777 194
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 658 170
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> move 540 146
+= layout=abc lang=en mods=0 word="" sugg=3 "god" "good" "your" alt=0
+> up
+mods 0 0 0 0
+key 20 1
+key 20 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 23 1
+key 23 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 50 1
+key 50 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "time" "tune" "timer" alt=0
+> down 1800 42
+= layout=abc lang=en mods=0 word="" sugg=3 "time" "tune" "timer" alt=0
+> up
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 20 1
+key 20 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 23 1
+key 23 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 50 1
+key 50 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 19 1
+key 19 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "timer" "tune" "time" alt=0
+> png swipe3
+= layout=abc lang=en mods=0 word="" sugg=3 "timer" "tune" "time" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="" sugg=3 "timer" "tune" "time" alt=0

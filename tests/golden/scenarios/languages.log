@@ -1,0 +1,223 @@
+keymap 1 37260
+> down 1276 512
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1396 512
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1536 512
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> png lang_fi
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> down 1472 268
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 255
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 243
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 231
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 219
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 207
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 194
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 182
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 170
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 158
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1472 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1413 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1354 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1295 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1236 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1177 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1118 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1059 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1000 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 941 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 883 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 961 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1040 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1118 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1197 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1276 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1354 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1433 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1511 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1590 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1669 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1531 158
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1394 170
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1256 182
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1119 194
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 981 207
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 844 219
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 706 231
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 569 243
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 431 255
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 294 268
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 37 1
+key 37 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 23 1
+key 23 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 23 1
+key 23 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 20 1
+key 20 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 31 1
+key 31 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="" sugg=3 "kiitos" "kid" "kuis" alt=0
+> down 2061 268
+= layout=abc lang=fi mods=0 word="" sugg=3 "kiitos" "kid" "kuis" alt=0
+> up
+mods 0 0 0 0
+key 40 1
+key 40 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="ä" sugg=3 "älä" "äiti" "älkää" alt=0
+> down 1865 268
+= layout=abc lang=fi mods=0 word="ä" sugg=3 "älä" "äiti" "älkää" alt=0
+> up
+mods 0 0 0 0
+key 39 1
+key 39 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="äö" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=fi mods=0 word="äö" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> down 2061 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 26 1
+key 26 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="å" sugg=1 "ålä" alt=0
+> down 1865 268
+= layout=abc lang=fi mods=0 word="å" sugg=1 "ålä" alt=0
+> longpress
+= layout=abc lang=fi mods=0 word="å" sugg=1 "ålä" alt=2
+> move 2061 268
+= layout=abc lang=fi mods=0 word="å" sugg=1 "ålä" alt=2
+> up
+mods 128 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="åœ" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=fi mods=0 word="åœ" sugg=0 alt=0
+> move 1156 512
+= layout=abc lang=fi mods=0 word="åœ" sugg=0 alt=0
+> move 1016 512
+= layout=abc lang=fi mods=0 word="åœ" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 540 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="e" sugg=3 "even" "everything" "ever" alt=0
+> down 1512 390
+= layout=abc lang=en mods=0 word="e" sugg=3 "even" "everything" "ever" alt=0
+> up
+mods 0 0 0 0
+key 49 1
+key 49 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="en" sugg=3 "enough" "end" "entire" alt=0
+> down 1276 512
+= layout=abc lang=en mods=0 word="en" sugg=3 "enough" "end" "entire" alt=0
+> move 1156 512
+= layout=abc lang=en mods=0 word="en" sugg=3 "enough" "end" "entire" alt=0
+> move 1016 512
+= layout=abc lang=en mods=0 word="en" sugg=3 "enough" "end" "entire" alt=0
+> up
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> png lang_back
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> keymap keymap.xkb
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0

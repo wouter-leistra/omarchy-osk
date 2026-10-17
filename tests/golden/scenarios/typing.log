@@ -1,0 +1,237 @@
+keymap 1 37260
+> down 1296 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> down 540 146
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> up
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="he" sugg=3 "here" "her" "hey" alt=0
+> down 1944 268
+= layout=abc lang=en mods=0 word="he" sugg=3 "here" "her" "hey" alt=0
+> up
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hel" sugg=3 "help" "hello" "hell" alt=0
+> down 1944 268
+= layout=abc lang=en mods=0 word="hel" sugg=3 "help" "hello" "hell" alt=0
+> up
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hell" sugg=3 "hello" "heller" "hellhole" alt=0
+> down 1836 146
+= layout=abc lang=en mods=0 word="hell" sugg=3 "hello" "heller" "hellhole" alt=0
+> up
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hello" sugg=0 alt=0
+> png typing1
+= layout=abc lang=en mods=0 word="hello" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=en mods=0 word="hello" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 324 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 17 1
+key 17 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="w" sugg=3 "what" "we" "was" alt=0
+> down 1836 146
+= layout=abc lang=en mods=0 word="w" sugg=3 "what" "we" "was" alt=0
+> up
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="wo" sugg=3 "would" "work" "won" alt=0
+> down 756 146
+= layout=abc lang=en mods=0 word="wo" sugg=3 "would" "work" "won" alt=0
+> up
+mods 0 0 0 0
+key 19 1
+key 19 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="wor" sugg=3 "work" "world" "worry" alt=0
+> png typing2
+= layout=abc lang=en mods=0 word="wor" sugg=3 "work" "world" "worry" alt=0
+> down 1080 42
+= layout=abc lang=en mods=0 word="wor" sugg=3 "work" "world" "worry" alt=0
+> up
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 17 1
+key 17 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 19 1
+key 19 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 37 1
+key 37 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=1 "work" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="work" sugg=3 "working" "worked" "works" alt=0
+> up
+= layout=abc lang=en mods=0 word="work" sugg=3 "working" "worked" "works" alt=0
+> down 648 390
+= layout=abc lang=en mods=0 word="work" sugg=3 "working" "worked" "works" alt=0
+> up
+mods 0 0 0 0
+key 45 1
+key 45 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="workx" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=en mods=0 word="workx" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 52 1
+key 52 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> down 1836 146
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="O" sugg=3 "Of" "On" "Out" alt=0
+> down 1728 268
+= layout=abc lang=en mods=0 word="O" sugg=3 "Of" "On" "Out" alt=0
+> up
+mods 0 0 0 0
+key 37 1
+key 37 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="Ok" sugg=3 "Okay" "Oklahoma" "Okinawa" alt=0
+> down 1570 512
+= layout=abc lang=en mods=0 word="Ok" sugg=3 "Okay" "Oklahoma" "Okinawa" alt=0
+> up
+mods 0 0 0 0
+key 52 1
+key 52 0
+mods 0 0 0 0
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> png typing3
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> down 1620 146
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 23 1
+key 23 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="I" sugg=3 "It" "Is" "In" alt=0
+> down 1276 512
+= layout=abc lang=en mods=0 word="I" sugg=3 "It" "Is" "In" alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 392 512
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 51 1
+key 51 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 1188 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 21 1
+key 21 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="y" sugg=3 "you" "your" "yeah" alt=0
+> down 540 146
+= layout=abc lang=en mods=0 word="y" sugg=3 "you" "your" "yeah" alt=0
+> up
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="ye" sugg=3 "yeah" "yes" "years" alt=0
+> down 432 268
+= layout=abc lang=en mods=0 word="ye" sugg=3 "yeah" "yes" "years" alt=0
+> up
+mods 0 0 0 0
+key 31 1
+key 31 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="yes" sugg=3 "yesterday" "yessir" "yeses" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="yes" sugg=3 "yesterday" "yessir" "yeses" alt=0

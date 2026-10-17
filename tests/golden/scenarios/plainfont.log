@@ -1,0 +1,13 @@
+keymap 1 37260
+> down 216 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 30 1
+key 30 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> png plain
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0

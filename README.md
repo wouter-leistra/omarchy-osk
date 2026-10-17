@@ -1,9 +1,9 @@
 # omarchy-osk
 
 A Gboard-style on-screen keyboard for [Omarchy](https://omarchy.org) (Hyprland),
-built for a Surface Pro 3 but usable on any touchscreen. It is a fork of
-[wvkbd](https://github.com/jjsullivan5196/wvkbd); see `README.wvkbd.md` for the
-original project.
+built for a Surface Pro 3 but usable on any touchscreen, written in Rust. It
+began as a fork of [wvkbd](https://github.com/jjsullivan5196/wvkbd) (C) and
+was then rewritten in Rust; see `README.wvkbd.md` for the original project.
 
 ## Features
 
@@ -31,8 +31,8 @@ original project.
 
 ## Install
 
-Needs `wayland`, `libxkbcommon`, `pango`, `cairo`, `wayland-protocols`,
-`scdoc`, `python-gobject` (for auto-show) and Omarchy.
+Needs Rust (`cargo`), `wayland`, `libxkbcommon`, `pango`, `cairo`,
+`python-gobject` (for auto-show) and Omarchy.
 
 ```sh
 make install-user        # installs to ~/.local, no root needed
@@ -210,8 +210,8 @@ Two separate things decide what you get:
   ```
 
   Rows are centred; Shift and Backspace share what the last row leaves
-  free. The `?123` symbol pages and the bottom row stay in
-  `layout.omarchy.h`.
+  free. The `?123` symbol pages and the bottom row are built in
+  (`builtin_sets()` in `src/keyboard.rs`).
 
 Long-press keys come, in this order, from: the digit on the top row (or the
 language's `[number_row]`), the layout file, the language's `[popup_keys]`
@@ -227,30 +227,40 @@ name (e.g. `~/.config/omarchy-osk/layouts/qwerty.txt` or
 over the installed ones. Then `omarchy-osk-restart`. `make check` checks the
 data in the repo.
 
-## Rust port
+## Development
 
-`rust/` is a port of the keyboard daemon (`omarchy-oskd`) to Rust: the same
-options, data files, signals and scripts, so it is a drop-in replacement.
+The daemon is `omarchy-oskd` (`src/main.rs`: Wayland, `src/keyboard.rs`:
+keys, gestures, suggestions and drawing, `src/swipe.rs`: the gesture
+decoder, `src/langs.rs`: layout data, `src/keymap.rs`: the xkb keymap).
 
 ```sh
-make install-user-rust   # needs cargo; installs it as omarchy-oskd
-omarchy-osk-restart
-make install-user        # back to the C version
+make check    # unit tests and the golden tests
+make bench    # speed and resource use
+tests/ui_test.py   # end to end on the real desktop (needs the machine to itself)
 ```
 
-It is tested against the C version, which is the reference
-(`make check-rust`, see [tests/ref/README.md](tests/ref/README.md)): for
-the same touches both send exactly the same key events and keymap and draw
-the same pixels, and the gesture decoders give the same words. The
-end-to-end `tests/ui_test.py` passes with both.
+The golden tests (`tests/golden.py`) run touch scripts through a headless
+build (`osk-trace`) and compare every key event, the keymap and the pixels of
+both surfaces with recordings, and the gesture decoder's results on 2400
+sloppy swipes. The recordings were made with the original C version, so the
+Rust version is checked to behave exactly as it did. The last C version is
+tagged `c-version` in this repository.
 
 ## Credits and thanks
 
 - [wvkbd](https://github.com/jjsullivan5196/wvkbd) by John Sullivan and
-  contributors (GPL-3.0). omarchy-osk is a modified version of it: the
-  wvkbd history is kept in this repository, and everything since upstream
-  commit `bbecd99` is the omarchy-osk work. The original readme is in
-  [README.wvkbd.md](README.wvkbd.md).
+  contributors (GPL-3.0). omarchy-osk is a modified version of it: first
+  changed in C, then translated to Rust, so it remains a derivative work
+  under the same license. The wvkbd history is kept in this repository;
+  everything since upstream commit `bbecd99` is the omarchy-osk work. The
+  original readme is in [README.wvkbd.md](README.wvkbd.md).
+- The Rust crates it builds on, listed in `Cargo.lock`, are under the MIT
+  and/or Apache-2.0 licenses (some also Zlib, Unlicense or Unicode-3.0), all
+  compatible with GPL-3.0: notably
+  [wayland-rs](https://github.com/Smithay/wayland-rs),
+  [gtk-rs](https://gtk-rs.org) (cairo, pango),
+  [xkbcommon-rs](https://github.com/rust-x-bindings/xkbcommon-rs) and
+  [libc](https://github.com/rust-lang/libc).
 - Word lists in `dict/` are adapted from
   [FrequencyWords](https://github.com/hermitdave/FrequencyWords) by Hermit Dave,
   built from [OpenSubtitles](https://www.opensubtitles.org) data, and licensed
@@ -271,9 +281,8 @@ end-to-end `tests/ui_test.py` passes with both.
   [HeliBoard](https://github.com/HeliBorg/HeliBoard) (GPL-3.0), some of
   whose layouts come from [FlorisBoard](https://github.com/florisboard/florisboard)
   (Apache-2.0). See [data/README.md](data/README.md).
-- `os-compatibility.c` comes from the Wayland/Weston project (MIT, see
-  [COPYING_WESTON](COPYING_WESTON)); the Wayland protocol files in `proto/` and
-  `tests/proto/` carry their own copyright notices.
+- The Wayland protocol file in `tests/proto/` carries its own copyright
+  notice.
 - Thanks to [Omarchy](https://omarchy.org) for the theme, bar plugin and hook
   system this plugs into, to [fcitx5](https://github.com/fcitx/fcitx5) for
   the virtual keyboard DBus interface used for auto-show, and to
@@ -282,4 +291,5 @@ end-to-end `tests/ui_test.py` passes with both.
 ## License
 
 GPL-3.0, like wvkbd: see [LICENSE](LICENSE) and [COPYING](COPYING). The word
-lists in `dict/` are CC BY-SA 4.0.
+lists in `dict/` are CC BY-SA 4.0; the layout data in `data/` comes from
+HeliBoard (GPL-3.0, partly FlorisBoard's Apache-2.0).

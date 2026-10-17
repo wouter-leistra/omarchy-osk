@@ -1,0 +1,293 @@
+keymap 1 37260
+> down 216 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 30 1
+key 30 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> down 1296 390
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> up
+mods 0 0 0 0
+key 48 1
+key 48 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="ab" sugg=3 "about" "able" "absolutely" alt=0
+> down 864 390
+= layout=abc lang=en mods=0 word="ab" sugg=3 "about" "able" "absolutely" alt=0
+> up
+mods 0 0 0 0
+key 46 1
+key 46 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+= layout=abc lang=en mods=0 word="ab" sugg=3 "about" "able" "absolutely" alt=0
+> up
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="ab" sugg=3 "about" "able" "absolutely" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> up
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> down 648 268
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> up
+mods 0 0 0 0
+key 32 1
+key 32 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> down 1296 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1220 255
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1144 243
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1069 231
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 993 219
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 918 207
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 842 194
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 766 182
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 691 170
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 615 158
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 540 146
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 680 158
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 820 170
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 961 182
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1101 194
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1242 207
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1382 219
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1522 231
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1663 243
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1803 255
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1933 255
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1922 243
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1911 231
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1900 219
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1890 207
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1879 194
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1868 182
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1857 170
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1846 158
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="ad" sugg=3 "address" "admit" "adam" alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 1296 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> down 540 146
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> up
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="he" sugg=3 "here" "her" "hey" alt=0
+> down 1944 268
+= layout=abc lang=en mods=0 word="he" sugg=3 "here" "her" "hey" alt=0
+> up
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hel" sugg=3 "help" "hello" "hell" alt=0
+> down 1080 42
+= layout=abc lang=en mods=0 word="hel" sugg=3 "help" "hello" "hell" alt=0
+> up
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 25 1
+key 25 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=1 "help" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="help" sugg=3 "helping" "helped" "helps" alt=0
+> up
+= layout=abc lang=en mods=0 word="help" sugg=3 "helping" "helped" "helps" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+= layout=abc lang=en mods=0 word="hel" sugg=3 "help" "hello" "hell" alt=0
+> up
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hel" sugg=3 "help" "hello" "hell" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+= layout=abc lang=en mods=0 word="he" sugg=3 "here" "her" "hey" alt=0
+> up
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="he" sugg=3 "here" "her" "hey" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> up
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> down 1998 390
+mods 0 0 0 0
+key 14 1
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1698 390
+key 14 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0

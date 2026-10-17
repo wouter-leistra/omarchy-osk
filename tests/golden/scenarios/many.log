@@ -1,0 +1,363 @@
+keymap 1 34616
+> png many_en
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1396 512
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1536 512
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> png many_fi
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> down 294 146
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 17 1
+key 17 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="w" sugg=3 "will" "walter" "william" alt=0
+> down 490 146
+= layout=abc lang=fi mods=0 word="w" sugg=3 "will" "walter" "william" alt=0
+> up
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="we" sugg=3 "west" "wendy" "wes" alt=0
+> down 196 390
+= layout=abc lang=fi mods=1 word="we" sugg=3 "west" "wendy" "wes" alt=0
+> up
+= layout=abc lang=fi mods=1 word="we" sugg=3 "west" "wendy" "wes" alt=0
+> down 98 268
+= layout=abc lang=fi mods=1 word="we" sugg=3 "west" "wendy" "wes" alt=0
+> up
+mods 1 0 0 0
+key 30 1
+key 30 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="weA" sugg=1 "weaver" alt=0
+> down 294 146
+= layout=abc lang=fi mods=0 word="weA" sugg=1 "weaver" alt=0
+> longpress
+= layout=abc lang=fi mods=0 word="weA" sugg=1 "weaver" alt=1
+> move 490 146
+= layout=abc lang=fi mods=0 word="weA" sugg=1 "weaver" alt=1
+> up
+mods 0 0 0 0
+key 3 1
+key 3 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> down 294 268
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=3
+> move 490 268
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=3
+> up
+mods 128 0 0 0
+key 31 1
+key 31 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="ß" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=fi mods=0 word="ß" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1396 512
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> move 1536 512
+= layout=abc lang=fi mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> png many_ru
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> down 294 146
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> up
+mods 129 0 0 0
+key 78 1
+key 78 0
+mods 0 0 0 0
+= layout=abc lang=ru mods=0 word="ц" sugg=0 alt=0
+> down 490 146
+= layout=abc lang=ru mods=0 word="ц" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 79 1
+key 79 0
+mods 0 0 0 0
+= layout=abc lang=ru mods=0 word="цу" sugg=0 alt=0
+> down 98 390
+= layout=abc lang=ru mods=1 word="цу" sugg=0 alt=0
+> up
+= layout=abc lang=ru mods=1 word="цу" sugg=0 alt=0
+> down 98 268
+= layout=abc lang=ru mods=1 word="цу" sugg=0 alt=0
+> up
+mods 128 0 0 0
+key 117 1
+key 117 0
+mods 0 0 0 0
+= layout=abc lang=ru mods=0 word="цуФ" sugg=0 alt=0
+> down 294 146
+= layout=abc lang=ru mods=0 word="цуФ" sugg=0 alt=0
+> longpress
+= layout=abc lang=ru mods=0 word="цуФ" sugg=0 alt=1
+> move 490 146
+= layout=abc lang=ru mods=0 word="цуФ" sugg=0 alt=1
+> up
+mods 0 0 0 0
+key 3 1
+key 3 0
+mods 0 0 0 0
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> down 294 268
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> move 490 268
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 13 1
+key 13 0
+mods 0 0 0 0
+= layout=abc lang=ru mods=0 word="ы" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=ru mods=0 word="ы" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> move 1396 512
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> move 1536 512
+= layout=abc lang=ru mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> png many_el
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> down 324 146
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 67 1
+key 67 0
+mods 0 0 0 0
+= layout=abc lang=el mods=0 word="ς" sugg=0 alt=0
+> down 540 146
+= layout=abc lang=el mods=0 word="ς" sugg=0 alt=0
+> up
+mods 129 0 0 0
+key 67 1
+key 67 0
+mods 0 0 0 0
+= layout=abc lang=el mods=0 word="ςε" sugg=0 alt=0
+> down 162 390
+= layout=abc lang=el mods=1 word="ςε" sugg=0 alt=0
+> up
+= layout=abc lang=el mods=1 word="ςε" sugg=0 alt=0
+> down 108 268
+= layout=abc lang=el mods=1 word="ςε" sugg=0 alt=0
+> up
+mods 128 0 0 0
+key 92 1
+key 92 0
+mods 0 0 0 0
+= layout=abc lang=el mods=0 word="ςεΑ" sugg=0 alt=0
+> down 324 146
+= layout=abc lang=el mods=0 word="ςεΑ" sugg=0 alt=0
+> longpress
+= layout=abc lang=el mods=0 word="ςεΑ" sugg=0 alt=1
+> move 540 146
+= layout=abc lang=el mods=0 word="ςεΑ" sugg=0 alt=1
+> up
+mods 0 0 0 0
+key 3 1
+key 3 0
+mods 0 0 0 0
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> down 324 268
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> move 540 268
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 93 1
+key 93 0
+mods 0 0 0 0
+= layout=abc lang=el mods=0 word="σ" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=el mods=0 word="σ" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> move 1396 512
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> move 1536 512
+= layout=abc lang=el mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> png many_de
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> down 294 146
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 17 1
+key 17 0
+mods 0 0 0 0
+= layout=abc lang=de-DE mods=0 word="w" sugg=0 alt=0
+> down 490 146
+= layout=abc lang=de-DE mods=0 word="w" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+= layout=abc lang=de-DE mods=0 word="we" sugg=0 alt=0
+> down 147 390
+= layout=abc lang=de-DE mods=1 word="we" sugg=0 alt=0
+> up
+= layout=abc lang=de-DE mods=1 word="we" sugg=0 alt=0
+> down 98 268
+= layout=abc lang=de-DE mods=1 word="we" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 30 1
+key 30 0
+mods 0 0 0 0
+= layout=abc lang=de-DE mods=0 word="weA" sugg=0 alt=0
+> down 294 146
+= layout=abc lang=de-DE mods=0 word="weA" sugg=0 alt=0
+> longpress
+= layout=abc lang=de-DE mods=0 word="weA" sugg=0 alt=1
+> move 490 146
+= layout=abc lang=de-DE mods=0 word="weA" sugg=0 alt=1
+> up
+mods 0 0 0 0
+key 3 1
+key 3 0
+mods 0 0 0 0
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> down 294 268
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=2
+> move 490 268
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=2
+> up
+mods 0 0 0 0
+key 41 1
+key 41 0
+mods 0 0 0 0
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> move 1396 512
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> move 1536 512
+= layout=abc lang=de-DE mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=fr mods=0 word="" sugg=0 alt=0
+> png many_fr
+= layout=abc lang=fr mods=0 word="" sugg=0 alt=0
+> down 324 146
+= layout=abc lang=fr mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 44 1
+key 44 0
+mods 0 0 0 0
+= layout=abc lang=fr mods=0 word="z" sugg=0 alt=0
+> down 540 146
+= layout=abc lang=fr mods=0 word="z" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+= layout=abc lang=fr mods=0 word="ze" sugg=0 alt=0
+> down 162 390
+= layout=abc lang=fr mods=1 word="ze" sugg=0 alt=0
+> up
+= layout=abc lang=fr mods=1 word="ze" sugg=0 alt=0
+> down 108 268
+= layout=abc lang=fr mods=1 word="ze" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 16 1
+key 16 0
+mods 0 0 0 0
+= layout=abc lang=fr mods=0 word="zeQ" sugg=0 alt=0
+> down 324 146
+= layout=abc lang=fr mods=0 word="zeQ" sugg=0 alt=0
+> longpress
+= layout=abc lang=fr mods=0 word="zeQ" sugg=0 alt=3
+> move 540 146
+= layout=abc lang=fr mods=0 word="zeQ" sugg=0 alt=3
+> up
+mods 0 0 0 0
+key 71 1
+key 71 0
+mods 0 0 0 0
+= layout=abc lang=fr mods=0 word="zeQž" sugg=0 alt=0
+> down 324 268
+= layout=abc lang=fr mods=0 word="zeQž" sugg=0 alt=0
+> longpress
+= layout=abc lang=fr mods=0 word="zeQž" sugg=0 alt=3
+> move 540 268
+= layout=abc lang=fr mods=0 word="zeQž" sugg=0 alt=3
+> up
+mods 128 0 0 0
+key 31 1
+key 31 0
+mods 0 0 0 0
+= layout=abc lang=fr mods=0 word="zeQžß" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=fr mods=0 word="zeQžß" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=fr mods=0 word="" sugg=0 alt=0
+> down 1728 390
+= layout=abc lang=fr mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 43 1
+key 43 0
+mods 0 0 0 0
+= layout=abc lang=fr mods=0 word="" sugg=0 alt=0
+> keymap keymap.xkb
+= layout=abc lang=fr mods=0 word="" sugg=0 alt=0

@@ -3,19 +3,23 @@ Copyright © 2026 Wouter Leistra (omarchy-osk modifications)
 
 omarchy-osk is a modified version of wvkbd, branched from upstream commit
 bbecd99 ("Fix segmentation fault after hiding the keyboard"). It was changed
-starting 2026-10-16; `git log bbecd99..` lists every change.
-
-os-compatibility.h and os-compatibility.c are licensed by the Wayland project
-under the MIT/X license. See more details in COPYING_WESTON.
-
-wld submodule is licensed by Michael Forney under the MIT license, see COPYING
-in `wld/`.
+in C starting 2026-10-16 and then translated to Rust (src/); `git log
+bbecd99..` lists every change, and the tag c-version is the last C version.
+As a translation it remains a derivative work of wvkbd under the same
+license.
 
 The word lists in dict/ are adapted from FrequencyWords and licensed under
 CC BY-SA 4.0, see dict/README.md.
 
+The layout data in data/layouts, data/locales and data/languages.txt comes
+from HeliBoard (GPL-3.0), some of it from FlorisBoard (Apache-2.0), see
+data/README.md.
+
 tests/proto/wlr-virtual-pointer-unstable-v1.xml (and the code generated from
 it) is Copyright © 2019 Josef Gajdusek under the MIT license in the file.
+
+The Rust crates this is built with (Cargo.lock) are not part of this
+repository; they are under MIT and/or Apache-2.0 compatible licenses.
 
 All other code in this repository falls under the terms of the GPL v3.0 license,
 which can be found in LICENSE.

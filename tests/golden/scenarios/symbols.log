@@ -1,0 +1,199 @@
+keymap 1 37260
+> down 147 512
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> png sym
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> down 98 268
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 128 0 0 0
+key 3 1
+key 3 0
+mods 0 0 0 0
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> down 490 268
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 435 1
+key 435 0
+mods 0 0 0 0
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> down 687 146
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 5 1
+key 5 0
+mods 0 0 0 0
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> down 98 146
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> longpress
+= layout=sym lang=en mods=0 word="" sugg=0 alt=4
+> move 294 146
+= layout=sym lang=en mods=0 word="" sugg=0 alt=4
+> up
+mods 1 0 0 0
+key 41 1
+key 41 0
+mods 0 0 0 0
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> down 196 390
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> png sym2
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 98 268
+= layout=sym2 lang=en mods=4 word="" sugg=0 alt=0
+> up
+= layout=sym2 lang=en mods=4 word="" sugg=0 alt=0
+> down 147 512
+= layout=abc lang=en mods=4 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=4 word="" sugg=0 alt=0
+> down 864 390
+= layout=abc lang=en mods=4 word="" sugg=0 alt=0
+> up
+key 29 1
+mods 4 0 0 0
+key 46 1
+key 46 0
+key 29 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 147 512
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> down 196 390
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 490 268
+= layout=sym2 lang=en mods=64 word="" sugg=0 alt=0
+> up
+= layout=sym2 lang=en mods=64 word="" sugg=0 alt=0
+> down 147 512
+= layout=abc lang=en mods=64 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=64 word="" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=en mods=64 word="" sugg=0 alt=0
+> up
+key 125 1
+mods 64 0 0 0
+key 57 1
+key 57 0
+key 125 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 147 512
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> down 196 390
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 687 268
+mods 0 0 0 0
+key 105 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 105 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 883 268
+mods 0 0 0 0
+key 108 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 108 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 1080 268
+mods 0 0 0 0
+key 103 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 103 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 1276 268
+mods 0 0 0 0
+key 106 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 106 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 1472 268
+mods 0 0 0 0
+key 102 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 102 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 1669 268
+mods 0 0 0 0
+key 107 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 107 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 1865 268
+mods 0 0 0 0
+key 104 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 104 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 2061 268
+mods 0 0 0 0
+key 109 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 109 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 98 146
+mods 0 0 0 0
+key 1 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 1 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 294 146
+mods 0 0 0 0
+key 15 1
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+key 15 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 1080 146
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 128 0 0 0
+key 12 1
+key 12 0
+mods 0 0 0 0
+= layout=sym2 lang=en mods=0 word="" sugg=0 alt=0
+> down 196 390
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> down 2061 512
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0
+> keymap keymap.xkb
+= layout=sym lang=en mods=0 word="" sugg=0 alt=0

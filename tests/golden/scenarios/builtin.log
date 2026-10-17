@@ -1,0 +1,133 @@
+keymap 1 37211
+> down 98 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 30 1
+key 30 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> down 1865 268
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> up
+mods 0 0 0 0
+key 39 1
+key 39 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> down 1080 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1021 255
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 962 243
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 903 231
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 844 219
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 785 207
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 726 194
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 667 182
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 608 170
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 549 158
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 490 146
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 607 158
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 725 170
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 843 182
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 961 194
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1079 207
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1197 219
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1315 231
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1433 243
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1551 255
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 268
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 255
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 243
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 231
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 219
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 207
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 194
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 182
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 170
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 158
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> move 1669 146
+= layout=abc lang=en mods=0 word="aö" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "hell" "helo" alt=0
+> png builtin
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "hell" "helo" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "hell" "helo" alt=0

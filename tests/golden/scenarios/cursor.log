@@ -1,0 +1,93 @@
+keymap 1 37260
+> down 216 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 30 1
+key 30 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> down 1296 390
+= layout=abc lang=en mods=0 word="a" sugg=3 "and" "are" "all" alt=0
+> up
+mods 0 0 0 0
+key 48 1
+key 48 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="ab" sugg=3 "about" "able" "absolutely" alt=0
+> down 864 390
+= layout=abc lang=en mods=0 word="ab" sugg=3 "about" "able" "absolutely" alt=0
+> up
+mods 0 0 0 0
+key 46 1
+key 46 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> down 1276 512
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1226 512
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1076 512
+mods 0 0 0 0
+key 105 1
+key 105 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 105 1
+key 105 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 856 512
+mods 0 0 0 0
+key 105 1
+key 105 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 105 1
+key 105 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 105 1
+key 105 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1376 512
+mods 0 0 0 0
+key 106 1
+key 106 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 106 1
+key 106 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 106 1
+key 106 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 106 1
+key 106 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 106 1
+key 106 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 106 1
+key 106 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 648 390
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 45 1
+key 45 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="x" sugg=3 "xena" "xiao" "xavier" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="x" sugg=3 "xena" "xiao" "xavier" alt=0

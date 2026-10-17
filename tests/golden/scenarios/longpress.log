@@ -1,0 +1,111 @@
+keymap 1 37260
+> down 108 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=0 word="" sugg=0 alt=1
+> up
+mods 0 0 0 0
+key 2 1
+key 2 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 540 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=0 word="" sugg=0 alt=7
+> move 756 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=7
+> up
+mods 0 0 0 0
+key 89 1
+key 89 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="é" sugg=0 alt=0
+> down 216 268
+= layout=abc lang=en mods=0 word="é" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=0 word="é" sugg=0 alt=8
+> png lp_a
+= layout=abc lang=en mods=0 word="é" sugg=0 alt=8
+> move 1296 268
+= layout=abc lang=en mods=0 word="é" sugg=0 alt=8
+> up
+mods 0 0 0 0
+key 40 1
+key 40 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="éä" sugg=0 alt=0
+> down 1512 390
+= layout=abc lang=en mods=0 word="éä" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=0 word="éä" sugg=0 alt=2
+> up
+mods 1 0 0 0
+key 73 1
+key 73 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="éäñ" sugg=0 alt=0
+> down 1570 512
+= layout=abc lang=en mods=0 word="éäñ" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=0 word="éäñ" sugg=0 alt=3
+> png lp_dot
+= layout=abc lang=en mods=0 word="éäñ" sugg=0 alt=3
+> up
+mods 1 0 0 0
+key 12 1
+key 12 0
+mods 0 0 0 0
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> down 2052 146
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=1 word="" sugg=0 alt=1
+> up
+mods 0 0 0 0
+key 11 1
+key 11 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 162 390
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> down 540 146
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=1 word="" sugg=0 alt=7
+> png lp_E
+= layout=abc lang=en mods=1 word="" sugg=0 alt=7
+> move 756 146
+= layout=abc lang=en mods=1 word="" sugg=0 alt=7
+> up
+mods 1 0 0 0
+key 89 1
+key 89 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="É" sugg=0 alt=0
+> down 1728 390
+= layout=abc lang=en mods=0 word="É" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=0 word="É" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 50 1
+key 50 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="Ém" sugg=0 alt=0
+> down 432 390
+= layout=abc lang=en mods=0 word="Ém" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=0 word="Ém" sugg=0 alt=2
+> move 648 390
+= layout=abc lang=en mods=0 word="Ém" sugg=0 alt=2
+> up
+mods 128 0 0 0
+key 71 1
+key 71 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="Émź" sugg=0 alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="Émź" sugg=0 alt=0

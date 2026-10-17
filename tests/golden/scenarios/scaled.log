@@ -1,0 +1,147 @@
+keymap 1 37260
+> down 1296 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> down 1620 146
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> up
+mods 0 0 0 0
+key 23 1
+key 23 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=0
+> down 1836 146
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=0
+> longpress
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=9
+> png scaled_lp
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=9
+> move 2052 146
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=9
+> up
+mods 128 0 0 0
+key 211 1
+key 211 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> down 1296 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1220 255
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1144 243
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1069 231
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 993 219
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 918 207
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 842 194
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 766 182
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 691 170
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 615 158
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 540 146
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 680 158
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 820 170
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 961 182
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1101 194
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1242 207
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1382 219
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1522 231
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1663 243
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1803 255
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1933 255
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1922 243
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1911 231
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1900 219
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1890 207
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1879 194
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1868 182
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1857 170
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1846 158
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> move 1836 146
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 38 1
+key 38 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> png scaled
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="" sugg=3 "hello" "help" "hell" alt=0

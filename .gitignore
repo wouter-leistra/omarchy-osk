@@ -1,13 +1,7 @@
+/target
 *~
-*\#*
-*.o
-*-client-protocol.h
-include/config.h
-.gdb_history
 *.log
-*.1
-build-*/*
-wvkbd-*
-wvkbd-omarchy
+!tests/golden/**/*.log
+.gdb_history
 tests/proto/vp.[ch]
 __pycache__/

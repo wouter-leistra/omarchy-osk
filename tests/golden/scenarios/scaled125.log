@@ -1,0 +1,17 @@
+keymap 1 37260
+> down 162 390
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> down 648 390
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> up
+mods 1 0 0 0
+key 45 1
+key 45 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="X" sugg=3 "Xena" "Xiao" "Xavier" alt=0
+> png scaled125
+= layout=abc lang=en mods=0 word="X" sugg=3 "Xena" "Xiao" "Xavier" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="X" sugg=3 "Xena" "Xiao" "Xavier" alt=0

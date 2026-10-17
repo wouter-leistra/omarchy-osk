@@ -1,0 +1,37 @@
+keymap 1 37260
+> down 1296 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> move 1944 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> cancel
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> png cancel
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 1836 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 24 1
+key 24 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="o" sugg=3 "of" "on" "out" alt=0
+> down 1296 268
+= layout=abc lang=en mods=0 word="o" sugg=3 "of" "on" "out" alt=0
+> longpress
+= layout=abc lang=en mods=0 word="o" sugg=3 "of" "on" "out" alt=0
+> cancel
+= layout=abc lang=en mods=0 word="o" sugg=3 "of" "on" "out" alt=0
+> down 2052 146
+= layout=abc lang=en mods=0 word="o" sugg=3 "of" "on" "out" alt=0
+> up
+mods 0 0 0 0
+key 25 1
+key 25 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="op" sugg=3 "open" "opportunity" "operation" alt=0
+> down 30 30
+= layout=abc lang=en mods=0 word="op" sugg=3 "open" "opportunity" "operation" alt=0
+> cancel
+= layout=abc lang=en mods=0 word="op" sugg=3 "open" "opportunity" "operation" alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="op" sugg=3 "open" "opportunity" "operation" alt=0

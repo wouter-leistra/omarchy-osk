@@ -1,0 +1,39 @@
+keymap 1 37260
+> down 819 195
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> down 1024 106
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> up
+mods 0 0 0 0
+key 23 1
+key 23 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=0
+> down 1161 106
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=0
+> longpress
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=9
+> png small_lp
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=9
+> move 1297 106
+= layout=abc lang=en mods=0 word="hi" sugg=3 "him" "his" "hit" alt=9
+> up
+mods 128 0 0 0
+key 211 1
+key 211 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="hiō" sugg=0 alt=0
+> down 102 284
+= layout=abc lang=en mods=1 word="hiō" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=1 word="hiō" sugg=0 alt=0
+> png small
+= layout=abc lang=en mods=1 word="hiō" sugg=0 alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=1 word="hiō" sugg=0 alt=0

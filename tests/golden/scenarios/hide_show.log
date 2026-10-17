@@ -1,0 +1,57 @@
+keymap 1 37260
+> down 1296 268
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> down 540 146
+= layout=abc lang=en mods=0 word="h" sugg=3 "he" "have" "here" alt=0
+> up
+mods 0 0 0 0
+key 18 1
+key 18 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="he" sugg=3 "here" "her" "hey" alt=0
+> down 216 268
+= layout=abc lang=en mods=0 word="he" sugg=3 "here" "her" "hey" alt=0
+> hide
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> show
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 1188 146
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 21 1
+key 21 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="y" sugg=3 "you" "your" "yeah" alt=0
+> down 162 390
+= layout=abc lang=en mods=1 word="y" sugg=3 "you" "your" "yeah" alt=0
+> up
+= layout=abc lang=en mods=1 word="y" sugg=3 "you" "your" "yeah" alt=0
+> hide
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> show
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 432 390
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 44 1
+key 44 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="z" sugg=3 "zero" "zone" "zoe" alt=0
+> reset
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> png hidden
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0

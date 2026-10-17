@@ -1,0 +1,153 @@
+keymap 1 37260
+> down 216 216
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 30 1
+key 30 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="a" sugg=0 alt=0
+> down 1296 360
+= layout=abc lang=en mods=0 word="a" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 48 1
+key 48 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="ab" sugg=0 alt=0
+> down 864 360
+= layout=abc lang=en mods=0 word="ab" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 46 1
+key 46 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> down 1296 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1220 201
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1144 187
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1069 172
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 993 158
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 918 144
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 842 129
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 766 115
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 691 100
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 615 86
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 540 72
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 680 86
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 820 100
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 961 115
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1101 129
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1242 144
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1382 158
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1522 172
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1663 187
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1803 201
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1944 216
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1933 201
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1922 187
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1911 172
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1900 158
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1890 144
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1879 129
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1868 115
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1857 100
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1846 86
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> move 1836 72
+= layout=abc lang=en mods=0 word="abc" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 35 1
+key 35 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="abch" sugg=0 alt=0
+> down 1276 504
+= layout=abc lang=en mods=0 word="abch" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> down 1570 504
+= layout=abc lang=en mods=0 word="" sugg=0 alt=0
+> up
+mods 0 0 0 0
+key 14 1
+key 14 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 52 1
+key 52 0
+mods 0 0 0 0
+mods 0 0 0 0
+key 57 1
+key 57 0
+mods 0 0 0 0
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> down 540 72
+= layout=abc lang=en mods=1 word="" sugg=0 alt=0
+> longpress
+= layout=abc lang=en mods=1 word="" sugg=0 alt=7
+> move 972 72
+= layout=abc lang=en mods=1 word="" sugg=0 alt=7
+> up
+mods 129 0 0 0
+key 89 1
+key 89 0
+mods 0 0 0 0
+= layout=abc lang=en mods=0 word="È" sugg=0 alt=0
+> png nodict
+= layout=abc lang=en mods=0 word="È" sugg=0 alt=0
+> keymap keymap.xkb
+= layout=abc lang=en mods=0 word="È" sugg=0 alt=0
