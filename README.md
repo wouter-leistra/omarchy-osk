@@ -127,14 +127,30 @@ as a hint.
 
 After editing either file: `make install-user && omarchy-osk-restart`.
 
-## Credits
+## Credits and thanks
 
 - [wvkbd](https://github.com/jjsullivan5196/wvkbd) by John Sullivan and
-  contributors (GPL-3.0), which this is built on.
-- Word lists in `dict/` are derived from
+  contributors (GPL-3.0). omarchy-osk is a modified version of it: the
+  wvkbd history is kept in this repository, and everything since upstream
+  commit `bbecd99` is the omarchy-osk work. The original readme is in
+  [README.wvkbd.md](README.wvkbd.md).
+- Word lists in `dict/` are adapted from
   [FrequencyWords](https://github.com/hermitdave/FrequencyWords) by Hermit Dave,
-  based on OpenSubtitles (content licensed CC BY-SA 4.0).
+  built from [OpenSubtitles](https://www.opensubtitles.org) data, and licensed
+  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). See
+  [dict/README.md](dict/README.md) for what was changed.
+- The swipe decoder follows the idea of SHARK² by Per Ola Kristensson and
+  Shumin Zhai ("SHARK²: A Large Vocabulary Shorthand Writing System for
+  Pen-based Computers", UIST 2004). No code was taken from any implementation.
+- `os-compatibility.c` comes from the Wayland/Weston project (MIT, see
+  [COPYING_WESTON](COPYING_WESTON)); the Wayland protocol files in `proto/` and
+  `tests/proto/` carry their own copyright notices.
+- Thanks to [Omarchy](https://omarchy.org) for the theme, bar plugin and hook
+  system this plugs into, to [fcitx5](https://github.com/fcitx/fcitx5) for
+  the virtual keyboard DBus interface used for auto-show, and to
+  [Nerd Fonts](https://www.nerdfonts.com) for the icons.
 
 ## License
 
-GPL-3.0, like wvkbd.
+GPL-3.0, like wvkbd: see [LICENSE](LICENSE) and [COPYING](COPYING). The word
+lists in `dict/` are CC BY-SA 4.0.

@@ -7,7 +7,7 @@ U = W / 11
 rows = ["qwertyuiopå", "asdfghjklöä", "zxcvbnm"]
 off = [0, 0, 2]
 def pos(c):
-    special = {" ": (6.5 * U, 3), "\n": (9.25 * U, 3), "<": (10 * U, 2), "^": (1 * U, 2), ".": (8.5 * U, 3), ",": (2 * U, 3)}
+    special = {" ": (6.5 * U, 3), "\n": (9.25 * U, 3), "<": (10 * U, 2), "^": (1 * U, 2), ".": (8 * U, 3), ",": (2 * U, 3)}
     if c in special:
         x, r = special[c]
     else:
