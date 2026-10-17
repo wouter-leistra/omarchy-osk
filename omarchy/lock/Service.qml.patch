@@ -1,0 +1,15 @@
+--- a/Service.qml
++++ b/Service.qml
+@@ -475,6 +475,12 @@
+     }
+   }
+ 
++  // The lock view goes away on unlock before it can tell omarchy-osk, so the
++  // keyboard leaves private mode from here
++  onLockRequestedChanged: {
++    if (!lockRequested) Quickshell.execDetached(["omarchy-osk-lock", "unlock"])
++  }
++
+   onAuthenticatingPasswordChanged: {
+     if (!lockRequested) return
+     if (authenticatingPassword) idleBlankTimer.stop()

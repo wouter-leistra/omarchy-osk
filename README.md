@@ -79,6 +79,7 @@ To bring it up there automatically, clone the lock plugin and apply the patch:
 ```bash
 omarchy plugin clone omarchy.lock    # ~/.config/omarchy/plugins/<you>.lock
 patch ~/.config/omarchy/plugins/<you>.lock/LockView.qml omarchy/lock/LockView.qml.patch
+patch ~/.config/omarchy/plugins/<you>.lock/Service.qml omarchy/lock/Service.qml.patch
 omarchy restart shell
 ```
 
