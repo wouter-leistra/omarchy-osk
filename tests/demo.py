@@ -128,9 +128,9 @@ def main():
 
     # a fresh workspace with nothing but the demo window
     prev_ws = hypr("activeworkspace")["id"]
-    focus_workspace(9)
-    if hypr("activeworkspace")["id"] != 9:
-        sys.exit("could not switch to workspace 9")
+    focus_workspace(3)
+    if hypr("activeworkspace")["id"] != 3:
+        sys.exit("could not switch to workspace 3")
     time.sleep(0.4)
     font = subprocess.run(["omarchy-font-current"], capture_output=True, text=True).stdout.strip()
     term = subprocess.Popen(["foot", "-T", TITLE, "-o", f"font={font}:size=20",

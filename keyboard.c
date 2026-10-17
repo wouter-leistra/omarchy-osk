@@ -727,6 +727,13 @@ kbd_switch_lang(struct kbd *kb, int dir)
 static void
 kbd_tap_space(struct kbd *kb, uint32_t time)
 {
+	if (kb->mods & (Ctrl | Alt | Super)) {
+		/* a shortcut such as Super+Space, never smart spacing */
+		kbd_type_cp(kb, time, ' ', kb->mods & (Shift | Ctrl | Alt | Super));
+		kbd_reset_text(kb);
+		kbd_unlatch(kb, time);
+		return;
+	}
 	if (kb->after_commit) {
 		/* the gesture already added a space */
 		kb->after_commit = false;
@@ -745,10 +752,8 @@ kbd_tap_space(struct kbd *kb, uint32_t time)
 	}
 	kb->after_space = kb->word[0] != 0;
 	kb->word[0] = 0;
-	kbd_type_cp(kb, time, ' ', kb->mods & (Ctrl | Alt | Super));
+	kbd_type_cp(kb, time, ' ', 0);
 	kbd_set_suggestions(kb, NULL, false);
-	if (kb->mods & (Ctrl | Alt | Super))
-		kbd_unlatch(kb, time);
 }
 
 /* completions for the letters typed so far, keeping their capitalisation */

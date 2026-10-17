@@ -39,10 +39,12 @@ Bar toggle: copy `omarchy/plugin/` to `~/.config/omarchy/plugins/omarchy-osk/`
 and run `omarchy plugin enable user.osk right`. Theme hooks:
 `omarchy hook install theme-set omarchy/plugin/theme-hook.sh` (and `font-set`).
 
-Optional Hyprland slide-in animation (`~/.config/hypr/looknfeel.lua`):
+Hyprland layer rule (`~/.config/hypr/looknfeel.lua`): slide-in animation, and
+keep the keyboard above other overlays such as the Omarchy menu, so those stay
+usable by touch:
 
 ```lua
-hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom" })
+hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom", order = -10 })
 ```
 
 ## Commands
