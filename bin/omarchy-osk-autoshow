@@ -38,6 +38,7 @@ IMPANEL_XML = """<node><interface name="org.fcitx.Fcitx5.VirtualKeyboard1">
 bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
 auto = False
 pending_hide = None
+ignore_show_until = 0.0   # skip fcitx5's echo of our own switch to on-screen mode
 
 
 def log(msg):
@@ -187,7 +188,8 @@ def on_call(conn, sender, path, iface, method, params, invocation):
         return
     if method == "ShowVirtualKeyboard":
         cancel_hide()
-        osk_show()
+        if time.monotonic() >= ignore_show_until:
+            osk_show()
     elif method == "HideVirtualKeyboard":
         cancel_hide()
         pending_hide = GLib.timeout_add(HIDE_DELAY_MS, guarded(do_hide))
@@ -206,7 +208,11 @@ def check_cover():
         auto = detached
         log("Type Cover detached: auto-show on" if auto else "Type Cover attached: auto-show off")
         if auto:
-            osk_show()
+            # on-screen mode only: the keyboard comes up when a text field
+            # gets focus, not because the cover went (e.g. at login), so
+            # the show fcitx5 echoes for this switch is ignored
+            global ignore_show_until
+            ignore_show_until = time.monotonic() + 1.5
             fcitx_call("ShowVirtualKeyboard")
         else:
             cancel_hide()
