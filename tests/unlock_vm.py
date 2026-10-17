@@ -5,7 +5,9 @@ omarchy-osk-unlock hook and a throwaway LUKS disk, then drive unl0kr.
 usage: tests/unlock_vm.py build
        tests/unlock_vm.py run SCENARIO [SCENARIO...]
 
-Scenarios: keyboard, wrong-then-right, touch, cover, fallback, skip. Everything goes
+Scenarios: keyboard, wrong-then-right, touch, cover, esp, fallback, skip.
+The esp scenario needs a look in /tmp/osk-vm/esp/omarchy-osk (see
+unlock/boot-look-sync). Everything goes
 to /tmp/osk-vm (screenshots, serial logs). Needs qemu-base and unlock/build.sh.
 """
 
@@ -61,7 +63,9 @@ MODULES+=(bochs virtio_pci virtio_blk virtio_input)
                OSK_LOOK=os.path.join(UNLOCK, "omarchy-look"), OSK_USER=os.environ["USER"],
                OSK_HOME=os.path.expanduser("~"), OSK_SCREEN=f"{W}x{H}",
                # the VM's keyboard plays the Type Cover
-               OSK_COVER_NAME="Virtio Keyboard")
+               OSK_COVER_NAME="Virtio Keyboard",
+               # a host directory as the EFI partition (QEMU vvfat, 2nd disk)
+               OSK_ESP="/dev/vdb1")
     r = subprocess.run(["/usr/bin/mkinitcpio", "-c", f"{OUT}/mkinitcpio.conf",
                         "-D", f"{OUT}/initcpio", "-D", "/usr/lib/initcpio",
                         "-k", KVER, "-g", f"{OUT}/initramfs.img"],
@@ -70,6 +74,7 @@ MODULES+=(bochs virtio_pci virtio_blk virtio_input)
     if r.returncode != 0:
         sys.exit(r.stderr)
 
+    os.makedirs(f"{OUT}/esp", exist_ok=True)
     disk = f"{OUT}/luks.img"
     with open(disk, "wb") as f:
         f.truncate(64 << 20)
@@ -93,6 +98,7 @@ class VM:
             "-device", f"VGA,xres={W},yres={H},edid=on",
             "-device", "virtio-tablet-pci", "-device", "virtio-keyboard-pci,id=kbd",
             "-drive", f"file={OUT}/luks.img,format=raw,if=virtio,snapshot=on",
+            "-drive", f"file=fat:{OUT}/esp,format=vvfat,if=virtio,readonly=on",
             "-serial", f"file:{self.serial}", "-qmp", f"unix:{sock},server=on,wait=off",
             "-no-reboot"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for _ in range(50):
@@ -204,6 +210,12 @@ def scenario(name):
             vm.shot("attached")
             vm.type(PASSWORD)
             ok = vm.wait_log(OURS)
+        elif name == "esp":
+            # the look on the EFI partition wins over the built-in one
+            ok = "omarchy-osk-unlock: look from" in vm.log() if vm.wait_log("look from", 25) else False
+            vm.shot("look")
+            vm.type(PASSWORD)
+            ok = ok and vm.wait_log(OURS)
         elif name == "fallback":
             # three wrong passphrases: unl0kr gives up, Plymouth asks
             wait_for_unl0kr(vm)

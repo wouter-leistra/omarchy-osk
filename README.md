@@ -51,55 +51,36 @@ usable by touch, and allow it on the lock screen:
 hl.layer_rule({ match = { namespace = "^omarchy-osk$" }, animation = "slide bottom", order = -10, above_lock = 2 })
 ```
 
-### Omarchy menu and theme switcher
+### Omarchy menu, theme switcher and lock screen
 
 Out of the box the Omarchy menu (Super+Space) and the theme/background
 switcher cover the whole screen and take exclusive keyboard focus. Hyprland
 then sends every touch to them, so the on-screen keyboard can't type into
-them and a tap on it closes the menu. Clone both plugins and change two
-properties on their `PanelWindow`:
+them and a tap on it closes the menu. The lock screen hides the keyboard
+altogether. omarchy-osk keeps patched copies of these three Omarchy plugins
+(`omarchy/patches/`):
 
 ```bash
-omarchy plugin clone omarchy.menu          # ~/.config/omarchy/plugins/<you>.menu/Menu.qml
-omarchy plugin clone omarchy.image-picker  # ~/.config/omarchy/plugins/<you>.image-picker/ImagePicker.qml
+omarchy-osk-plugins    # copies menu, image-picker and lock to ~/.config/omarchy/plugins/<you>.*, patched
 ```
 
-```qml
-WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand   // was Exclusive
-exclusionMode: ExclusionMode.Normal                      // was Ignore
-exclusiveZone: 0
-```
+- menu and image picker: `WlrKeyboardFocus.OnDemand` instead of `Exclusive`
+  and `ExclusionMode.Normal` with `exclusiveZone: 0`, so they open above the
+  keyboard and take its typing; the menu also gets its own app library
+  (a copied menu gets none from the shell, which leaves Apps empty).
+- lock screen: shows the keyboard on lock (see below).
 
-(In the image picker keep its condition: `root.opened && root.imagesLoaded ?
-WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None`.) A cloned menu gets no app
-library from the shell, which leaves Apps empty; give it its own:
+`make install-user` adds an Omarchy post-update hook that runs it after
+every `omarchy update`: when Omarchy changed one of these plugins, it takes
+the new version and patches it again. If a patch no longer fits, your
+previous copy stays and a notification says so. `omarchy-osk-plugins --force`
+redoes all three.
 
-```qml
-import qs.services
-
-readonly property var appLibrary: root.shell && root.shell.appLibrary ? root.shell.appLibrary : ownAppLibrary
-AppLibrary { id: ownAppLibrary; visible: false }
-```
- Then `omarchy restart
-shell`. The menus open above the keyboard and take its typing. Clones don't get
-Omarchy updates, so re-clone after an update that changes these plugins.
-
-### Lock screen
-
-`above_lock = 2` lets the keyboard show and take touches on the lock screen.
-To bring it up there automatically, clone the lock plugin and apply the patch:
-
-```bash
-omarchy plugin clone omarchy.lock    # ~/.config/omarchy/plugins/<you>.lock
-patch ~/.config/omarchy/plugins/<you>.lock/LockView.qml omarchy/lock/LockView.qml.patch
-patch ~/.config/omarchy/plugins/<you>.lock/Service.qml omarchy/lock/Service.qml.patch
-omarchy restart shell
-```
-
-On lock it runs `omarchy-osk-lock lock`: the keyboard switches to private
-mode (no suggestions, gestures, automatic capitals or smart punctuation, so
-the password never appears on screen) and shows itself while the Type Cover is
-detached. A button under the password field shows or hides it. Unlocking
+`above_lock = 2` in the layer rule lets the keyboard show and take touches
+on the lock screen. On lock the patched lock screen runs `omarchy-osk-lock
+lock`: the keyboard switches to private mode (no suggestions, gestures,
+automatic capitals or smart punctuation, so the password never appears on
+screen) and shows itself while the Type Cover is detached. A button under the password field shows or hides it. Unlocking
 switches private mode off again.
 
 ### Disk encryption passphrase at boot
@@ -128,9 +109,11 @@ It looks like the Omarchy lock screen: `unlock/unl0kr-omarchy.patch` adds an
 field, no header bar) and JetBrains Mono fonts. The on-screen keyboard
 hides while the Type Cover is attached and slides up when it is detached
 (`OSK_COVER_NAME`, as for auto-show). The colours and the blurred
-wallpaper are taken from your current Omarchy theme whenever the initramfs is
-built (`unlock/omarchy-look`), so after a theme change run
-`sudo limine-mkinitcpio`, or it follows at the next kernel update.
+wallpaper follow your Omarchy theme: on every theme or background change
+`omarchy-osk-boot-look` (a user path unit) renders them, a root path unit
+copies them to the EFI partition (`/boot/omarchy-osk`, checked by
+`unlock/boot-look-sync`), and the hook reads them from there at boot. The
+look built into the initramfs is the fallback.
 
 ## Commands
 

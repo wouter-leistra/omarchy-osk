@@ -1,0 +1,17 @@
+--- a/ImagePicker.qml
++++ b/ImagePicker.qml
+@@ -367,8 +367,12 @@
+     color: "transparent"
+     WlrLayershell.namespace: "omarchy-image-selector"
+     WlrLayershell.layer: WlrLayer.Overlay
+-    WlrLayershell.keyboardFocus: root.opened && root.imagesLoaded ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+-    exclusionMode: ExclusionMode.Ignore
++    // on-screen keyboard (omarchy-osk) friendly: OnDemand instead of Exclusive
++    // focus so touches still reach the keyboard, and stay clear of its
++    // exclusive zone instead of covering it
++    WlrLayershell.keyboardFocus: root.opened && root.imagesLoaded ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
++    exclusionMode: ExclusionMode.Normal
++    exclusiveZone: 0
+ 
+     Rectangle {
+       anchors.fill: parent

@@ -1,0 +1,86 @@
+#!/bin/bash
+# Keep the patched copies of Omarchy's menu, image picker (theme switcher) and
+# lock screen in step with Omarchy. For each plugin whose Omarchy version (or
+# our patch) changed since the last run: copy Omarchy's version afresh (the
+# first time with `omarchy plugin clone`) and apply the patches. When a patch
+# no longer applies, the previous copy stays and a notification says so. Runs as an Omarchy post-update hook;
+# safe to run by hand. --force redoes all three.
+
+PATCHES="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-osk/patches"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-osk/plugins"
+PLUGINS="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy/plugins"
+STOCK="${OMARCHY_PATH:-/usr/share/omarchy}/shell/plugins"
+
+force=0
+[[ ${1:-} == --force ]] && force=1
+mkdir -p "$STATE"
+
+say() {
+  echo "omarchy-osk: $*"
+  notify-send -a omarchy-osk "On-screen keyboard" "$*" 2>/dev/null || true
+}
+
+# the user's copy of omarchy.<name>, by its clonedFrom
+clone_of() {
+  local m
+  for m in "$PLUGINS"/*/manifest.json; do
+    [[ $(jq -r '.omarchy.clonedFrom // empty' "$m" 2>/dev/null) == "omarchy.$1" ]] && { dirname "$m"; return; }
+  done
+}
+
+fingerprint() {
+  (cd "$STOCK/$1" && find . -type f -print0 | sort -z | xargs -0 sha256sum
+   cat "$PATCHES/$1"/*.patch) | sha256sum | cut -d' ' -f1
+}
+
+changed=0
+for name in menu image-picker lock; do
+  [[ -d $STOCK/$name && -d $PATCHES/$name ]] || continue
+  sum=$(fingerprint "$name")
+  dir=$(clone_of "$name")
+  if (( !force )) && [[ -n $dir && $(cat "$STATE/$name.sum" 2>/dev/null) == "$sum" ]]; then
+    continue
+  fi
+
+  if [[ -z $dir ]]; then
+    # first time: let Omarchy make the copy (and switch to it)
+    omarchy plugin clone "omarchy.$name" >/dev/null || { say "could not copy Omarchy's $name"; continue; }
+    dir=$(clone_of "$name")
+  fi
+
+  # build the new copy next to the old one: Omarchy's files, the copy's
+  # identity in the manifest (as `omarchy plugin clone` writes it), patches
+  id=$(jq -r .id "$dir/manifest.json")
+  label=$(jq -r .name "$dir/manifest.json")
+  new="$STATE/$name.new"
+  rm -rf "$new"
+  mkdir -p "$new"
+  cp -aL "$STOCK/$name/." "$new/"
+  ok=1
+  jq --arg id "$id" --arg name "$label" --arg sourceId "omarchy.$name" '
+      .id = $id | .name = $name |
+      if (.barWidget | type) == "object" then .barWidget.displayName = $name else . end |
+      .omarchy = ((if (.omarchy | type) == "object" then .omarchy else {} end) + { clonedFrom: $sourceId }) |
+      del(.omarchy.clonePaths)' "$STOCK/$name/manifest.json" > "$new/manifest.json" || ok=0
+  for p in "$PATCHES/$name"/*.patch; do
+    (( ok )) || break
+    patch -s -d "$new" -p1 --no-backup-if-mismatch -r - < "$p" >/dev/null || ok=0
+  done
+
+  if (( ok )); then
+    # swap it in
+    rm -rf "$STATE/$name.previous"
+    mv "$dir" "$STATE/$name.previous"
+    mv "$new" "$dir"
+    rm -rf "$STATE/$name.previous"
+    echo "$sum" > "$STATE/$name.sum"
+    echo "omarchy-osk: updated $id from Omarchy's $name"
+    changed=1
+  else
+    rm -rf "$new"
+    say "Omarchy's $name changed in a way the on-screen keyboard patch doesn't fit; kept your previous copy."
+  fi
+done
+
+(( changed )) && omarchy restart shell >/dev/null 2>&1
+exit 0

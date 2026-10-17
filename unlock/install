@@ -33,6 +33,28 @@ omarchy_look() {
     rm -rf "$tmp"
 }
 
+# Where the current look lives between initramfs builds: the EFI partition
+# (/boot/omarchy-osk, kept up to date by omarchy-osk-boot-look), read at boot.
+esp_look() {
+    local esp src part tmp
+    esp="${OSK_ESP:-}"
+    if [[ -z $esp ]]; then
+        src=$(findmnt -no SOURCE /boot 2>/dev/null) || return 0
+        [[ $(findmnt -no FSTYPE /boot 2>/dev/null) == vfat && -b $src ]] || return 0
+        part=$(lsblk -no PARTUUID "$src" 2>/dev/null)
+        [[ -n $part ]] || return 0
+        esp="PARTUUID=$part"
+    fi
+    add_module vfat
+    add_module nls_cp437
+    add_module nls_iso8859_1
+    add_module nls_utf8
+    tmp=$(mktemp)
+    printf 'osk_esp=%s\n' "$esp" > "$tmp"
+    add_file "$tmp" /etc/omarchy-osk-esp
+    rm -f "$tmp"
+}
+
 build() {
     local f
 
@@ -43,6 +65,7 @@ build() {
     add_module hid_multitouch
 
     omarchy_look
+    esp_look
 
     add_binary cryptsetup
     add_binary /usr/lib/libgcc_s.so.1   # cryptsetup's pthread_create dlopen()s it

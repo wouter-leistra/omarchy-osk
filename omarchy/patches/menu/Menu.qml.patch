@@ -1,0 +1,41 @@
+--- a/Menu.qml
++++ b/Menu.qml
+@@ -4,6 +4,7 @@
+ import QtQuick
+ import qs.Commons
+ import qs.Ui
++import qs.services
+ import "MenuModel.js" as MenuModel
+ 
+ Item {
+@@ -77,7 +78,14 @@
+ 
+   // Shared application engine (entries, hidden filters, icons, launch,
+   // removal), owned by the shell and also used by the standalone launcher.
+-  readonly property var appLibrary: root.shell ? root.shell.appLibrary : null
++  // Omarchy hands this clone a shell without an app library, so the Apps
++  // submenu was empty; keep a library of its own for that case
++  readonly property var appLibrary: root.shell && root.shell.appLibrary ? root.shell.appLibrary : ownAppLibrary
++
++  AppLibrary {
++    id: ownAppLibrary
++    visible: false
++  }
+   property bool deleteConfirmOpen: false
+   property var deleteTarget: null
+   onOpenedChanged: if (!opened) { deleteConfirmOpen = false; deleteTarget = null }
+@@ -1021,8 +1029,12 @@
+     color: "transparent"
+     WlrLayershell.namespace: "omarchy-menu"
+     WlrLayershell.layer: WlrLayer.Overlay
+-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+-    exclusionMode: ExclusionMode.Ignore
++    // on-screen keyboard (omarchy-osk) friendly: OnDemand instead of Exclusive
++    // focus so touches still reach the keyboard, and stay clear of its
++    // exclusive zone instead of covering it
++    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
++    exclusionMode: ExclusionMode.Normal
++    exclusiveZone: 0
+ 
+     // The card opens centered exactly as always. The first search keystroke
+     // or submenu move freezes the top line where it currently sits — from

@@ -10,6 +10,30 @@ osk_log() {
     echo "<5>omarchy-osk-unlock: $*" > /dev/kmsg 2>/dev/null
 }
 
+# the look as last rendered for the current Omarchy theme, from the EFI
+# partition; the one built into the initramfs is the fallback
+osk_esp_look() {
+    local dev dir=/run/omarchy-osk-esp
+    [ -r /etc/omarchy-osk-esp ] || return 0
+    . /etc/omarchy-osk-esp
+    [ -n "${osk_esp}" ] || return 0
+    dev=$(resolve_device "${osk_esp}" 5) || return 0
+    modprobe -a -q vfat nls_cp437 nls_iso8859-1 >/dev/null 2>&1
+    mkdir -p "${dir}"
+    if ! mount -t vfat -o ro "${dev}" "${dir}" 2>/dev/null; then
+        osk_log "could not mount ${osk_esp}, using the built-in look"
+        return 0
+    fi
+    if [ -f "${dir}/omarchy-osk/omarchy.conf" ]; then
+        rm -f /etc/unl0kr.conf.d/50-omarchy.conf /etc/unl0kr/wallpaper.xrgb
+        mkdir -p /etc/unl0kr.conf.d /etc/unl0kr
+        cp "${dir}/omarchy-osk/omarchy.conf" /etc/unl0kr.conf.d/60-omarchy.conf
+        [ -f "${dir}/omarchy-osk/wallpaper.xrgb" ] && cp "${dir}/omarchy-osk/wallpaper.xrgb" /etc/unl0kr/wallpaper.xrgb
+        osk_log "look from ${osk_esp}"
+    fi
+    umount "${dir}"
+}
+
 run_hook() {
     local cryptdev cryptname cryptoptions cryptopt cryptargs resolved
     local pass tries plymouth_off
@@ -47,6 +71,8 @@ EOF2
 
     resolved=$(resolve_device "${cryptdev}" "$(getarg rootdelay)") || return 0
     cryptsetup isLuks "${resolved}" >/dev/null 2>&1 || return 0
+
+    osk_esp_look
 
     # Plymouth holds the display; hand it over while unl0kr runs
     plymouth_off=0

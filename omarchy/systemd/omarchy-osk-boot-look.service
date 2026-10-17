@@ -1,0 +1,7 @@
+[Unit]
+Description=Render the boot passphrase screen from the Omarchy theme
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/omarchy-osk-boot-look
+Nice=10

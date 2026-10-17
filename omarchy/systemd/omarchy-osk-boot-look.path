@@ -1,0 +1,9 @@
+[Unit]
+Description=Follow Omarchy theme changes on the boot passphrase screen
+
+[Path]
+PathChanged=%h/.local/state/omarchy/current/theme.name
+PathChanged=%h/.local/state/omarchy/current/background
+
+[Install]
+WantedBy=default.target

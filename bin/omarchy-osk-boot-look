@@ -1,0 +1,44 @@
+#!/bin/bash
+# Render the boot passphrase screen's look (colours and blurred wallpaper)
+# from the current Omarchy theme into ~/.local/state/omarchy-osk/boot-look.
+# A root path unit (unlock/install.sh) copies it to the EFI partition, where
+# the initramfs hook reads it at boot. Started by omarchy-osk-boot-look.path
+# when the theme or the background changes.
+set -euo pipefail
+
+LOOK="${OSK_LOOK:-$HOME/.local/lib/omarchy-osk/omarchy-look}"
+OUT="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-osk/boot-look"
+CURRENT="$HOME/.local/state/omarchy/current"
+
+# the internal panel's native resolution, as at boot
+screen() {
+  local c mode
+  for c in /sys/class/drm/card*-eDP-* /sys/class/drm/card*-*; do
+    [[ $(cat "$c/status" 2>/dev/null) == connected ]] || continue
+    mode=$(head -1 "$c/modes" 2>/dev/null)
+    [[ $mode =~ ^[0-9]+x[0-9]+ ]] && { echo "${BASH_REMATCH[0]}"; return; }
+  done
+  echo 1920x1080
+}
+
+state() {
+  echo "$(cat "$CURRENT/theme.name" 2>/dev/null) $(readlink -f "$CURRENT/background" 2>/dev/null)"
+}
+
+mkdir -p "$OUT"
+size=$(screen)
+# render until the theme holds still (theme switches come in bursts)
+while :; do
+  before=$(state)
+  tmp=$(mktemp -d "$OUT/.render.XXXXXX")
+  "$LOOK" "$HOME" "$tmp" "${size%x*}" "${size#*x}" /etc/unl0kr/wallpaper.xrgb
+  if [[ -f $tmp/wallpaper.xrgb ]]; then
+    mv "$tmp/wallpaper.xrgb" "$OUT/wallpaper.xrgb"
+  else
+    rm -f "$OUT/wallpaper.xrgb"
+  fi
+  # the config last: the root side watches it
+  mv "$tmp/omarchy.conf" "$OUT/omarchy.conf"
+  rm -rf "$tmp"
+  [[ $(state) == "$before" ]] && break
+done

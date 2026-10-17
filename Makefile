@@ -81,9 +81,17 @@ USER_PREFIX ?= $(HOME)/.local
 install-user: wvkbd-omarchy
 	mkdir -p $(USER_PREFIX)/bin $(USER_PREFIX)/share/omarchy-osk/dict
 	install -m 755 wvkbd-omarchy $(USER_PREFIX)/bin/omarchy-oskd
-	install -m 755 bin/omarchy-osk bin/omarchy-osk-toggle bin/omarchy-osk-restart bin/omarchy-osk-lock bin/omarchy-osk-autoshow $(USER_PREFIX)/bin/
+	install -m 755 bin/omarchy-osk bin/omarchy-osk-toggle bin/omarchy-osk-restart bin/omarchy-osk-lock bin/omarchy-osk-autoshow \
+		bin/omarchy-osk-plugins bin/omarchy-osk-boot-look $(USER_PREFIX)/bin/
 	mkdir -p $(HOME)/.config/systemd/user
-	install -m 644 omarchy/systemd/omarchy-osk-autoshow.service $(HOME)/.config/systemd/user/
+	install -m 644 omarchy/systemd/omarchy-osk-autoshow.service omarchy/systemd/omarchy-osk-boot-look.path \
+		omarchy/systemd/omarchy-osk-boot-look.service $(HOME)/.config/systemd/user/
+	install -Dm 755 unlock/omarchy-look $(USER_PREFIX)/lib/omarchy-osk/omarchy-look
+	for p in menu image-picker lock; do \
+		install -Dm 644 -t $(USER_PREFIX)/share/omarchy-osk/patches/$$p omarchy/patches/$$p/*.patch; \
+	done
+	# keep the patched Omarchy plugin copies current after `omarchy update`
+	install -Dm 755 omarchy/hooks/post-update $(HOME)/.config/omarchy/hooks/post-update.d/omarchy-osk
 	install -m 644 dict/*.txt dict/README.md $(USER_PREFIX)/share/omarchy-osk/dict/
 	mkdir -p $(USER_PREFIX)/share/omarchy-osk/layouts $(USER_PREFIX)/share/omarchy-osk/locales
 	install -m 644 data/languages.txt data/popups.txt data/README.md $(USER_PREFIX)/share/omarchy-osk/

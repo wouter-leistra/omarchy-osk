@@ -1,0 +1,4 @@
+#!/bin/bash
+# omarchy-osk: re-apply the on-screen keyboard patches to fresh copies of
+# Omarchy's menu, theme switcher and lock screen when an update changed them
+exec omarchy-osk-plugins

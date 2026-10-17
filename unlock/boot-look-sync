@@ -1,0 +1,42 @@
+#!/bin/bash
+# Copy the boot passphrase screen's look, rendered by omarchy-osk-boot-look in
+# the user's state directory, to the EFI partition, where the initramfs hook
+# reads it at boot. Run as root by omarchy-osk-boot-look.path. Only a plain
+# colour config and a raw wallpaper of the stated size get through.
+set -euo pipefail
+
+src="$1"
+dest="${2:-/boot/omarchy-osk}"
+conf="$src/omarchy.conf"
+[[ -f $conf ]] || exit 0
+
+# every line must be one of ours
+if grep -vqE '^(#.*|\[(textarea|omarchy)\]|bullet=●|(background|foreground|accent|accent_text|keyboard|key|key_special|key_pressed)=[0-9a-fA-F]{6}|cover=[A-Za-z0-9 ._-]{1,64}|wallpaper=/etc/unl0kr/wallpaper\.xrgb|wallpaper_(width|height)=[0-9]{1,5}|)$' "$conf"; then
+  echo "boot-look-sync: unexpected content in $conf, ignored" >&2
+  exit 1
+fi
+
+tmp="$dest/.new"
+rm -rf "$tmp"
+mkdir -p "$tmp"
+if grep -q '^wallpaper=' "$conf"; then
+  w=$(sed -n 's/^wallpaper_width=//p' "$conf")
+  h=$(sed -n 's/^wallpaper_height=//p' "$conf")
+  size=$(stat -c %s "$src/wallpaper.xrgb" 2>/dev/null || echo 0)
+  if (( w > 0 && h > 0 && w * h * 4 == size && size <= 64 * 1024 * 1024 )); then
+    cp "$src/wallpaper.xrgb" "$tmp/wallpaper.xrgb"
+    cp "$conf" "$tmp/omarchy.conf"
+  else
+    # no usable wallpaper: the colours alone
+    grep -v '^wallpaper' "$conf" > "$tmp/omarchy.conf"
+  fi
+else
+  cp "$conf" "$tmp/omarchy.conf"
+fi
+sync -f "$tmp"
+
+rm -f "$dest/omarchy.conf" "$dest/wallpaper.xrgb"
+[[ -f $tmp/wallpaper.xrgb ]] && mv "$tmp/wallpaper.xrgb" "$dest/wallpaper.xrgb"
+mv "$tmp/omarchy.conf" "$dest/omarchy.conf"
+rmdir "$tmp"
+sync -f "$dest"
