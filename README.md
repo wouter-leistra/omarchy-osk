@@ -11,7 +11,7 @@ runs in it anymore, but because the Rust code was ported from wvkbd's, it
 keeps wvkbd's GPL-3.0 license and credits (see [Credits](#credits-and-thanks)).
 
 > **Made for one device.** omarchy-osk is built and tested on a **Microsoft
-> Surface Pro 3 with the Surface Type Cover**, on **Omarchy 4.0.4**. Other
+> Surface Pro 3 with the Surface Type Cover**, on **Omarchy 4.0.5**. Other
 > tablets, touch laptops and touchscreens may work, but nothing is
 > guaranteed: touch, pen and the "show while the keyboard is detached"
 > behaviour are only tested there, and newer Omarchy versions may break the
@@ -108,8 +108,8 @@ Numbers vary with system load; it was about 2 during these runs.
 curl -fsSL https://github.com/wouter-leistra/omarchy-osk/releases/latest/download/install.sh | bash
 ```
 
-The installer downloads the latest release (a prebuilt keyboard, its scripts
-and data; the checksum is verified), installs it for your user in
+The installer downloads the release made for your Omarchy version (a
+prebuilt keyboard, its scripts and data; the checksum is verified), installs it for your user in
 `~/.local` (no root needed) and runs `omarchy-osk-setup`, which asks:
 
 - **languages** (in space-bar switching order). English, Finnish and
@@ -133,8 +133,18 @@ run `omarchy-osk-setup`. `omarchy-osk-uninstall` removes everything again
 (Omarchy's own menu, theme switcher and lock screen come back; `--purge`
 also removes your settings).
 
-To update, run the install line again: it installs the latest release, and
-setup asks again with your current answers preselected (Enter keeps them).
+**Which release.** Every release is tested with one Omarchy version, and its
+patches for Omarchy's menu, theme switcher and lock screen are made for that
+version, so a newer omarchy-osk can fail to patch an older Omarchy and the
+other way round. The installer installs the newest release tested with your
+Omarchy version or an older one: on Omarchy 4.0.4 that is 0.1.2, on 4.0.5
+0.1.3 or later. When your Omarchy is older than every release, it installs
+the one made for the oldest and tells you to run `omarchy update` first.
+`install.sh --which` says what it would install and why; `--version vX.Y.Z`
+installs a given release.
+
+To update, run the install line again: it installs the release for your
+Omarchy (see above), and setup asks again with your current answers preselected (Enter keeps them).
 What changed in each release is in [CHANGELOG.md](CHANGELOG.md) and the
 [release notes](https://github.com/wouter-leistra/omarchy-osk/releases).
 

@@ -82,6 +82,7 @@ if ((publish)); then
   {
     echo "$changes"
     echo
+    # install.sh picks the release for the user's Omarchy from "with Omarchy X.Y.Z"
     echo "Tested on $(sed -n 's/^device=//p' target/TESTED) with Omarchy $(sed -n 's/^omarchy=//p' target/TESTED) and Hyprland $(sed -n 's/^hyprland=//p' target/TESTED): $(sed -n 's/^tests=//p' target/TESTED)."
     echo
     echo "Install or update: \`curl -fsSL https://github.com/wouter-leistra/omarchy-osk/releases/latest/download/install.sh | bash\`"

@@ -3,12 +3,19 @@
 #
 #   curl -fsSL https://github.com/wouter-leistra/omarchy-osk/releases/latest/download/install.sh | bash
 #
-# Downloads the latest release (a prebuilt keyboard, its scripts and data),
-# checks it, installs it for your user in ~/.local (no root needed) and runs
-# omarchy-osk-setup, which asks for languages and the rest.
+# Downloads the release made for your Omarchy version (a prebuilt keyboard,
+# its scripts and data), checks it, installs it for your user in ~/.local (no
+# root needed) and runs omarchy-osk-setup, which asks for languages and the
+# rest.
+#
+# Each release is tested with one Omarchy version, and its patches for
+# Omarchy's menu, theme switcher and lock screen fit that version. So the
+# newest release tested with your Omarchy or an older one is installed, not
+# simply the latest: on Omarchy 4.0.4 that is the last release made for 4.0.4.
 #
 # Options:
-#   --version vX.Y.Z   install that release instead of the latest
+#   --version vX.Y.Z   install that release instead
+#   --which            only say which release would be installed, and why
 #   --from DIR|FILE    install from an unpacked release or a release tarball
 #   --yes              no questions: defaults (or your current settings)
 #   --files-only       only copy the files, don't run the setup
@@ -21,7 +28,7 @@ PREFIX="${OSK_PREFIX:-$HOME/.local}"
 CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
 STATE="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-osk"
 
-version="" from="" yes=0 files_only=0 force=0
+version="" from="" yes=0 files_only=0 force=0 which=0
 while (($#)); do
   case $1 in
     --version) version=$2; shift ;;
@@ -29,8 +36,9 @@ while (($#)); do
     --yes|-y) yes=1 ;;
     --files-only) files_only=1 ;;
     --force) force=1 ;;
+    --which) which=1 ;;
     -h|--help)
-      echo "usage: install.sh [--version vX.Y.Z] [--from DIR|FILE] [--yes] [--files-only] [--force]"
+      echo "usage: install.sh [--version vX.Y.Z] [--which] [--from DIR|FILE] [--yes] [--files-only] [--force]"
       exit 0 ;;
     *) echo "unknown option $1" >&2; exit 2 ;;
   esac
@@ -49,6 +57,56 @@ fi
 for tool in jq hyprctl python3; do
   command -v "$tool" >/dev/null || ((force)) || die "$tool is missing"
 done
+
+# ---------------------------------------------------------------- which release
+# The newest release tested with this Omarchy or an older one. Release notes
+# say "... with Omarchy X.Y.Z and Hyprland ..." (tools/release.sh writes them).
+pick_release() {
+  local omarchy releases tested tag older="" newest=""
+  omarchy=$(omarchy version 2>/dev/null | head -1 | cut -d- -f1)
+  if [[ ! $omarchy =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+    reason="can't tell your Omarchy version"
+    return
+  fi
+  releases=$(curl -fsSL "${OSK_RELEASES_API:-https://api.github.com/repos/$REPO/releases?per_page=100}" 2>/dev/null |
+    jq -r '.[] | select(.draft | not) | select(.prerelease | not)
+           | [.tag_name, (.body // "" | capture("with Omarchy (?<v>[0-9][0-9.]*[0-9])").v // "")] | @tsv' 2>/dev/null) || releases=""
+  if [[ -z $releases ]]; then
+    reason="can't list the releases on GitHub"
+    return
+  fi
+  # newest first, as GitHub lists them
+  while IFS=$'\t' read -r tag tested; do
+    [[ -n $tested ]] || continue
+    [[ -n $newest ]] || newest="$tag $tested"
+    if [[ $(printf '%s\n%s\n' "$tested" "$omarchy" | sort -V | head -1) == "$tested" ]]; then
+      version=$tag
+      if [[ $tag == "${newest%% *}" ]]; then
+        reason="the latest release, tested with Omarchy $tested; you have $omarchy"
+      else
+        reason="tested with Omarchy $tested; you have $omarchy. Newer releases are made for Omarchy ${newest#* }: update Omarchy (omarchy update) to get them"
+      fi
+      return
+    fi
+    # the newest release for each older Omarchy comes first
+    [[ -n $older && $tested == "${older#* }" ]] || older="$tag $tested"
+  done <<<"$releases"
+  if [[ -n $older ]]; then
+    # every release is newer than this Omarchy: the one made for the oldest
+    version=${older%% *}
+    reason="made for Omarchy ${older#* }, newer than your $omarchy: update Omarchy (omarchy update) first, or Omarchy's menu, theme switcher and lock screen may not get the keyboard patches"
+  fi
+}
+
+reason=""
+if [[ -z $version && -z $from && -z ${OSK_RELEASE_URL:-} ]]; then
+  pick_release
+fi
+if ((which)); then
+  echo "${version:-latest}${reason:+: $reason}"
+  exit 0
+fi
+[[ -z $reason ]] || say "installing ${version:-the latest release}: $reason"
 
 # ---------------------------------------------------------------- the files
 tmp=$(mktemp -d)

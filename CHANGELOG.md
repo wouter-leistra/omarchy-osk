@@ -4,6 +4,18 @@ What changed in each release, newest first. `tools/release.sh` puts a
 version's section in its GitHub release notes and won't release a version
 that has none here.
 
+## 0.1.3 (2026-10-18)
+
+- Made for Omarchy 4.0.5. Its lock screen now writes `Commons.Color.lock`,
+  which the lock screen patch didn't fit, so `omarchy update` kept your old
+  lock screen copy. The patch is updated for the new lock screen.
+- The installer installs the release made for your Omarchy version instead of
+  the latest: the newest release tested with your Omarchy or an older one.
+  On Omarchy 4.0.4 that stays 0.1.2. `install.sh --which` says what it would
+  install and why.
+- When an Omarchy update doesn't fit the menu, theme switcher or lock screen
+  patch, the notification says to run the install line again.
+
 ## 0.1.2 (2026-10-18)
 
 - Setup can be opened from the Omarchy menu (**Setup › On-screen keyboard**)

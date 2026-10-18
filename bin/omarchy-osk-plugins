@@ -78,7 +78,7 @@ for name in menu image-picker lock; do
     changed=1
   else
     rm -rf "$new"
-    say "Omarchy's $name changed in a way the on-screen keyboard patch doesn't fit; kept your previous copy."
+    say "Omarchy's $name changed in a way the on-screen keyboard patch doesn't fit; kept your previous copy. Run the install line again for an omarchy-osk made for your Omarchy."
   fi
 done
 

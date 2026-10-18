@@ -162,6 +162,31 @@ def main():
     def logged(text):
         return text in open(log).read() if os.path.exists(log) else False
 
+    # ---------------------------------------------------------------- which release
+    # newest first, as GitHub lists them; notes as tools/release.sh writes them
+    def notes(v):
+        return f"- changes\n\nTested on Surface Pro 3 with Omarchy {v} and Hyprland 0.56.2: all passed."
+    releases = [{"tag_name": "v0.3.0", "draft": True, "prerelease": False, "body": notes("4.0.9")},
+                {"tag_name": "v0.2.1", "draft": False, "prerelease": False, "body": notes("4.0.10")},
+                {"tag_name": "v0.2.0", "draft": False, "prerelease": False, "body": notes("4.0.5")},
+                {"tag_name": "v0.1.9", "draft": False, "prerelease": True, "body": notes("4.0.5")},
+                {"tag_name": "v0.1.2", "draft": False, "prerelease": False, "body": notes("4.0.4")},
+                {"tag_name": "v0.1.1", "draft": False, "prerelease": False, "body": notes("4.0.4")},
+                {"tag_name": "v0.0.1", "draft": False, "prerelease": False, "body": "no notes"}]
+    api = os.path.join(base, "releases.json")
+    json.dump(releases, open(api, "w"))
+    for omarchy, want in (("4.0.4-1", "v0.1.2"), ("4.0.5-2", "v0.2.0"), ("4.0.9-1", "v0.2.0"),
+                          ("4.0.10-1", "v0.2.1"), ("4.1.0-1", "v0.2.1"), ("4.0.3-1", "v0.1.2")):
+        p = run("bash", os.path.join(ROOT, "install.sh"), "--which",
+                env={"OSK_RELEASE_URL": "", "OSK_RELEASES_API": "file://" + api, "FAKE_OMARCHY_VERSION": omarchy})
+        check(f"Omarchy {omarchy} gets {want}", p.stdout.startswith(want + ":"), p.stdout + p.stderr)
+    p = run("bash", os.path.join(ROOT, "install.sh"), "--which",
+            env={"OSK_RELEASE_URL": "", "OSK_RELEASES_API": "file:///nonexistent"})
+    check("GitHub unreachable: the latest", p.stdout.startswith("latest"), p.stdout + p.stderr)
+    p = run("bash", os.path.join(ROOT, "install.sh"), "--which", "--version", "v0.1.1",
+            env={"OSK_RELEASE_URL": "", "OSK_RELEASES_API": "file://" + api})
+    check("--version wins", p.stdout.strip() == "v0.1.1", p.stdout + p.stderr)
+
     # ---------------------------------------------------------------- install
     p = run("bash", os.path.join(ROOT, "install.sh"), "--yes")
     check("install from the release", p.returncode == 0, p.stdout + p.stderr)

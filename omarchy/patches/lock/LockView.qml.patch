@@ -6,9 +6,9 @@
 +import Quickshell
 +import Quickshell.Io
  import qs.Commons
+ import qs.Commons as Commons
  import qs.Ui
- 
-@@ -16,6 +18,14 @@
+@@ -17,6 +19,14 @@
    property bool loadBackground: true
    property string passwordText: ""
    property bool syncingPasswordText: false
@@ -23,7 +23,7 @@
  
    readonly property string placeholderText: "Enter Password"
    readonly property int fieldWidth: 381
-@@ -67,13 +77,43 @@
+@@ -68,13 +78,43 @@
      syncingPasswordText = false
    }
  
@@ -68,7 +68,7 @@
    }
  
    // Measures the masked password at full size; passwordDotScale compares this
-@@ -123,7 +163,9 @@
+@@ -124,7 +164,9 @@
        id: inputField
        width: root.fieldWidth
        height: root.fieldHeight
@@ -76,10 +76,10 @@
 +      anchors.horizontalCenter: parent.horizontalCenter
 +      y: Math.round(((root.keyboardShown ? parent.height - root.keyboardHeight : parent.height) - height) / 2)
 +      Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-       color: Color.lock.background
+       color: Commons.Color.lock.background
        borderSpec: root.inputBorderSpec
        radius: Style.cornerRadius
-@@ -215,5 +257,27 @@
+@@ -216,5 +258,27 @@
          verticalAlignment: Text.AlignVCenter
        }
      }
@@ -91,7 +91,7 @@
 +      anchors.topMargin: 24
 +      visible: root.inputEnabled
 +      text: "󰌌"
-+      color: root.keyboardShown ? Color.lock.borderActive : Color.lock.placeholder
++      color: root.keyboardShown ? Commons.Color.lock.borderActive : Commons.Color.lock.placeholder
 +      font.family: Style.font.family
 +      font.pixelSize: Math.round(root.fieldFontSize * 1.6)
 +
