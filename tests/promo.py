@@ -11,7 +11,11 @@ an Omarchy menu opened by the demo) has focus. Writes OUT.mp4 and OUT.json
 omarchy-osk settings, theme, background and do-not-disturb are restored
 afterwards; the install itself is the real one (the latest release).
 
-usage: tests/promo.py OUT.mp4
+The recorder encodes on the CPU here (no VAAPI encoder for this
+resolution), so it records 30 fps with real timestamps (MKV): at 60 fps it
+drops frames and the scene times drift from the video.
+
+usage: tests/promo.py OUT.mkv
 """
 
 import json
@@ -280,10 +284,12 @@ def main():
         sys.exit(f"could not switch to workspace {WS}")
     procs, rec, daemon = [], None, None
     try:
+        # the virtual pointer may still rest on the bar button (tooltip)
+        subprocess.run([VPTR], input="move 1080 700\n", text=True)
         time.sleep(1.0)
         if os.path.exists(out):
             os.remove(out)
-        rec = subprocess.Popen(["gpu-screen-recorder", "-w", "eDP-1", "-f", "60", "-fm", "cfr",
+        rec = subprocess.Popen(["gpu-screen-recorder", "-w", "eDP-1", "-f", "30", "-fm", "vfr", "-c", "mkv",
                                 "-cursor", "no", "-k", "auto", "-fallback-cpu-encoding", "yes",
                                 "-q", "very_high", "-o", out],
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -293,9 +299,12 @@ def main():
         time.sleep(2.0)
         mark("start")
 
-        # 1. the one-line install and its setup, then setup from the menu
-        install_scene(mark, procs)
+        # 1. setup from the menu (recorded first: setup reloads the patched
+        # menu, which then doesn't draw for a while; the edit puts it after
+        # the install), then the one-line install and its setup
         menu_scene(mark)
+        time.sleep(1.0)
+        install_scene(mark, procs)
 
         # auto-show service that believes the Type Cover is detached
         mark("prepare")
@@ -307,10 +316,6 @@ def main():
         time.sleep(0.3)
         subprocess.Popen(["omarchy-osk", "--hidden"], start_new_session=True,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        pic = bg                      # your wallpaper, in a window without a text field
-        procs.append(subprocess.Popen(["imv", pic], start_new_session=True,
-                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
-        wait(lambda: hypr("activewindow").get("class") == "imv", 5)
         time.sleep(3.0)
 
         # 1. a text field gets focus: the keyboard appears by itself
@@ -325,13 +330,19 @@ def main():
         if not wait(keyboard_visible, 3):
             print("auto-show did not trigger", flush=True)
         time.sleep(1.2)
+        # a window without a text field (your wallpaper in an image viewer)
+        # takes focus: the keyboard goes; it closes: the keyboard is back
         mark("autohide")
-        click_window(next(c["title"] for c in hypr("clients")
-                          if c["class"] == "imv" and c["workspace"]["id"] == WS))
+        viewer = subprocess.Popen(["imv", bg], start_new_session=True,
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        procs.append(viewer)
+        wait(lambda: hypr("activewindow").get("class") == "imv", 5)
         if not wait(lambda: not keyboard_visible(), 2):
             print("auto-hide did not trigger", flush=True)
-        time.sleep(0.9)
-        click_window(TITLE)
+        time.sleep(1.2)
+        os.killpg(viewer.pid, signal.SIGTERM)
+        if not wait(lambda: hypr("activewindow").get("title") == TITLE, 3):
+            click_window(TITLE)
         wait(keyboard_visible, 2)
         time.sleep(0.7)
 
@@ -394,11 +405,12 @@ def main():
         wait(lambda: subprocess.run(["omarchy", "theme", "current"], capture_output=True,
                                     text=True).stdout.strip() != theme, 15)
         wait(lambda: not layer_open("omarchy-image-selector"), 5)
-        time.sleep(3.0)               # hooks restyle the keyboard
+        time.sleep(6.0)               # hooks restyle and restart the keyboard
         wait(lambda: hypr("activewindow").get("title") == TITLE, 3)
-        if hypr("activewindow").get("title") != TITLE:
-            click_window(TITLE)
-            time.sleep(0.5)
+        click_window(TITLE)           # tap the text field again, as you would
+        if not wait(keyboard_visible, 3):
+            print("keyboard not back after the theme change", flush=True)
+        time.sleep(0.8)
 
         # 4. keep typing in the new colours
         mark("follows")
@@ -408,6 +420,10 @@ def main():
         time.sleep(0.8)
 
         # 5. toggle from the bar
+        if not keyboard_visible():
+            click_window(TITLE)
+            wait(keyboard_visible, 3)
+            time.sleep(0.8)
         mark("toggle")
         vptr(tap_at(*BAR_ICON, 100), check=False)
         if not wait(lambda: not keyboard_visible(), 2):
@@ -450,6 +466,11 @@ def main():
             with open(STATE, "w") as fh:
                 fh.write(saved_lang)
         subprocess.run([os.path.expanduser("~/.local/bin/omarchy-osk-restart")])
+        # leave it hidden, as auto-show expects (the restart starts it in the background)
+        wait(lambda: subprocess.run(["pgrep", "-x", "omarchy-oskd"],
+                                    stdout=subprocess.DEVNULL).returncode == 0, 5)
+        time.sleep(1.0)
+        osk("USR1")
         with open(os.path.splitext(out)[0] + ".json", "w") as fh:
             json.dump(marks, fh)
     print(out)
