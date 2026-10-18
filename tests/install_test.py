@@ -12,6 +12,7 @@ usage: tests/install_test.py [--keep]   (after `cargo build --release`)
 import http.server
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,10 @@ case "$1 $2" in
     jq --arg id "tester.$name" --arg src "$3" '.id = $id | .omarchy.clonedFrom = $src' \
       "/usr/share/omarchy/shell/plugins/$name/manifest.json" >"$dir/manifest.json" ;;
   "plugin remove") rm -rf "$HOME/.config/omarchy/plugins/$3" ;;
+  "plugin enable")
+    # like Omarchy's shell: a plugin copied in a moment ago is not known yet
+    seen="$HOME/.stub-seen-$3"
+    [[ -e $seen ]] || { touch "$seen"; echo "Unknown plugin $3" >&2; exit 1; } ;;
 esac
 exit 0
 ''',
@@ -159,6 +164,7 @@ def main():
     import time
     fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 100, 0, 0))
     out = b""
+    since = b""  # what it showed since the last Enter
     end = time.time() + 60
     status = None
     while time.time() < end:
@@ -171,8 +177,10 @@ def main():
             if not chunk:
                 break
             out += chunk
-        else:
-            os.write(fd, b"\r")  # a question waits: take its default
+            since += chunk
+        elif b"enter" in since:
+            os.write(fd, b"\r")  # a question waits (gum's key help is up): take its default
+            since = b""
         done, st = os.waitpid(pid, os.WNOHANG)
         if done:
             status = os.waitstatus_to_exitcode(st)
@@ -187,8 +195,10 @@ def main():
     check("interactive setup ends", status == 0, text[-600:])
     check("interactive defaults keep the settings", read(".config/omarchy-osk/config") == before,
           read(".config/omarchy-osk/config"))
-    check("interactive setup asks", "Which languages" in text and "Show the keyboard automatically" in text
-          and "Keyboard height" in text, text[-600:])
+    plain = re.sub(r"\x1b(\[[0-9;?<=>]*[ -/]*[@-~]|[@-_])", "", text)
+    missing = [q for q in ("Which languages", "Show the keyboard automatically", "Keyboard height")
+               if q not in plain]
+    check("interactive setup asks", not missing, f"never asked: {missing}")
 
     # ---------------------------------------------------------------- setup again
     p = run(path(".local/bin/omarchy-osk-setup"), "--yes", "--langs", "en,fi,de-DE", "--download", "no",
