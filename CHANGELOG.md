@@ -4,7 +4,7 @@ What changed in each release, newest first. `tools/release.sh` puts a
 version's section in its GitHub release notes and won't release a version
 that has none here.
 
-## 0.1.2
+## 0.1.2 (2026-10-18)
 
 - Setup can be opened from the Omarchy menu (**Setup › On-screen keyboard**)
   and from the app launcher ("On-screen keyboard setup"), in Omarchy's
