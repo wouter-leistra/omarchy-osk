@@ -30,13 +30,15 @@ keeps wvkbd's GPL-3.0 license and credits (see [Credits](#credits-and-thanks)).
 - **Gesture (swipe) typing** with a suggestion strip: swipe across letters to
   type a word, tap a suggestion to swap it, backspace right after a swipe
   removes the whole word.
-- **English and Finnish dictionaries** (Swedish included); swipe across the
-  space bar to switch language, the choice is remembered.
+- **Word lists for swipe typing**: English, Finnish and Swedish included,
+  other languages downloaded by setup. Swipe across the space bar to switch
+  language; the choice is remembered.
 - **A layout per language**, taken from
   [HeliBoard](https://github.com/HeliBorg/HeliBoard): about 80 layouts
   (qwerty, qwertz, azerty, Cyrillic, Greek, …) for 100+ languages. Finnish
   gets `å ö ä`, English plain qwerty, German qwertz. Keys type through a
-  real xkb keymap (`fi` by default) so symbols like `@ € | £` come out right.
+  real xkb keymap (your Hyprland keyboard layout by default) so symbols like
+  `@ € | £` come out right.
 - **Long-press alternates** per language (numbers on the top row, ä å on
   `a` in English, é ü ñ ø …, extra punctuation); characters the keymap lacks
   are added to it.
@@ -46,8 +48,8 @@ keeps wvkbd's GPL-3.0 license and credits (see [Credits](#credits-and-thanks)).
 - **Touch, mouse and Surface pen** (tablet-v2) input.
 - Long-press space and slide to move the cursor; double space types `. `;
   punctuation attaches to the previous word; automatic capitals.
-- **Auto-show** for focused text fields while the Type Cover is detached,
-  driven by fcitx5's virtual keyboard D-Bus interface.
+- **Auto-show** for focused text fields while the Type Cover is detached (or
+  always, or never), driven by fcitx5's virtual keyboard D-Bus interface.
 
 ## Performance
 
@@ -131,12 +133,18 @@ run `omarchy-osk-setup`. `omarchy-osk-uninstall` removes everything again
 (Omarchy's own menu, theme switcher and lock screen come back; `--purge`
 also removes your settings).
 
+To update, run the install line again: it installs the latest release, and
+setup asks again with your current answers preselected (Enter keeps them).
+What changed in each release is in [CHANGELOG.md](CHANGELOG.md) and the
+[release notes](https://github.com/wouter-leistra/omarchy-osk/releases).
+
 **Tested versions.** Every release is made on the Surface Pro 3 with all
 tests passing (`tools/release.sh`), and records which Omarchy and Hyprland
-it was tested with (`~/.local/share/omarchy-osk/TESTED`). The installer
-warns when your Omarchy is newer, and after an `omarchy update` past the
-tested version a notification says so: the keyboard itself should keep
-working, the patched Omarchy plugins are the parts most likely to break.
+it was tested with (`~/.local/share/omarchy-osk/TESTED`; check it with
+`omarchy-osk-tested`). Setup warns when your Omarchy is newer than that, and
+when an `omarchy update` brings a new minor or major Omarchy version (4.1,
+5.0) a notification says so. The keyboard itself should keep working; the
+patched Omarchy plugins are the parts most likely to break.
 
 Needs Omarchy (x86_64), which brings everything else: pango, cairo,
 libxkbcommon, gum, jq and python-gobject (for auto-show).
@@ -177,8 +185,9 @@ redoes all three.
 on the lock screen. On lock the patched lock screen runs `omarchy-osk-lock
 lock`: the keyboard switches to private mode (no suggestions, gestures,
 automatic capitals or smart punctuation, so the password never appears on
-screen) and shows itself while the Type Cover is detached. A button under the password field shows or hides it. Unlocking
-switches private mode off again.
+screen) and shows itself while the Type Cover is detached. A button under
+the password field shows or hides it. Unlocking switches private mode off
+again.
 
 ### Disk encryption passphrase at boot (optional, separate)
 
@@ -280,11 +289,12 @@ a list to the repo itself, put it in `dict/`.
 
 Two separate things decide what you get:
 
-- **`OSK_XKB`** is the xkb layout used to *type* (default `fi`, same as the
-  Type Cover). Keys look up their character in this keymap, so `@`, `€` etc.
-  always arrive correctly, and characters the keymap lacks (é, ñ, — …) are
-  added to spare keycodes automatically. Use the layout your physical
-  keyboard uses, e.g. `OSK_XKB=us`, `OSK_XKB=se`, `OSK_XKB=de:nodeadkeys`.
+- **`OSK_XKB`** is the xkb layout used to *type* (default: the first layout
+  in Hyprland's `input:kb_layout`, else `us`; `fi` on the Surface here). Keys
+  look up their character in this keymap, so `@`, `€` etc. always arrive
+  correctly, and characters the keymap lacks (é, ñ, — …) are added to
+  spare keycodes automatically. Use the layout your physical keyboard uses,
+  e.g. `OSK_XKB=us`, `OSK_XKB=se`, `OSK_XKB=de:nodeadkeys`.
 - **The language's layout** decides what the letter keys *show* and type.
   Layouts are plain text files (`data/layouts/`, imported from HeliBoard by
   `tools/import-heliboard.py`): one key per line, its long-press keys after
@@ -323,13 +333,14 @@ keys, gestures, suggestions and drawing, `src/swipe.rs`: the gesture
 decoder, `src/langs.rs`: layout data, `src/keymap.rs`: the xkb keymap).
 
 ```sh
-make check              # unit tests and the golden tests
-make bench              # speed and resource use
-tests/install_test.py   # installer, setup and uninstaller in a throwaway home
-tests/ui_test.py        # end to end on the real desktop (needs the machine to itself)
-make dist               # the release tarball
-tools/release.sh vX.Y.Z [--publish]   # all of the above on this machine, TESTED, release
-                        # (notes from its dated section in CHANGELOG.md)
+make check                 # unit tests and the golden tests
+make bench                 # speed and resource use
+tests/install_test.py      # installer, setup and uninstaller in a throwaway home
+python3 tests/ui_test.py   # end to end on the real desktop (needs the machine to itself)
+make dist                  # the release tarball
+tools/release.sh vX.Y.Z [--publish]
+                           # all of the above on this machine, TESTED, and the
+                           # release (notes from its dated section in CHANGELOG.md)
 ```
 
 The golden tests (`tests/golden.py`) run touch scripts through a headless
