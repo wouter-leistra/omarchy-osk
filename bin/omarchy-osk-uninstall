@@ -2,7 +2,7 @@
 # Remove omarchy-osk: the keyboard, its scripts and data, the auto-show
 # service, the bar button, the theme/font/update hooks, the patched copies
 # of Omarchy's menu, theme switcher and lock screen (Omarchy's own come
-# back) and the Hyprland layer rule it added.
+# back), the Hyprland layer rule and the menu and app launcher entries it added.
 #
 #   omarchy-osk-uninstall                 your settings stay in ~/.config/omarchy-osk
 #   omarchy-osk-uninstall --purge         remove those too
@@ -22,7 +22,7 @@ for a in "$@"; do
   case $a in
     --purge) purge=1 ;;
     --patches-only) patches_only=1 ;;
-    -h|--help) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option $a" >&2; exit 2 ;;
   esac
 done
@@ -77,6 +77,13 @@ if grep -q '^-- omarchy-osk: slide in' "$LAYER_FILE" 2>/dev/null; then
   hyprctl reload >/dev/null 2>&1 || true
 elif grep -qF 'namespace = "^omarchy-osk$"' "$LAYER_FILE" 2>/dev/null; then
   say "the omarchy-osk layer rule in ${LAYER_FILE/#$HOME/\~} was not added by setup: remove it yourself if you like"
+fi
+
+MENU_FILE="$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
+if grep -q '^[[:space:]]*// omarchy-osk: Setup > On-screen keyboard' "$MENU_FILE" 2>/dev/null; then
+  sed -i '/^[[:space:]]*\/\/ omarchy-osk: Setup > On-screen keyboard/,/^[[:space:]]*\/\/ end omarchy-osk$/d' "$MENU_FILE"
+  # a file setup made just for this entry
+  [[ $(tr -d '[:space:]' <"$MENU_FILE") == "{}" ]] && rm -f "$MENU_FILE"
 fi
 
 if [[ -f $STATE/files ]]; then

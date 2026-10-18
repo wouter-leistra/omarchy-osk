@@ -58,6 +58,45 @@ exit 0
 }
 
 LOOKNFEEL = "-- my Hyprland look\nhl.config({ general = { gaps_in = 5 } })\n"
+# your own Omarchy menu extension: no trailing comma allowed, // inside a string
+MENU = """{
+  // my menu /* not a block */
+  "personal": {"icon":"","label":"Personal"},
+  /* a block
+     comment */
+  "personal.site": {"icon":"","label":"Site","action":"xdg-open https://example.com//x"}
+}
+"""
+
+
+def jsonc(text):
+    """Omarchy's JSONC: comments out, then strict JSON (no trailing commas)"""
+    out, i, n, in_str = [], 0, len(text), False
+    while i < n:
+        c = text[i]
+        if in_str:
+            out.append(c)
+            if c == "\\":
+                out.append(text[i + 1])
+                i += 1
+            elif c == '"':
+                in_str = False
+        elif c == '"':
+            in_str = True
+            out.append(c)
+        elif text.startswith("//", i):
+            i = text.find("\n", i) if "\n" in text[i:] else n
+            continue
+        elif text.startswith("/*", i):
+            i = text.find("*/", i) + 2
+            continue
+        else:
+            out.append(c)
+        i += 1
+    try:
+        return json.loads("".join(out))
+    except ValueError:
+        return None
 
 results = []
 
@@ -79,6 +118,8 @@ def main():
         os.chmod(p, 0o755)
     os.makedirs(os.path.join(home, ".config/hypr"))
     open(os.path.join(home, ".config/hypr/looknfeel.lua"), "w").write(LOOKNFEEL)
+    os.makedirs(os.path.join(home, ".config/omarchy/extensions"))
+    open(os.path.join(home, ".config/omarchy/extensions/omarchy-menu.jsonc"), "w").write(MENU)
 
     # a release: staged tree, tarball and checksums, served over HTTP
     rel = os.path.join(base, "release")
@@ -149,6 +190,13 @@ def main():
     lnf = read(".config/hypr/looknfeel.lua")
     check("layer rule added", lnf.startswith(LOOKNFEEL) and lnf.count('namespace = "^omarchy-osk$"') == 1, lnf)
     check("auto-show service enabled", logged("systemctl --user enable omarchy-osk-autoshow.service"))
+    desktop = read(".local/share/applications/omarchy-osk-setup.desktop")
+    check("app launcher entry", "Exec=omarchy-launch-floating-terminal-with-presentation "
+          + path(".local/bin/omarchy-osk-setup") in desktop, desktop)
+    menu = read(".config/omarchy/extensions/omarchy-menu.jsonc")
+    items = jsonc(menu) or {}
+    check("Omarchy menu entry, your entries kept", "setup.osk" in items and "personal.site" in items
+          and items["setup.osk"]["action"].endswith("omarchy-osk-setup"), menu)
 
     # ---------------------------------------------------------------- interactive
     # the gum questions in a terminal, Enter on each: the same as --yes
@@ -210,6 +258,7 @@ def main():
     check("always show", 'OSK_AUTOSHOW="always"' in conf, conf)
     check("no word list without download", not os.path.exists(path(".local/share/omarchy-osk/dict/de-DE.txt")))
     check("layer rule only once", read(".config/hypr/looknfeel.lua").count('namespace = "^omarchy-osk$"') == 1)
+    check("menu entry only once", read(".config/omarchy/extensions/omarchy-menu.jsonc").count('"setup.osk"') == 1)
 
     # a word list downloaded and filtered for the layout (needs the network)
     p = run(path(".local/bin/omarchy-osk-setup"), "--yes", "--langs", "en,fi,de-DE", "--download", "yes")
@@ -251,6 +300,8 @@ def main():
     check("patched copies gone", not any("tester." in f for f in left), [f for f in left if "tester." in f])
     check("layer rule removed, the rest intact", read(".config/hypr/looknfeel.lua") == LOOKNFEEL,
           repr(read(".config/hypr/looknfeel.lua")))
+    check("menu entry removed, the rest intact", read(".config/omarchy/extensions/omarchy-menu.jsonc") == MENU,
+          repr(read(".config/omarchy/extensions/omarchy-menu.jsonc")))
     check("settings kept", os.path.exists(path(".config/omarchy-osk/config")))
 
     server.shutdown()

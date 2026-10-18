@@ -1,7 +1,8 @@
 #!/bin/bash
 # Set up omarchy-osk: languages, auto-show, keyboard height, the bar button,
 # the Omarchy patches (menu, theme switcher, lock screen) and the Hyprland
-# layer rule. Run it again any time to change your choices.
+# layer rule; adds itself to the app launcher and to Setup in the Omarchy
+# menu. Run it again any time to change your choices.
 #
 #   omarchy-osk-setup            ask (with your current settings preselected)
 #   omarchy-osk-setup --yes      no questions: current settings or defaults
@@ -19,6 +20,8 @@ STATE="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-osk"
 HOOKS="$CONFIG_DIR/omarchy/hooks"
 PLUGIN_DIR="$CONFIG_DIR/omarchy/plugins/omarchy-osk"
 LAYER_FILE="$CONFIG_DIR/hypr/looknfeel.lua"
+MENU_FILE="$CONFIG_DIR/omarchy/extensions/omarchy-menu.jsonc"
+APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 FREQ_URL="https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018"
 
 yes=0 a_langs="" a_autoshow="" a_cover="" a_height="" a_bar="" a_patches="" a_rule="" a_download=""
@@ -106,7 +109,7 @@ else
   list=$( { echo "en English"; grep -v '^#' "$DATA/languages.txt" | grep -v '^en-' | awk '{ t = $1; $1 = ""; $2 = ""; sub(/^  */, ""); print t " " $0 }'; } )
   selected=$(echo "$list" | awk -v d=",$default," 'index(d, "," $1 ",") { printf "%s%s", sep, $0; sep = "," }')
   picked=$(echo "$list" | gum choose --no-limit --height 15 --selected "$selected" \
-    --header "Which languages? (space to pick, enter when done; swipe the space bar to switch)") || picked=""
+    --header "Which languages? (x to pick or unpick, enter when done; swipe the space bar to switch)") || picked=""
   [[ -n $picked ]] || picked=$(echo "$list" | awk '$1 == "en"')
   # keep the order you had, new ones after it
   new=$(echo "$picked" | awk '{print $1}')
@@ -273,6 +276,91 @@ elif ask "Add the Hyprland layer rule (slide-in, above Omarchy's menus, on the l
   state_set layer_rule yes
   hyprctl reload >/dev/null 2>&1 || true
 fi
+
+# ---------------------------------------------------------------- launchers
+# this setup in a floating terminal: from the app launcher and from
+# Setup > On-screen keyboard in the Omarchy menu
+setup_cmd="omarchy-launch-floating-terminal-with-presentation $PREFIX/bin/omarchy-osk-setup"
+desktop="$APPS_DIR/omarchy-osk-setup.desktop"
+mkdir -p "$APPS_DIR"
+cat >"$desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=On-screen keyboard setup
+Comment=Languages, auto-show, height and the rest of omarchy-osk
+Exec=$setup_cmd
+Icon=input-keyboard
+Terminal=false
+Categories=Settings;
+EOF
+record "$desktop"
+
+# Omarchy's menu extension is JSONC without trailing commas, and a file that
+# doesn't parse empties your whole extension: only write what parses
+python3 -I - "$MENU_FILE" "$setup_cmd" <<'EOF'
+import json, os, sys
+
+path, action = sys.argv[1], sys.argv[2]
+
+def code(s):
+    """(index, char) of everything outside // and /* */ comments"""
+    i, n, in_str = 0, len(s), False
+    while i < n:
+        c = s[i]
+        if in_str:
+            yield i, c
+            if c == "\\" and i + 1 < n:
+                yield i + 1, s[i + 1]
+                i += 1
+            elif c == '"':
+                in_str = False
+        elif c == '"':
+            in_str = True
+            yield i, c
+        elif s.startswith("//", i):
+            j = s.find("\n", i)
+            i = n if j < 0 else j
+            continue
+        elif s.startswith("/*", i):
+            j = s.find("*/", i + 2)
+            i = n if j < 0 else j + 2
+            continue
+        else:
+            yield i, c
+        i += 1
+
+def parses(s):
+    try:
+        return isinstance(json.loads("".join(c for _, c in code(s))), dict)
+    except ValueError:
+        return False
+
+try:
+    text = open(path).read()
+except FileNotFoundError:
+    text = "{\n}\n"
+if '"setup.osk"' in text:
+    sys.exit(0)
+if not parses(text):
+    print(f"omarchy-osk: {path} doesn't parse: no menu entry added")
+    sys.exit(0)
+brace = next(i for i, c in code(text) if c == "{") + 1
+entry = json.dumps({"icon": "\U000F030C", "label": "On-screen keyboard", "action": action},
+                   ensure_ascii=False)
+for comma in (",", ""):
+    new = (text[:brace]
+           + "\n  // omarchy-osk: Setup > On-screen keyboard (added by omarchy-osk-setup, removed by omarchy-osk-uninstall)"
+           + f'\n  "setup.osk": {entry}{comma}'
+           + "\n  // end omarchy-osk"
+           + text[brace:])
+    if parses(new):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path + ".osk-tmp", "w") as f:
+            f.write(new)
+        os.replace(path + ".osk-tmp", path)
+        print("omarchy-osk: added Setup > On-screen keyboard to the Omarchy menu")
+        break
+EOF
 
 # ---------------------------------------------------------------- start
 if command -v systemctl >/dev/null; then

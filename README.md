@@ -125,10 +125,11 @@ and data; the checksum is verified), installs it for your user in
   `~/.config/hypr/looknfeel.lua` between marker comments.
 
 It also adds theme and font hooks, so the keyboard follows your Omarchy
-theme. Run `omarchy-osk-setup` again any time to change the answers, and
-`omarchy-osk-uninstall` to remove everything again (Omarchy's own menu,
-theme switcher and lock screen come back; `--purge` also removes your
-settings).
+theme. To change the answers later, open **Setup › On-screen keyboard** in
+the Omarchy menu, search "On-screen keyboard setup" in the app launcher, or
+run `omarchy-osk-setup`. `omarchy-osk-uninstall` removes everything again
+(Omarchy's own menu, theme switcher and lock screen come back; `--purge`
+also removes your settings).
 
 **Tested versions.** Every release is made on the Surface Pro 3 with all
 tests passing (`tools/release.sh`), and records which Omarchy and Hyprland
@@ -223,7 +224,7 @@ look built into the initramfs is the fallback.
 
 | Command | Does |
 |---|---|
-| `omarchy-osk-setup` | choose languages, auto-show, height, bar button, Omarchy patches |
+| `omarchy-osk-setup` | choose languages, auto-show, height, bar button, Omarchy patches (also in the Omarchy menu under Setup) |
 | `omarchy-osk-toggle` | show/hide, starting it if needed |
 | `omarchy-osk` | start the keyboard with theme colours (extra args passed on, e.g. `--hidden`) |
 | `omarchy-osk-restart` | restart it (used by the theme/font hooks) |
