@@ -329,6 +329,7 @@ tests/install_test.py   # installer, setup and uninstaller in a throwaway home
 tests/ui_test.py        # end to end on the real desktop (needs the machine to itself)
 make dist               # the release tarball
 tools/release.sh vX.Y.Z [--publish]   # all of the above on this machine, TESTED, release
+                        # (notes from its dated section in CHANGELOG.md)
 ```
 
 The golden tests (`tests/golden.py`) run touch scripts through a headless

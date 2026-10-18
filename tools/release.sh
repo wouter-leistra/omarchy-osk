@@ -3,7 +3,8 @@
 #
 #   tools/release.sh v0.1.0 [--skip-ui] [--publish]
 #
-# 1. the tree must be clean and Cargo.toml's version must match
+# 1. the tree must be clean, Cargo.toml's version must match and
+#    CHANGELOG.md must have a dated section for it
 # 2. installs this build for your user and runs every test: unit and golden
 #    tests (make check), the installer test, the end-to-end tests/ui_test.py
 #    (needs the machine to itself; --skip-ui to leave them out, which TESTED
@@ -12,7 +13,8 @@
 #    date and what passed
 # 4. makes the tarball and SHA256SUMS (make dist), with TESTED inside
 # 5. --publish: tags the commit, pushes the tag and creates the GitHub
-#    release with install.sh, the tarball and SHA256SUMS
+#    release with install.sh, the tarball and SHA256SUMS; the notes are the
+#    CHANGELOG.md section and what it was tested on
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -30,6 +32,18 @@ done
 version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
 [[ $tag == "v$version" ]] || { echo "Cargo.toml says $version, not ${tag#v}" >&2; exit 1; }
 [[ -z $(git status --porcelain) ]] || { echo "the tree is not clean" >&2; exit 1; }
+# this version's section of CHANGELOG.md, without its heading
+changes=$(awk -v v="$version" '
+  /^## / { on = ($2 == v); next }
+  on' CHANGELOG.md | sed -e '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' |
+  # one line per paragraph and list item: GitHub shows every line break
+  awk 'NF == 0 { if (buf != "") print buf; buf = ""; print ""; next }
+       /^- / { if (buf != "") print buf; buf = $0; next }
+       { sub(/^ +/, ""); buf = (buf == "" ? $0 : buf " " $0) }
+       END { if (buf != "") print buf }')
+[[ -n $changes ]] || { echo "CHANGELOG.md has nothing for $version" >&2; exit 1; }
+grep -q "^## $version (" CHANGELOG.md ||
+  { echo "CHANGELOG.md: date the heading, like ## $version ($(date +%Y-%m-%d))" >&2; exit 1; }
 commit=$(git rev-parse --short HEAD)
 
 make install-user
@@ -66,6 +80,8 @@ if ((publish)); then
   git tag -a "$tag" -m "omarchy-osk $version"
   git push origin "$tag"
   {
+    echo "$changes"
+    echo
     echo "Tested on $(sed -n 's/^device=//p' target/TESTED) with Omarchy $(sed -n 's/^omarchy=//p' target/TESTED) and Hyprland $(sed -n 's/^hyprland=//p' target/TESTED): $(sed -n 's/^tests=//p' target/TESTED)."
     echo
     echo "Install or update: \`curl -fsSL https://github.com/wouter-leistra/omarchy-osk/releases/latest/download/install.sh | bash\`"
