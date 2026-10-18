@@ -1,17 +1,23 @@
 #!/usr/bin/python3 -I
-"""Record the promo video: auto-show, typing, swiping, symbols, Super+Ctrl+Shift+Space
-into the Omarchy theme switcher, theme following and the bar toggle.
+"""Record the promo video: the one-line install and its setup (adding
+Swedish), setup from the Omarchy menu, auto-show, typing, swiping, symbols,
+switching language, Super+Ctrl+Shift+Space into the Omarchy theme switcher,
+theme following and the bar toggle.
 
-Runs on workspace 3 with throwaway windows. Nobody may use the machine while
-this runs: text goes in only while the demo window (or an Omarchy menu opened
-by the demo) has focus. Writes OUT.mp4 and OUT.json (scene start times, in
-seconds from the start of the recording). The theme is restored afterwards.
+Runs on an empty workspace (4) with throwaway windows. Nobody may use the
+machine while this runs: keys and text go in only while the demo window (or
+an Omarchy menu opened by the demo) has focus. Writes OUT.mp4 and OUT.json
+(scene start times, in seconds from the start of the recording). Your
+omarchy-osk settings, theme, background and do-not-disturb are restored
+afterwards; the install itself is the real one (the latest release).
 
 usage: tests/promo.py OUT.mp4
 """
 
 import json
 import os
+import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -23,6 +29,13 @@ import keys  # noqa: E402
 from demo import hypr, focus_workspace, osk, spline, jitter, VPTR  # noqa: E402
 
 TITLE = "osk-demo"
+WS = 4
+INSTALL_TITLE = "osk-install"
+INSTALL = "curl -fsSL https://github.com/wouter-leistra/omarchy-osk/releases/latest/download/install.sh | bash"
+TERM_LOG = "/tmp/osk-promo-term.log"
+CONF = os.path.expanduser("~/.config/omarchy-osk/config")
+SETUP_STATE = os.path.expanduser("~/.local/state/omarchy-osk/setup")
+SWEDISH_DOWNS = 87       # sv Svenska is 88th in setup's language list
 U = keys.W / 11
 STATE = os.path.expanduser("~/.local/state/omarchy-osk/language")
 BAR_ICON = (1945, 23)
@@ -61,8 +74,8 @@ target = {"layer": None}
 
 
 def guard():
-    if hypr("activeworkspace")["id"] != 3:
-        raise Abort("left workspace 3")
+    if hypr("activeworkspace")["id"] != WS:
+        raise Abort(f"left workspace {WS}")
     if target["layer"]:
         if not layer_open(target["layer"]):
             raise Abort(f"{target['layer']} is not open")
@@ -119,6 +132,117 @@ SUPER = tap_at(2.5 * U, row_y(1))
 SPACE = tap_at(5.0 * U, row_y(3))
 ENTER = tap_at(9.25 * U, row_y(3))
 PAREN = tap_at(9.5 * U, row_y(1))    # ) on ?123
+SPACE_SWIPE = [f"move {4.5 * U:.0f} {row_y(3):.0f}", "down", f"to {6.5 * U:.0f} {row_y(3):.0f}",
+               "up", "sleep 200"]
+
+
+def active_title():
+    return hypr("activewindow").get("title")
+
+
+def keys_to(title, *args):
+    """wtype into the window titled title, never anywhere else"""
+    if hypr("activeworkspace")["id"] != WS or active_title() != title:
+        raise Abort(f"{title} lost focus")
+    subprocess.run(["wtype", *args])
+
+
+def menu_keys(*args):
+    if not layer_open("omarchy-menu"):
+        raise Abort("the Omarchy menu is not open")
+    subprocess.run(["wtype", *args])
+
+
+def plain(text):
+    return re.sub(r"\x1b(\[[0-9;?<=>]*[ -/]*[@-~]|\][^\x07]*\x07|[@-_])", "", text)
+
+
+def install_scene(mark, procs):
+    """the README's install line in a terminal; setup adds Swedish"""
+    font = subprocess.run(["omarchy-font-current"], capture_output=True, text=True).stdout.strip()
+    script = "/tmp/osk-promo-term.sh"
+    with open(script, "w") as fh:
+        fh.write('clear\nprintf "\\n  \\e[1;32m❯\\e[0m "\nIFS= read -r line\neval "$line"\nsleep 600\n')
+    open(TERM_LOG, "w").close()
+    procs.append(subprocess.Popen(
+        ["foot", "-T", INSTALL_TITLE, "-o", f"font={font}:size=25",
+         "script", "-qfc", f"bash {script}", TERM_LOG],
+        start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+    if not wait(lambda: active_title() == INSTALL_TITLE, 5):
+        raise Abort("the install terminal did not open")
+    time.sleep(1.2)
+
+    log = open(TERM_LOG, errors="ignore")
+    seen = {"all": "", "since": ""}
+
+    def read():
+        new = log.read()
+        seen["all"] += new
+        seen["since"] += new
+        return new
+
+    def until(pred, timeout):
+        end, quiet = time.time() + timeout, time.time()
+        while time.time() < end:
+            if read():
+                quiet = time.time()
+            elif pred() and time.time() - quiet > 0.5:
+                return True
+            time.sleep(0.1)
+        raise Abort(f"setup stalled: {plain(seen['all'])[-300:]!r}")
+
+    mark("install")
+    keys_to(INSTALL_TITLE, "-d", "28", INSTALL)
+    time.sleep(0.6)
+    keys_to(INSTALL_TITLE, "-k", "Return")
+    mark("download")
+    until(lambda: "Which languages" in plain(seen["all"]) and "enter" in plain(seen["since"]), 60)
+    mark("languages")
+    time.sleep(1.5)
+    keys_to(INSTALL_TITLE, "-d", "22", *["-k", "Down"] * SWEDISH_DOWNS)
+    time.sleep(0.7)
+    keys_to(INSTALL_TITLE, "x")
+    time.sleep(1.1)
+    seen["since"] = ""
+    keys_to(INSTALL_TITLE, "-k", "Return")
+    mark("questions")
+    # the other questions: keep the current answers
+    while "omarchy-osk: done" not in plain(seen["all"]):
+        until(lambda: "enter" in plain(seen["since"]) or "omarchy-osk: done" in plain(seen["all"]), 60)
+        if "omarchy-osk: done" in plain(seen["all"]):
+            break
+        time.sleep(0.8)
+        seen["since"] = ""
+        keys_to(INSTALL_TITLE, "-k", "Return")
+    mark("installed")
+    langs = open(CONF).read()
+    if 'OSK_LANGS="en,fi,sv"' not in langs:
+        raise Abort(f"setup did not add Swedish: {langs!r}")
+    time.sleep(2.5)
+    term = next(c for c in hypr("clients") if c["title"] == INSTALL_TITLE)
+    os.kill(term["pid"], signal.SIGTERM)
+    wait(lambda: not any(c["title"] == INSTALL_TITLE for c in hypr("clients")), 3)
+    time.sleep(0.8)
+
+
+def menu_scene(mark):
+    """setup again, from Setup > On-screen keyboard in the Omarchy menu"""
+    mark("menu")
+    subprocess.run(["omarchy", "menu", "summon", "setup"], capture_output=True)
+    if not wait(lambda: layer_open("omarchy-menu"), 3):
+        raise Abort("the Omarchy menu did not open")
+    time.sleep(1.4)
+    menu_keys("-k", "Up")              # wraps round to the last row: On-screen keyboard
+    time.sleep(1.0)
+    menu_keys("-k", "Return")
+    if not wait(lambda: any(c["title"] == "Omarchy" for c in hypr("clients")), 5):
+        raise Abort("setup did not open from the menu")
+    time.sleep(4.5)
+    mark("menu_end")
+    for c in hypr("clients"):
+        if c["title"] == "Omarchy" and c["workspace"]["id"] == WS:
+            os.kill(c["pid"], signal.SIGTERM)
+    wait(lambda: not any(c["title"] == "Omarchy" for c in hypr("clients")), 3)
 
 
 def main():
@@ -136,41 +260,58 @@ def main():
     subprocess.run(["hyprctl", "eval", "hl.config({ misc = { focus_on_activate = false } })"],
                    capture_output=True)
     saved_lang = open(STATE).read() if os.path.exists(STATE) else None
+    saved = {}
+    for f in (CONF, SETUP_STATE):
+        if os.path.exists(f):
+            shutil.copy(f, f + ".promo-backup")
+            saved[f] = f + ".promo-backup"
     with open(STATE, "w") as fh:
         fh.write("en\n")
-
-    # auto-show service that believes the Type Cover is detached
-    subprocess.run(["systemctl", "--user", "stop", "omarchy-osk-autoshow"])
-    env = dict(os.environ, OSK_COVER_NAME="no-such-cover-for-demo", OSK_DEBUG="1")
-    daemon = subprocess.Popen([os.path.expanduser("~/.local/bin/omarchy-osk-autoshow")], env=env,
-                              stdout=open("/tmp/osk-promo-autoshow.log", "w"), stderr=subprocess.STDOUT)
-    subprocess.run(["pkill", "-x", "omarchy-oskd"])
-    time.sleep(0.3)
-    subprocess.Popen(["omarchy-osk"], start_new_session=True,
-                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(3.0)
+    dnd = subprocess.run(["omarchy-shell", "notifications", "dndState"], capture_output=True,
+                         text=True).stdout.strip()
+    subprocess.run(["omarchy-shell", "notifications", "setDnd", "on"], capture_output=True)
+    if any(c["workspace"]["id"] == WS for c in hypr("clients")):
+        sys.exit(f"workspace {WS} is not empty")
+    osk("USR1")                       # hidden while installing
 
     prev_ws = hypr("activeworkspace")["id"]
-    focus_workspace(3)
-    if hypr("activeworkspace")["id"] != 3:
-        sys.exit("could not switch to workspace 3")
-    procs, rec = [], None
+    focus_workspace(WS)
+    if hypr("activeworkspace")["id"] != WS:
+        sys.exit(f"could not switch to workspace {WS}")
+    procs, rec, daemon = [], None, None
     try:
-        pics = "/usr/share/omarchy/themes/catppuccin/backgrounds"
-        pic = os.path.join(pics, sorted(os.listdir(pics))[-1])
-        procs.append(subprocess.Popen(["imv", pic], start_new_session=True,
-                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
-        wait(lambda: hypr("activewindow").get("class") == "imv", 5)
-        osk("USR1")
-        wait(lambda: not keyboard_visible(), 2)
-        time.sleep(0.8)
-
-        t0 = time.time()
+        time.sleep(1.0)
+        if os.path.exists(out):
+            os.remove(out)
         rec = subprocess.Popen(["gpu-screen-recorder", "-w", "eDP-1", "-f", "60", "-fm", "cfr",
                                 "-cursor", "no", "-k", "auto", "-fallback-cpu-encoding", "yes",
                                 "-q", "very_high", "-o", out],
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        time.sleep(1.5)
+        # the clock starts with the recording, which takes a moment to begin
+        wait(lambda: os.path.exists(out) and os.path.getsize(out) > 0, 10)
+        t0 = time.time()
+        time.sleep(2.0)
+        mark("start")
+
+        # 1. the one-line install and its setup, then setup from the menu
+        install_scene(mark, procs)
+        menu_scene(mark)
+
+        # auto-show service that believes the Type Cover is detached
+        mark("prepare")
+        subprocess.run(["systemctl", "--user", "stop", "omarchy-osk-autoshow"])
+        env = dict(os.environ, OSK_COVER_NAME="no-such-cover-for-demo", OSK_DEBUG="1")
+        daemon = subprocess.Popen([os.path.expanduser("~/.local/bin/omarchy-osk-autoshow")], env=env,
+                                  stdout=open("/tmp/osk-promo-autoshow.log", "w"), stderr=subprocess.STDOUT)
+        subprocess.run(["pkill", "-x", "omarchy-oskd"])
+        time.sleep(0.3)
+        subprocess.Popen(["omarchy-osk", "--hidden"], start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        pic = bg                      # your wallpaper, in a window without a text field
+        procs.append(subprocess.Popen(["imv", pic], start_new_session=True,
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+        wait(lambda: hypr("activewindow").get("class") == "imv", 5)
+        time.sleep(3.0)
 
         # 1. a text field gets focus: the keyboard appears by itself
         mark("autoshow")
@@ -186,7 +327,7 @@ def main():
         time.sleep(1.2)
         mark("autohide")
         click_window(next(c["title"] for c in hypr("clients")
-                          if c["class"] == "imv" and c["workspace"]["id"] == 3))
+                          if c["class"] == "imv" and c["workspace"]["id"] == WS))
         if not wait(lambda: not keyboard_visible(), 2):
             print("auto-hide did not trigger", flush=True)
         time.sleep(0.9)
@@ -209,6 +350,27 @@ def main():
         hold_slide(",", 0, ms=500)    # long-press ,: colon
         vptr(SYM + PAREN + SYM)
         tap(" ")
+        time.sleep(0.4)
+
+        # the language added in setup: swipe the space bar (English, Finnish, Swedish)
+        mark("language")
+        vptr(ENTER)
+        vptr(SPACE_SWIPE)
+        time.sleep(0.5)
+        vptr(SPACE_SWIPE)
+        keys.use("fi")                # Swedish has the same keys as Finnish
+        time.sleep(0.7)
+        tap("^")
+        for w in ["hej", "från", "^sverige"]:
+            if w[0] == "^":
+                tap("^")
+                w = w[1:]
+            swipe(w)
+        hold_slide(".", U)            # !
+        time.sleep(0.6)
+        vptr(SPACE_SWIPE)             # back to English
+        keys.use("en")
+        vptr(ENTER)
         time.sleep(0.4)
 
         # 3. Super+Ctrl+Shift+Space from the keyboard opens the theme switcher
@@ -276,8 +438,12 @@ def main():
         focus_workspace(prev_ws)
         subprocess.run(["hyprctl", "eval", "hl.config({ misc = { focus_on_activate = %s } })"
                         % ("true" if focus_on_activate else "false")], capture_output=True)
-        daemon.terminate()
-        subprocess.run(["systemctl", "--user", "start", "omarchy-osk-autoshow"])
+        if daemon:
+            daemon.terminate()
+        for f, b in saved.items():
+            shutil.move(b, f)
+        subprocess.run(["omarchy-shell", "notifications", "setDnd", dnd or "off"], capture_output=True)
+        subprocess.run(["systemctl", "--user", "restart", "omarchy-osk-autoshow"])
         if saved_lang is None:
             os.remove(STATE)
         else:
