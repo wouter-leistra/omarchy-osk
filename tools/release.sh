@@ -72,6 +72,6 @@ if ((publish)); then
     echo
     echo "Made for the Surface Pro 3 with the Type Cover; other devices may work but are not tested."
   } >target/notes.md
-  gh release create "$tag" --title "omarchy-osk $version" --notes-file target/notes.md \
+  gh release create "$tag" -R wouter-leistra/omarchy-osk --title "omarchy-osk $version" --notes-file target/notes.md \
     install.sh target/omarchy-osk-x86_64.tar.gz target/SHA256SUMS
 fi
